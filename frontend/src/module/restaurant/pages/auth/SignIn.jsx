@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Mail, Lock, EyeOff, Eye, CheckSquare, UtensilsCrossed } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -15,12 +15,30 @@ export default function RestaurantSignIn() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
+  // Redirect to restaurant panel if already authenticated
+  useEffect(() => {
+    const isAuthenticated = localStorage.getItem("restaurant_authenticated") === "true"
+    if (isAuthenticated) {
+      navigate("/restaurant-panel/dashboard", { replace: true })
+    }
+  }, [navigate])
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsLoading(true)
 
     // TODO: replace with real API
     await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    // Set authentication state
+    localStorage.setItem("restaurant_authenticated", "true")
+    localStorage.setItem("restaurant_user", JSON.stringify({
+      email: email,
+      name: "Restaurant Partner"
+    }))
+
+    // Dispatch custom event for same-tab updates
+    window.dispatchEvent(new Event('restaurantAuthChanged'))
 
     setIsLoading(false)
     navigate("/restaurant-panel/dashboard")
