@@ -87,21 +87,11 @@ export default function UserLayout() {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
   }, [location.pathname, location.search, location.hash])
 
-  // Hide bottom navigation on cart page, checkout, restaurant details, and profile pages
-  const hideBottomNav = location.pathname === "/user/cart" || 
-                        location.pathname === "/user/cart/checkout" ||
-                        location.pathname.startsWith("/user/restaurants/") ||
-                        location.pathname.startsWith("/user/profile") ||
-                        location.pathname.startsWith("/user/orders") ||
-                        location.pathname.startsWith("/user/offers") ||
-                        location.pathname.startsWith("/user/gourmet") ||
-                        location.pathname.startsWith("/user/top-10") ||
-                        location.pathname.startsWith("/user/collections") ||
-                        location.pathname.startsWith("/user/gift-card") ||
-                        location.pathname.startsWith("/user/help") ||
-                        location.pathname.startsWith("/user/notifications") ||
-                        location.pathname.startsWith("/user/wallet") ||
-                        location.pathname.startsWith("/user/auth")
+  // Show bottom navigation only on home page and dining page
+  const showBottomNav = location.pathname === "/" || 
+                        location.pathname === "/user" ||
+                        location.pathname === "/dining" ||
+                        location.pathname === "/user/dining"
 
   return (
     <CartProvider>
@@ -112,7 +102,7 @@ export default function UserLayout() {
               {/* <Navbar /> */}
               <LocationPrompt />
               <Outlet />
-              {!hideBottomNav && <BottomNavigation />}
+              {showBottomNav && <BottomNavigation />}
             </LocationSelectorProvider>
           </SearchOverlayProvider>
         </OrdersProvider>

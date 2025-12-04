@@ -1,15 +1,63 @@
 import { Link, useLocation } from "react-router-dom"
 import { UtensilsCrossed, Tag, User, ShoppingBag } from "lucide-react"
+import { useEffect, useState, useRef } from "react"
 
 export default function BottomNavigation() {
   const location = useLocation()
-  const isDining = location.pathname === "/user/dining"
-  const isUnder250 = location.pathname === "/user/under-250"
-  const isProfile = location.pathname.startsWith("/user/profile")
-  const isDelivery = !isDining && !isUnder250 && !isProfile && location.pathname.startsWith("/user") && location.pathname !== "/user/dining" && location.pathname !== "/user/under-250"
+  const [isVisible, setIsVisible] = useState(true)
+  const lastScrollY = useRef(0)
+
+  // Check active routes - support both /user/* and /* paths
+  const isDining = location.pathname === "/dining" || location.pathname === "/user/dining"
+  const isUnder250 = location.pathname === "/under-250" || location.pathname === "/user/under-250"
+  const isProfile = location.pathname.startsWith("/profile") || location.pathname.startsWith("/user/profile")
+  const isDelivery = !isDining && !isUnder250 && !isProfile && (location.pathname === "/" || location.pathname === "/user" || (location.pathname.startsWith("/") && !location.pathname.startsWith("/restaurant") && !location.pathname.startsWith("/delivery") && !location.pathname.startsWith("/admin") && !location.pathname.startsWith("/usermain")))
+
+  // Reset visibility and scroll position when route changes
+  useEffect(() => {
+    setIsVisible(true)
+    lastScrollY.current = window.scrollY
+  }, [location.pathname])
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY
+      const scrollDifference = Math.abs(currentScrollY - lastScrollY.current)
+
+      // Show navigation when at the top
+      if (currentScrollY < 10) {
+        setIsVisible(true)
+        lastScrollY.current = currentScrollY
+        return
+      }
+
+      // Only update if scroll difference is significant (avoid flickering on tiny movements)
+      if (scrollDifference < 5) {
+        return
+      }
+
+      // Show when scrolling up, hide when scrolling down
+      if (currentScrollY < lastScrollY.current) {
+        // Scrolling up - show navigation
+        setIsVisible(true)
+      } else if (currentScrollY > lastScrollY.current) {
+        // Scrolling down - hide navigation
+        setIsVisible(false)
+      }
+
+      lastScrollY.current = currentScrollY
+    }
+
+    window.addEventListener("scroll", handleScroll, { passive: true })
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [location.pathname])
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+    <div 
+      className={`fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 transition-transform duration-300 ease-in-out ${
+        isVisible ? "translate-y-0" : "translate-y-full"
+      }`}
+    >
       <div className="flex items-center justify-around h-20 px-4 sm:px-6 py-2">
         {/* Delivery Tab */}
         <Link

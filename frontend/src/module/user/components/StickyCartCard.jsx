@@ -22,7 +22,7 @@ export default function StickyCartCard() {
   const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity * 83), 0)
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-4 md:pb-6 pointer-events-none">
+    <div className="fixed bottom-18 left-0 right-0 z-50 px-4 pb-4 md:pb-6 pointer-events-none">
       <div className="max-w-7xl mx-auto pointer-events-auto">
         <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
           <div className="flex items-center gap-3 p-3">
