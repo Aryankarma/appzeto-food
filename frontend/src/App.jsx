@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom"
+import { Routes, Route } from "react-router-dom"
 import Home from "@/pages/Home"
 import UserRouter from "@/module/user/components/UserRouter"
 import HomePage from "@/module/usermain/pages/HomePage"
@@ -11,6 +11,7 @@ import PaymentPage from "@/module/usermain/pages/PaymentPage"
 import OrdersPage from "@/module/usermain/pages/OrdersPage"
 import OrderDetailsPage from "@/module/usermain/pages/OrderDetailsPage"
 import WishlistPage from "@/module/usermain/pages/WishlistPage"
+import RestaurantHome from "@/module/restaurant/pages/RestaurantHome"
 import RestaurantOrdersPage from "@/module/restaurant/pages/OrdersPage"
 import AllOrdersPage from "@/module/restaurant/pages/AllOrdersPage"
 import RestaurantDetailsPage from "@/module/restaurant/pages/RestaurantDetailsPage"
@@ -65,9 +66,7 @@ import AdminRouter from "@/module/admin/components/AdminRouter"
 export default function App() {
   return (
     <Routes>
-      {/* Specific routes that should be matched before UserRouter */}
-      <Route path="/routes" element={<Home />} />
-      <Route path="/user" element={<Navigate to="/" replace />} />
+      <Route path="/" element={<Home />} />
       <Route path="/user/*" element={<UserRouter />} />
       <Route path="/restaurant/auth/sign-in" element={<RestaurantSignIn />} />
       <Route path="/restaurant/login" element={<RestaurantLogin />} />
@@ -84,7 +83,7 @@ export default function App() {
       <Route path="/usermain/orders" element={<OrdersPage />} />
       <Route path="/usermain/orders/:orderId" element={<OrderDetailsPage />} />
       <Route path="/usermain/wishlist" element={<WishlistPage />} />
-      <Route path="/restaurant" element={<Navigate to="/restaurant-panel/dashboard" replace />} />
+      <Route path="/restaurant" element={<RestaurantHome />} />
       <Route path="/restaurant/notifications" element={<RestaurantNotifications />} />
       <Route path="/restaurant/orders" element={<RestaurantOrdersPage />} />
       <Route path="/restaurant/orders/all" element={<AllOrdersPage />} />
@@ -130,11 +129,7 @@ export default function App() {
       <Route path="/delivery/profile/conversation" element={<Conversation />} />
       <Route path="/delivery/profile/terms" element={<TermsAndConditions />} />
       <Route path="/delivery/profile/privacy" element={<PrivacyPolicy />} />
-      <Route path="/admin" element={<Navigate to="/admin/" replace />} />
       <Route path="/admin/*" element={<AdminRouter />} />
-      
-      {/* Catch-all route - UserRouter handles all other routes including root */}
-      <Route path="/*" element={<UserRouter />} />
     </Routes>
   )
 }
