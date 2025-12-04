@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom"
+import { Routes, Route, Navigate, useLocation } from "react-router-dom"
 import Home from "@/pages/Home"
 import UserRouter from "@/module/user/components/UserRouter"
 import HomePage from "@/module/usermain/pages/HomePage"
@@ -63,11 +63,18 @@ import PrivacyPolicy from "@/module/delivery/pages/PrivacyPolicy"
 import Notifications from "@/module/delivery/pages/Notifications"
 import AdminRouter from "@/module/admin/components/AdminRouter"
 
+// Component to redirect /user/* to /* (removing /user prefix)
+function UserPathRedirect() {
+  const location = useLocation()
+  const newPath = location.pathname.replace(/^\/user/, '') || '/'
+  return <Navigate to={newPath} replace />
+}
+
 export default function App() {
   return (
     <Routes>
       <Route path="/user" element={<Navigate to="/" replace />} />
-      <Route path="/*" element={<UserRouter />} />
+      <Route path="/user/*" element={<UserPathRedirect />} />
       <Route path="/routes" element={<Home />} />
       <Route path="/restaurant/auth/sign-in" element={<RestaurantSignIn />} />
       <Route path="/restaurant/login" element={<RestaurantLogin />} />
