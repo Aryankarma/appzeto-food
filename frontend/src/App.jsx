@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom"
+import Home from "@/pages/Home"
 import UserRouter from "@/module/user/components/UserRouter"
 import HomePage from "@/module/usermain/pages/HomePage"
 import CategoriesPage from "@/module/usermain/pages/CategoriesPage"
@@ -65,8 +66,9 @@ export default function App() {
   return (
     <Routes>
       {/* Specific routes that should be matched before UserRouter */}
+      <Route path="/routes" element={<Home />} />
       <Route path="/user" element={<Navigate to="/" replace />} />
-      <Route path="/user/*" element={<Navigate to="/" replace />} />
+      <Route path="/user/*" element={<UserRouter />} />
       <Route path="/restaurant/auth/sign-in" element={<RestaurantSignIn />} />
       <Route path="/restaurant/login" element={<RestaurantLogin />} />
       <Route path="/restaurant/signup" element={<RestaurantSignup />} />
