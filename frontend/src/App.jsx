@@ -66,8 +66,9 @@ import AdminRouter from "@/module/admin/components/AdminRouter"
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/user/*" element={<UserRouter />} />
+      <Route path="/routes" element={<Home />} />
+      <Route path="/user" element={<Navigate to="/" replace />} />
+      <Route path="/user/*" element={<UserRouter />} />      
       <Route path="/restaurant/auth/sign-in" element={<RestaurantSignIn />} />
       <Route path="/restaurant/login" element={<RestaurantLogin />} />
       <Route path="/restaurant/signup" element={<RestaurantSignup />} />
