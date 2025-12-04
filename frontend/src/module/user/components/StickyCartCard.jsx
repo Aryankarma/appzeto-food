@@ -1,12 +1,41 @@
 import { Link } from "react-router-dom"
 import { X, ChevronRight } from "lucide-react"
 import { useCart } from "../context/CartContext"
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 
 export default function StickyCartCard() {
   const { cart, getCartCount } = useCart()
   const [isVisible, setIsVisible] = useState(true)
+  const [bottomPosition, setBottomPosition] = useState("bottom-[72px]") // bottom-18 equivalent
+  const lastScrollY = useRef(0)
   const cartCount = getCartCount()
+
+  // Scroll detection for positioning
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY
+      const scrollDifference = Math.abs(currentScrollY - lastScrollY.current)
+
+      // Only update if scroll difference is significant (avoid flickering)
+      if (scrollDifference < 5) {
+        return
+      }
+
+      // Scroll down -> bottom-0, Scroll up -> bottom-[72px] (bottom-18)
+      if (currentScrollY > lastScrollY.current) {
+        // Scrolling down
+        setBottomPosition("bottom-0")
+      } else if (currentScrollY < lastScrollY.current) {
+        // Scrolling up
+        setBottomPosition("bottom-[72px]")
+      }
+
+      lastScrollY.current = currentScrollY
+    }
+
+    window.addEventListener("scroll", handleScroll, { passive: true })
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
 
   // Don't show if cart is empty or card is dismissed
   if (cartCount === 0 || !isVisible) return null
@@ -22,7 +51,7 @@ export default function StickyCartCard() {
   const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity * 83), 0)
 
   return (
-    <div className="fixed bottom-18 left-0 right-0 z-50 px-4 pb-4 md:pb-6 pointer-events-none">
+    <div className={`fixed ${bottomPosition} left-0 right-0 z-50 px-4 pb-4 md:pb-6 pointer-events-none transition-all duration-300 ease-in-out`}>
       <div className="max-w-7xl mx-auto pointer-events-auto">
         <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
           <div className="flex items-center gap-3 p-3">

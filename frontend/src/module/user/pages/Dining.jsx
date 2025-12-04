@@ -313,6 +313,8 @@ export default function Dining() {
   const [sortBy, setSortBy] = useState(null)
   const [selectedCuisine, setSelectedCuisine] = useState(null)
   const [selectedBankOffer, setSelectedBankOffer] = useState(null)
+  const [mapButtonBottom, setMapButtonBottom] = useState("bottom-20")
+  const lastScrollY = useRef(0)
   const filterSectionRefs = useRef({})
   const rightContentRef = useRef(null)
   const { openSearch, closeSearch, setSearchValue } = useSearchOverlay()
@@ -414,6 +416,33 @@ export default function Dining() {
     }, 2000) // Change every 2 seconds
 
     return () => clearInterval(interval)
+  }, [])
+
+  // Scroll detection for map button positioning
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY
+      const scrollDifference = Math.abs(currentScrollY - lastScrollY.current)
+
+      // Only update if scroll difference is significant (avoid flickering)
+      if (scrollDifference < 5) {
+        return
+      }
+
+      // Scroll down -> bottom-0, Scroll up -> bottom-20
+      if (currentScrollY > lastScrollY.current) {
+        // Scrolling down
+        setMapButtonBottom("bottom-0")
+      } else if (currentScrollY < lastScrollY.current) {
+        // Scrolling up
+        setMapButtonBottom("bottom-20")
+      }
+
+      lastScrollY.current = currentScrollY
+    }
+
+    window.addEventListener("scroll", handleScroll, { passive: true })
+    return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
   return (
@@ -1175,7 +1204,7 @@ export default function Dining() {
       </div>
 
       {/* Map Button - Sticky above bottom navigation */}
-      <div className="sticky bottom-20 left-0 right-0 z-40 px-4 pb-2">
+      <div className={`sticky ${mapButtonBottom} left-0 right-0 z-40 px-4 pb-2 transition-all duration-300 ease-in-out`}>
         <button
           onClick={handleOpenMap}
           className="w-min mx-auto bg-gradient-to-r from-blue-600 via-blue-800 to-blue-700 text-white text-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 py-2 px-3"
