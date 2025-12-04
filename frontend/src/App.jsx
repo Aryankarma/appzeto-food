@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom"
+import { Routes, Route, Navigate } from "react-router-dom"
 import Home from "@/pages/Home"
 import UserRouter from "@/module/user/components/UserRouter"
 import HomePage from "@/module/usermain/pages/HomePage"
@@ -66,9 +66,9 @@ import AdminRouter from "@/module/admin/components/AdminRouter"
 export default function App() {
   return (
     <Routes>
-      <Route path="/routes" element={<Home />} />
       <Route path="/user" element={<Navigate to="/" replace />} />
-      <Route path="/user/*" element={<UserRouter />} />      
+      <Route path="/*" element={<UserRouter />} />
+      <Route path="/routes" element={<Home />} />
       <Route path="/restaurant/auth/sign-in" element={<RestaurantSignIn />} />
       <Route path="/restaurant/login" element={<RestaurantLogin />} />
       <Route path="/restaurant/signup" element={<RestaurantSignup />} />
@@ -131,6 +131,7 @@ export default function App() {
       <Route path="/delivery/profile/terms" element={<TermsAndConditions />} />
       <Route path="/delivery/profile/privacy" element={<PrivacyPolicy />} />
       <Route path="/admin/*" element={<AdminRouter />} />
+      <Route path="/*" element={<UserRouter />} />
     </Routes>
   )
 }
