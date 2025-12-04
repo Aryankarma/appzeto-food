@@ -64,9 +64,9 @@ import AdminRouter from "@/module/admin/components/AdminRouter"
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/user/" replace />} />
-      <Route path="/user" element={<Navigate to="/user/" replace />} />
-      <Route path="/user/*" element={<UserRouter />} />
+      {/* Specific routes that should be matched before UserRouter */}
+      <Route path="/user" element={<Navigate to="/" replace />} />
+      <Route path="/user/*" element={<Navigate to="/" replace />} />
       <Route path="/restaurant/auth/sign-in" element={<RestaurantSignIn />} />
       <Route path="/restaurant/login" element={<RestaurantLogin />} />
       <Route path="/restaurant/signup" element={<RestaurantSignup />} />
@@ -130,6 +130,9 @@ export default function App() {
       <Route path="/delivery/profile/privacy" element={<PrivacyPolicy />} />
       <Route path="/admin" element={<Navigate to="/admin/" replace />} />
       <Route path="/admin/*" element={<AdminRouter />} />
+      
+      {/* Catch-all route - UserRouter handles all other routes including root */}
+      <Route path="/*" element={<UserRouter />} />
     </Routes>
   )
 }
