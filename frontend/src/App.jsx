@@ -1,5 +1,4 @@
 import { Routes, Route, Navigate } from "react-router-dom"
-import Home from "@/pages/Home"
 import UserRouter from "@/module/user/components/UserRouter"
 import HomePage from "@/module/usermain/pages/HomePage"
 import CategoriesPage from "@/module/usermain/pages/CategoriesPage"
@@ -65,7 +64,7 @@ import AdminRouter from "@/module/admin/components/AdminRouter"
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={<Navigate to="/user/" replace />} />
       <Route path="/user" element={<Navigate to="/user/" replace />} />
       <Route path="/user/*" element={<UserRouter />} />
       <Route path="/restaurant/auth/sign-in" element={<RestaurantSignIn />} />
