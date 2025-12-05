@@ -58,7 +58,7 @@ export default function BottomNavigation() {
         isVisible ? "translate-y-0" : "translate-y-full"
       }`}
     >
-      <div className="flex items-center justify-around h-20 px-4 sm:px-6">
+      <div className="flex items-center justify-around h-auto px-4 sm:px-6">
         {/* Delivery Tab */}
         <Link
           to="/user"

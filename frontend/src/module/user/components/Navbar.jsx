@@ -52,18 +52,18 @@ export default function Navbar() {
               onClick={handleLocationClick}
               disabled={loading}
             >
-              {loading ? (
-                <span className="text-xs sm:text-sm font-semibold text-left text-foreground">
+              {loading ? ( 
+                <span className="text-xs sm:text-sm font-semibold text-left text-black">
                   Loading...
                 </span>
               ) : (
                 <div className="flex flex-col items-start w-full min-w-0">
                   <span className="text-xs sm:text-sm flex flex-row items-center gap-1 font-semibold text-left text-foreground truncate w-full">
-                    <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary-orange flex-shrink-0" />
+                    <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-black flex-shrink-0" />
                     {cityName}
                   </span>
                   {location?.state && (
-                    <span className="text-[10px] sm:text-xs text-muted-foreground/60 pt-1 text-left truncate w-full">
+                    <span className="text-[10px] sm:text-xs text-black pt-1 text-left truncate w-full">
                       {stateName}
                     </span>
                   )}

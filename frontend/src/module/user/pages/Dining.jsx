@@ -313,7 +313,7 @@ export default function Dining() {
   const [sortBy, setSortBy] = useState(null)
   const [selectedCuisine, setSelectedCuisine] = useState(null)
   const [selectedBankOffer, setSelectedBankOffer] = useState(null)
-  const [mapButtonBottom, setMapButtonBottom] = useState("bottom-20")
+  const [mapButtonBottom, setMapButtonBottom] = useState("bottom-16")
   const lastScrollY = useRef(0)
   const filterSectionRefs = useRef({})
   const rightContentRef = useRef(null)
