@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom"
-import { UtensilsCrossed, Tag, User, ShoppingBag } from "lucide-react"
+import { UtensilsCrossed, Tag, User, Truck } from "lucide-react"
 import { useEffect, useState, useRef } from "react"
 
 export default function BottomNavigation() {
@@ -68,12 +68,12 @@ export default function BottomNavigation() {
               : "text-gray-400"
           }`}
         >
-          <ShoppingBag className={`h-5 w-5 ${isDelivery ? "text-green-600" : "text-gray-400"}`} strokeWidth={2} />
+          <Truck className={`h-5 w-5 ${isDelivery ? "text-green-600 fill-green-600" : "text-gray-400"}`} strokeWidth={2} />
           <span className={`text-xs sm:text-sm font-medium ${isDelivery ? "text-green-600 font-semibold" : "text-gray-400"}`}>
             Delivery
           </span>
           {isDelivery && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-600 rounded-t-full" />
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-green-600 rounded-b-full" />
           )}
         </Link>
 
@@ -89,12 +89,12 @@ export default function BottomNavigation() {
               : "text-gray-400"
           }`}
         >
-          <Tag className={`h-5 w-5 ${isUnder250 ? "text-green-600" : "text-gray-400"}`} strokeWidth={2} />
+          <Tag className={`h-5 w-5 ${isUnder250 ? "text-green-600 fill-green-600" : "text-gray-400"}`} strokeWidth={2} />
           <span className={`text-xs sm:text-sm font-medium ${isUnder250 ? "text-green-600 font-semibold" : "text-gray-400"}`}>
             Under 250
           </span>
           {isUnder250 && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-600 rounded-t-full" />
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-green-600 rounded-b-full" />
           )}
         </Link>
 
@@ -110,12 +110,12 @@ export default function BottomNavigation() {
               : "text-gray-400"
           }`}
         >
-          <UtensilsCrossed className={`h-5 w-5 ${isDining ? "text-green-600" : "text-gray-400"}`} strokeWidth={2} />
+          <UtensilsCrossed className={`h-5 w-5 ${isDining ? "text-green-600 fill-green-600" : "text-gray-400"}`} strokeWidth={2} />
           <span className={`text-xs sm:text-sm font-medium ${isDining ? "text-green-600 font-semibold" : "text-gray-400"}`}>
             Dining
           </span>
           {isDining && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-600 rounded-t-full" />
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-green-600 rounded-b-full" />
           )}
         </Link>
 
@@ -131,12 +131,12 @@ export default function BottomNavigation() {
               : "text-gray-400"
           }`}
         >
-          <User className={`h-5 w-5 ${isProfile ? "text-green-600" : "text-gray-400"}`} />
+          <User className={`h-5 w-5 ${isProfile ? "text-green-600 fill-green-600" : "text-gray-400"}`} />
           <span className={`text-xs sm:text-sm font-medium ${isProfile ? "text-green-600 font-semibold" : "text-gray-400"}`}>
             Profile
           </span>
           {isProfile && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-600 rounded-t-full" />
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-green-600 rounded-b-full" />
           )}
         </Link>
       </div>

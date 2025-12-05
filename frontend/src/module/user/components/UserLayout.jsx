@@ -87,11 +87,13 @@ export default function UserLayout() {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
   }, [location.pathname, location.search, location.hash])
 
-  // Show bottom navigation only on home page and dining page
+  // Show bottom navigation only on home page, dining page, and under-250 page
   const showBottomNav = location.pathname === "/" || 
                         location.pathname === "/user" ||
                         location.pathname === "/dining" ||
-                        location.pathname === "/user/dining"
+                        location.pathname === "/user/dining" ||
+                        location.pathname === "/under-250" ||
+                        location.pathname === "/user/under-250"
 
   return (
     <CartProvider>

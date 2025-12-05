@@ -1,6 +1,6 @@
 import { useSearchParams, Link, useNavigate } from "react-router-dom"
 import { useRef, useEffect, useState, useMemo, useCallback } from "react"
-import { Star, Clock, MapPin, Heart, Search, Tag, Flame, ShoppingBag, ShoppingCart, Mic, SlidersHorizontal, ChevronDown, CheckCircle2, Bell, Wallet, Bookmark, BadgePercent, X, ArrowDownUp, Timer, CalendarClock, ShieldCheck, IndianRupee, UtensilsCrossed, Leaf } from "lucide-react"
+import { Star, Clock, MapPin, Heart, Search, Tag, Flame, ShoppingBag, ShoppingCart, Mic, SlidersHorizontal, ChevronDown, CheckCircle2, Bell, Wallet, Bookmark, BadgePercent, X, ArrowDownUp, Timer, CalendarClock, ShieldCheck, IndianRupee, UtensilsCrossed, Leaf, AlertCircle, Loader2 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import Footer from "../components/Footer"
 import AddToCartButton from "../components/AddToCartButton"
@@ -351,14 +351,22 @@ export default function Home() {
   const [vegMode, setVegMode] = useState(true)
   const [prevVegMode, setPrevVegMode] = useState(true)
   const [showVegModePopup, setShowVegModePopup] = useState(false)
+  const [showSwitchOffPopup, setShowSwitchOffPopup] = useState(false)
   const [vegModeOption, setVegModeOption] = useState("all") // "all" or "pure-veg"
   const [isApplyingVegMode, setIsApplyingVegMode] = useState(false)
+  const [isSwitchingOffVegMode, setIsSwitchingOffVegMode] = useState(false)
   const [popupPosition, setPopupPosition] = useState({ top: 0, right: 0 })
   const vegModeToggleRef = useRef(null)
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0)
+  const isHandlingSwitchOff = useRef(false)
 
-  // Handle vegMode toggle - show popup when turned ON
+  // Handle vegMode toggle - show popup when turned ON or OFF
   useEffect(() => {
+    // Skip if we're handling switch off confirmation
+    if (isHandlingSwitchOff.current) {
+      return
+    }
+
     if (vegMode && !prevVegMode) {
       // Veg mode was just turned ON
       // Calculate popup position relative to toggle
@@ -370,8 +378,18 @@ export default function Home() {
         })
       }
       setShowVegModePopup(true)
+      // Don't update prevVegMode yet - wait for user to apply or cancel
+    } else if (!vegMode && prevVegMode) {
+      // Veg mode was just turned OFF - show switch off confirmation popup
+      isHandlingSwitchOff.current = true
+      setShowSwitchOffPopup(true)
+      // Revert the toggle state until user confirms
+      setVegMode(true)
+      // Don't update prevVegMode here - keep it as true so the popup can show again next time
+    } else {
+      // Normal state change - update prevVegMode
+      setPrevVegMode(vegMode)
     }
-    setPrevVegMode(vegMode)
   }, [vegMode, prevVegMode])
 
   // Update popup position on scroll/resize
@@ -932,8 +950,8 @@ export default function Home() {
               {/* VEG MODE Toggle */}
               <div ref={vegModeToggleRef} className="flex flex-col items-center gap-0.5 sm:gap-1 flex-shrink-0 relative">
                 <div className="flex flex-col items-center">
-                  <span className="text-gray-700 text-[9px] sm:text-[11px] font-black leading-none">VEG</span>
-                  <span className="text-gray-700 text-[8px] sm:text-[10px] font-black leading-none">MODE</span>
+                  <span className="text-white text-[13px] sm:text-[11px] font-black leading-none">VEG</span>
+                  <span className="text-white text-[9.5px] sm:text-[10px] font-black leading-none">MODE</span>
                 </div>
                 <Switch
                   checked={vegMode}
@@ -1539,7 +1557,12 @@ export default function Home() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              onClick={() => setShowVegModePopup(false)}
+              onClick={() => {
+                setShowVegModePopup(false)
+                // Revert veg mode to OFF if popup is closed without applying
+                setVegMode(false)
+                setPrevVegMode(false)
+              }}
               className="fixed inset-0 bg-black/30 z-[9998] backdrop-blur-sm"
             />
             
@@ -1640,6 +1663,8 @@ export default function Home() {
                 onClick={() => {
                   setShowVegModePopup(false)
                   setIsApplyingVegMode(true)
+                  // Confirm veg mode is ON by updating prevVegMode
+                  setPrevVegMode(true)
                   // Simulate applying veg mode settings
                   setTimeout(() => {
                     setIsApplyingVegMode(false)
@@ -1652,7 +1677,12 @@ export default function Home() {
               
               {/* More settings link */}
               <button
-                onClick={() => setShowVegModePopup(false)}
+                onClick={() => {
+                  setShowVegModePopup(false)
+                  // Revert veg mode to OFF if popup is closed without applying
+                  setVegMode(false)
+                  setPrevVegMode(false)
+                }}
                 className="w-full text-green-600 font-medium text-xs hover:text-green-700 transition-colors"
               >
                 More settings
@@ -1662,8 +1692,96 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {/* Loading Screen */}
+      {/* Switch Off Veg Mode Popup */}
       <AnimatePresence>
+        {showSwitchOffPopup && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => {
+                setShowSwitchOffPopup(false)
+                isHandlingSwitchOff.current = false
+                setVegMode(true)
+                // prevVegMode stays true (from before), which is correct
+              }}
+              className="fixed inset-0 bg-black/50 z-[9998] backdrop-blur-sm"
+            />
+            
+            {/* Popup */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ 
+                type: "spring", 
+                damping: 25, 
+                stiffness: 300,
+                mass: 0.8
+              }}
+              className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="bg-white rounded-2xl shadow-2xl w-[85%] max-w-sm p-6">
+                {/* Warning Icon */}
+                <div className="flex justify-center mb-4">
+                  <div className="w-20 h-20 rounded-full bg-pink-100 flex items-center justify-center">
+                    <AlertCircle className="w-20 h-20 text-white bg-red-500/90 rounded-full p-2" strokeWidth={2.5} />
+                  </div>
+                </div>
+                
+                {/* Title */}
+                <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
+                  Switch off Veg Mode?
+                </h2>
+                
+                {/* Description */}
+                <p className="text-gray-600 text-center mb-6 text-sm">
+                  You'll see all restaurants, including those serving non-veg dishes
+                </p>
+                
+                {/* Buttons */}
+                <div className="space-y-3">
+                  <button
+                    onClick={() => {
+                      setShowSwitchOffPopup(false)
+                      setIsSwitchingOffVegMode(true)
+                      // Simulate switching off veg mode
+                      setTimeout(() => {
+                        setIsSwitchingOffVegMode(false)
+                        isHandlingSwitchOff.current = false
+                        setVegMode(false)
+                        setPrevVegMode(false) // Set to false to match current state (veg mode is OFF)
+                      }, 2000)
+                    }}
+                    className="w-full bg-transparent text-red-600 font-normal py-1 text-normal rounded-xl hover:bg-red-50 transition-colors text-base"
+                  >
+                    Switch off
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      setShowSwitchOffPopup(false)
+                      isHandlingSwitchOff.current = false
+                      setVegMode(true)
+                      // prevVegMode stays true (from before), which is correct
+                    }}
+                    className="w-full text-gray-900 font-normal py-1 text-center rounded-xl hover:bg-gray-200 transition-colors text-base"
+                  >
+                    Keep using this mode
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Loading Screen - Applying Veg Mode */}
+      {/* <AnimatePresence>
         {isApplyingVegMode && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -1673,43 +1791,211 @@ export default function Home() {
             className="fixed inset-0 z-[10000] bg-white/95 backdrop-blur-md flex items-center justify-center"
           >
             <div className="flex flex-col items-center gap-6">
-              {/* Animated Leaf Icon */}
+              <div className="relative w-32 h-32 flex items-center justify-center">
+                {[...Array(8)].map((_, i) => {
+                  const baseSize = 112 // Starting size (w-28 = 112px)
+                  const maxSize = 600 // Maximum size to expand to
+                  return (
+                    <motion.div
+                      key={i}
+                      initial={{ 
+                        scale: 1,
+                        opacity: 0
+                      }}
+                      animate={{ 
+                        scale: maxSize / baseSize,
+                        opacity: [0, 0.4, 0.2, 0]
+                      }}
+                      transition={{
+                        duration: 2.5,
+                        repeat: Infinity,
+                        ease: "easeOut",
+                        delay: i * 0.3 // Stagger each circle by 0.3s so they appear one at a time
+                      }}
+                      className="absolute rounded-full border border-green-300"
+                      style={{
+                        width: baseSize,
+                        height: baseSize,
+                        left: '50%',
+                        top: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        transformOrigin: 'center center'
+                      }}
+                    />
+                  )
+                })}
+                
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 200,
+                    damping: 15,
+                    delay: 0.1
+                  }}
+                  className="relative z-10 w-28 h-28 rounded-full border-2 border-green-300 bg-white flex flex-col items-center justify-center shadow-sm"
+                >
+                  <motion.div
+                    className="flex flex-col items-center"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <span className="text-green-700 font-bold text-xs leading-none">100%</span>
+                    <span className="text-green-700 font-bold text-xl leading-none mt-0.5">VEG</span>
+                  </motion.div>
+                </motion.div>
+              </div>
+              
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="text-gray-800 font-normal text-base text-center relative z-10"
+              >
+                Explore veg dishes from all restaurants
+              </motion.p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence> */}
+
+<AnimatePresence>
+      {isApplyingVegMode && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="fixed inset-0 z-[10000] bg-white flex items-center justify-center"
+          >
+          <div className="relative w-32 h-32 flex items-center justify-center w-full">
+            {/* Animated circles - positioned absolutely at the center */}
+            {[...Array(8)].map((_, i) => {
+              const baseSize = 112
+              const maxSize = 600
+              return (
+                <motion.div
+                  key={i}
+                  initial={{
+                    scale: 1,
+                    opacity: 0,
+                  }}
+                  animate={{
+                    scale: maxSize / baseSize,
+                    opacity: [0, 0.4, 0.2, 0],
+                  }}
+                  transition={{
+                    duration: 2.5,
+                    repeat: Number.POSITIVE_INFINITY,
+                    ease: "easeOut",
+                    delay: i * 0.3,
+                  }}
+                  className="absolute rounded-full border border-green-300"
+                  style={{
+                    width: baseSize,
+                    height: baseSize,
+                    // left: "50%",
+                    // top: "50%",
+                    // transform: "translate(-50%, -50%)",
+                    // transformOrigin: "center center",
+                  }}
+                />
+              )
+            })}
+
+            {/* 100% VEG badge - absolute positioning at exact center */}
+            <motion.div
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{
+                type: "spring",
+                stiffness: 200,
+                damping: 15,
+                delay: 0.1,
+              }}
+              className="absolute z-10 w-28 h-28 rounded-full border-2 border-green-500 bg-white flex flex-col items-center justify-center shadow-sm"
+              style={{
+                // left: "50%",
+                // top: "50%",
+                // transform: "translate(-50%, -50%)",
+              }}
+            >
               <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
+                className="flex flex-col items-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+              >
+                <span className="text-green-600 font-extrabold text-3xl leading-none">100%</span>
+                <span className="text-green-600 font-extrabold text-3xl leading-none mt-0.5">VEG</span>
+              </motion.div>
+            </motion.div>
+
+            {/* Text below badge */}
+            <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="text-xl font-normal text-gray text-center relative z-10 mt-56 w-full"
+              >
+                Explore veg dishes from all restaurants
+              </motion.p>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+
+
+      {/* Loading Screen - Switching Off Veg Mode */}
+      <AnimatePresence>
+        {isSwitchingOffVegMode && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-[10000] bg-white flex items-center justify-center"
+          >
+            <div className="flex flex-col items-center gap-6">
+              {/* Two Circles Spinning in Opposite Directions */}
+              <motion.div
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
                 transition={{
                   type: "spring",
                   stiffness: 200,
                   damping: 15,
                   delay: 0.1
                 }}
+                className="relative w-16 h-16 flex items-center justify-center"
               >
+                {/* Outer Circle - Spins Clockwise */}
                 <motion.div
-                  animate={{ 
-                    rotate: [0, 10, -10, 0],
-                    scale: [1, 1.1, 1]
-                  }}
+                  animate={{ rotate: 360 }}
                   transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                  className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center"
-                >
-                  <motion.div
-                    animate={{ 
-                      rotate: [0, 5, -5, 0],
-                      scale: [1, 1.05, 1]
-                    }}
-                    transition={{
+                    rotate: {
                       duration: 1.5,
                       repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
-                  >
-                    <Leaf className="w-10 h-10 text-green-600" strokeWidth={2} />
-                  </motion.div>
-                </motion.div>
+                      ease: "linear"
+                    }
+                  }}
+                  className="absolute w-16 h-16 border-[4px] border-transparent border-t-pink-500 border-r-pink-500 rounded-full"
+                />
+                
+                {/* Inner Circle - Spins Counter-clockwise */}
+                <motion.div
+                  animate={{ rotate: -360 }}
+                  transition={{
+                    rotate: {
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: "linear"
+                    }
+                  }}
+                  className="absolute w-12 h-12 border-[4px] border-transparent border-r-pink-500 rounded-full"
+                />
               </motion.div>
               
               {/* Loading Text */}
@@ -1720,38 +2006,21 @@ export default function Home() {
                 className="text-center"
               >
                 <motion.h2
-                  className="text-2xl font-bold text-gray-900 mb-2"
-                  animate={{ opacity: [0.5, 1, 0.5] }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
+                  className="text-xl font-normal text-gray-800 mb-1"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
                 >
-                  Applying...
+                  Switching off
                 </motion.h2>
-                <p className="text-gray-600 text-sm">
-                  Updating your preferences
-                </p>
-              </motion.div>
-              
-              {/* Progress Bar */}
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: "100%" }}
-                transition={{ duration: 2, ease: "easeInOut" }}
-                className="h-1 bg-green-200 rounded-full overflow-hidden w-64"
-              >
-                <motion.div
-                  initial={{ x: "-100%" }}
-                  animate={{ x: "100%" }}
-                  transition={{
-                    duration: 1,
-                    repeat: Infinity,
-                    ease: "linear"
-                  }}
-                  className="h-full w-1/3 bg-green-600 rounded-full"
-                />
+                <motion.p
+                  className="text-xl font-normal text-gray-800"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  Veg Mode for you
+                </motion.p>
               </motion.div>
             </div>
           </motion.div>
