@@ -477,7 +477,7 @@ export default function CategoryPage() {
               className="h-7 px-2.5 rounded-md flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-all bg-white border border-gray-200 hover:bg-gray-50"
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
-              <span className="text-xs font-semibold text-gray-900">Filters</span>
+              <span className="text-xs font-bold text-black">Filters</span>
             </Button>
             {[
               { id: 'under-30-mins', label: 'Under 30 mins' },
@@ -497,7 +497,7 @@ export default function CategoryPage() {
                       : 'bg-white border border-gray-200 hover:bg-gray-50'
                   }`}
                 >
-                  <span className={`text-xs font-semibold ${isActive ? 'text-white' : 'text-gray-900'}`}>{filter.label}</span>
+                  <span className={`text-xs text-black font-bold ${isActive ? 'text-white' : 'text-black'}`}>{filter.label}</span>
                 </Button>
               )
             })}
@@ -531,7 +531,7 @@ export default function CategoryPage() {
                   }`}
                 >
                   {Icon && <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-white' : 'text-gray-900'}`} />}
-                  <span className={`text-xs font-semibold ${isActive ? 'text-white' : 'text-gray-900'}`}>{filter.label}</span>
+                  <span className={`text-xs font-bold ${isActive ? 'text-white' : 'text-black'}`}>{filter.label}</span>
                 </Button>
               )
             })}

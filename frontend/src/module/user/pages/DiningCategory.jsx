@@ -258,7 +258,7 @@ export default function DiningCategory() {
                 className="h-7 sm:h-8 px-2 sm:px-3 rounded-md flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 font-medium transition-all bg-white border border-gray-200 hover:bg-gray-50 text-gray-700"
               >
                 <SlidersHorizontal className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="text-xs sm:text-sm font-medium">Filters</span>
+                <span className="text-xs sm:text-sm font-bold text-black">Filters</span>
               </Button>
 
               {/* Filter Buttons */}
@@ -280,12 +280,12 @@ export default function DiningCategory() {
                     onClick={() => toggleFilter(filter.id)}
                     className={`h-7 sm:h-8 px-2 sm:px-3 rounded-md flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 transition-all font-medium ${
                       isActive
-                        ? 'bg-primary-orange text-white border border-primary-orange hover:bg-primary-orange/90'
+                        ? 'bg-green-500 text-white border border-green-500 hover:bg-green-500/90'
                         : 'bg-white border border-gray-200 hover:bg-gray-50 text-gray-600'
                     }`}
                   >
                     {Icon && <Icon className={`h-3 w-3 sm:h-4 sm:w-4 ${isActive ? 'fill-white' : ''}`} />}
-                    <span className="text-xs sm:text-sm font-medium">{filter.label}</span>
+                    <span className="text-xs sm:text-sm font-bold text-black">{filter.label}</span>
                   </Button>
                 )
               })}

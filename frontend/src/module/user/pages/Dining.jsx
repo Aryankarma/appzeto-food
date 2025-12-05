@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
-import { MapPin, ChevronDown, Search, Mic, Wallet, SlidersHorizontal, Star, Compass, X, ArrowDownUp, Timer, IndianRupee, UtensilsCrossed, BadgePercent, ShieldCheck, Clock, Bookmark, Check } from "lucide-react"
+import { MapPin, Search, Mic, SlidersHorizontal, Star, Compass, X, ArrowDownUp, Timer, IndianRupee, UtensilsCrossed, BadgePercent, ShieldCheck, Clock, Bookmark, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -9,7 +9,7 @@ import AnimatedPage from "../components/AnimatedPage"
 import { useSearchOverlay, useLocationSelector } from "../components/UserLayout"
 import { useLocation as useLocationHook } from "../hooks/useLocation"
 import { useProfile } from "../context/ProfileContext"
-import { FaLocationDot } from "react-icons/fa6"
+import PageNavbar from "../components/PageNavbar"
 import appzetoFoodLogo from "@/assets/appzetofoodlogo.jpeg"
 import diningBanner from "@/assets/diningbanner.png"
 import diningCard1 from "@/assets/dining images/diningcard1.png"
@@ -313,16 +313,14 @@ export default function Dining() {
   const [sortBy, setSortBy] = useState(null)
   const [selectedCuisine, setSelectedCuisine] = useState(null)
   const [selectedBankOffer, setSelectedBankOffer] = useState(null)
-  const [mapButtonBottom, setMapButtonBottom] = useState("bottom-16")
+  const [mapButtonBottom, setMapButtonBottom] = useState("bottom-14")
   const lastScrollY = useRef(0)
   const filterSectionRefs = useRef({})
   const rightContentRef = useRef(null)
   const { openSearch, closeSearch, setSearchValue } = useSearchOverlay()
   const { openLocationSelector } = useLocationSelector()
-  const { location, loading } = useLocationHook()
+  const { location } = useLocationHook()
   const { addFavorite, removeFavorite, isFavorite } = useProfile()
-  const cityName = location?.city || "Select"
-  const stateName = location?.state || "Location"
 
   const toggleFilter = (filterId) => {
     setActiveFilters(prev => {
@@ -388,9 +386,6 @@ export default function Dining() {
     return filtered
   }, [activeFilters, selectedCuisine, sortBy])
 
-  const handleLocationClick = useCallback(() => {
-    openLocationSelector()
-  }, [openLocationSelector])
 
   const handleSearchFocus = useCallback(() => {
     if (heroSearch) {
@@ -463,84 +458,11 @@ export default function Dining() {
         </div>
 
         {/* Navbar */}
-        <nav 
-          className="relative z-50 w-full px-3 sm:px-6 lg:px-8 py-1.5 sm:py-3 backdrop-blur-sm"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center justify-between gap-3 sm:gap-4">
-            {/* Left: Logo & Location */}
-            <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-              {/* Logo */}
-              <Link to="/user" className="hidden sm:block flex-shrink-0 transition-opacity hover:opacity-80">
-                <img
-                  src={appzetoFoodLogo}
-                  alt="Appzeto Food"
-                  className="h-9 w-9 sm:h-10 sm:w-10 rounded-full object-cover shadow-lg ring-2 ring-white/30"
-                />
-              </Link>
-
-              {/* Location Button */}
-              <Button
-                variant="ghost"
-                onClick={handleLocationClick}
-                disabled={loading}
-                className="h-auto px-3 py-2 sm:px-4 sm:py-2.5 hover:bg-white/20 transition-colors rounded-lg flex-shrink-0"
-              >
-                {loading ? (
-                  <span className="text-sm font-bold text-white drop-shadow-lg">Loading...</span>
-                ) : (
-                  <div className="flex flex-col items-start min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <FaLocationDot className="h-6 w-6 sm:h-7 sm:w-7 text-white flex-shrink-0 drop-shadow-lg" fill="white" strokeWidth={2} />
-                      <span className="text-lg sm:text-xl font-bold text-white truncate max-w-[120px] sm:max-w-[180px] drop-shadow-lg">
-                        {cityName}
-                      </span>
-                      <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 text-white drop-shadow-lg flex-shrink-0" strokeWidth={2.5} />
-                    </div>
-                    {location?.state && (
-                      <span className="text-xs font-bold text-white/90 truncate max-w-[120px] sm:max-w-[180px] mt-0.5 drop-shadow-md">
-                        {stateName}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </Button>
-            </div>
-
-            {/* Right: Actions */}
-            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-              {/* Wallet Icon */}
-              <Link to="/user/wallet">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-full p-0 hover:opacity-80 transition-opacity"
-                  title="Wallet"
-                >
-                  <div className="h-full w-full rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center ring-2 ring-white/30">
-                    <Wallet className="h-4 w-4 sm:h-5 sm:w-5 text-white" strokeWidth={2} />
-                  </div>
-                </Button>
-              </Link>
-
-              {/* Profile */}
-              <Link to="/user/profile">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-full p-0 hover:opacity-80 transition-opacity"
-                  title="Profile"
-                >
-                  <div className="h-full w-full rounded-full bg-blue-100 flex items-center justify-center shadow-lg ring-2 ring-white/30">
-                    <span className="text-primary-orange text-xs sm:text-sm font-extrabold">
-                      AK
-                    </span>
-                  </div>
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </nav>
+        <PageNavbar 
+          textColor="white" 
+          zIndex={50} 
+          onNavClick={(e) => e.stopPropagation()}
+        />
 
         {/* Hero Section with Search */}
         <section 
@@ -668,7 +590,7 @@ export default function Dining() {
                   {/* Discount Tag - Top Left */}
                   <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-10">
                     <div className="bg-white/95 backdrop-blur-sm px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg shadow-lg">
-                      <span className="text-[10px] sm:text-xs font-bold text-primary-orange">
+                      <span className="text-[10px] sm:text-xs font-bold text-green-500">
                         {restaurant.discount}
                       </span>
                     </div>
@@ -898,7 +820,7 @@ export default function Dining() {
                 className="h-7 sm:h-8 px-2 sm:px-3 rounded-md flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 font-medium transition-all bg-white border border-gray-200 hover:bg-gray-50 text-gray-700"
               >
                 <SlidersHorizontal className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="text-xs sm:text-sm font-medium">Filters</span>
+                <span className="text-xs sm:text-sm font-bold text-black">Filters</span>
               </Button>
 
               {/* Filter Buttons */}
@@ -920,12 +842,12 @@ export default function Dining() {
                     onClick={() => toggleFilter(filter.id)}
                     className={`h-7 sm:h-8 px-2 sm:px-3 rounded-md flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 transition-all font-medium ${
                       isActive
-                        ? 'bg-primary-orange text-white border border-primary-orange hover:bg-primary-orange/90'
+                        ? 'bg-green-500 text-white border border-green-500 hover:bg-green-500/90'
                         : 'bg-white border border-gray-200 hover:bg-gray-50 text-gray-600'
                     }`}
                   >
                     {Icon && <Icon className={`h-3 w-3 sm:h-4 sm:w-4 ${isActive ? 'fill-white' : ''}`} />}
-                    <span className="text-xs sm:text-sm font-medium">{filter.label}</span>
+                    <span className="text-xs sm:text-sm font-bold text-black">{filter.label}</span>
                   </Button>
                 )
               })}

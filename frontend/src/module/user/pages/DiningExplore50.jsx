@@ -251,7 +251,7 @@ export default function DiningExplore50() {
                 }
               }}
               placeholder="Search for restaurants, cuisines, dishes..."
-              className="w-full h-12 sm:h-14 pl-12 sm:pl-14 pr-12 sm:pr-14 rounded-xl border-2 border-gray-200 focus:border-primary-orange bg-white shadow-sm text-base sm:text-lg"
+              className="w-full h-12 sm:h-14 pl-12 sm:pl-14 pr-12 sm:pr-14 rounded-xl border-2 border-gray-200 focus:border-green-500 bg-white shadow-sm text-base sm:text-lg"
             />
             <Search className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 h-5 w-5 sm:h-6 sm:w-6 text-gray-400" />
             <Button
@@ -293,7 +293,7 @@ export default function DiningExplore50() {
                 className="h-7 sm:h-8 px-2 sm:px-3 rounded-md flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 font-medium transition-all bg-white border border-gray-200 hover:bg-gray-50 text-gray-700"
               >
                 <SlidersHorizontal className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="text-xs sm:text-sm font-medium">Filters</span>
+                <span className="text-xs sm:text-sm font-bold text-black">Filters</span>
               </Button>
 
               {/* Filter Buttons */}
@@ -315,12 +315,12 @@ export default function DiningExplore50() {
                     onClick={() => toggleFilter(filter.id)}
                     className={`h-7 sm:h-8 px-2 sm:px-3 rounded-md flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 transition-all font-medium ${
                       isActive
-                        ? 'bg-primary-orange text-white border border-primary-orange hover:bg-primary-orange/90'
+                        ? 'bg-green-500 text-white border border-green-500 hover:bg-green-500/90'
                         : 'bg-white border border-gray-200 hover:bg-gray-50 text-gray-600'
                     }`}
                   >
                     {Icon && <Icon className={`h-3 w-3 sm:h-4 sm:w-4 ${isActive ? 'fill-white' : ''}`} />}
-                    <span className="text-xs sm:text-sm font-medium">{filter.label}</span>
+                    <span className="text-xs sm:text-sm font-bold text-black">{filter.label}</span>
                   </Button>
                 )
               })}

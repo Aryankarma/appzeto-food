@@ -15,6 +15,9 @@ export function CartProvider({ children }) {
     }
   })
 
+  // Track last add event for animation
+  const [lastAddEvent, setLastAddEvent] = useState(null)
+
   // Persist to localStorage whenever cart changes
   useEffect(() => {
     try {
@@ -24,7 +27,7 @@ export function CartProvider({ children }) {
     }
   }, [cart])
 
-  const addToCart = (item) => {
+  const addToCart = (item, sourcePosition = null) => {
     setCart((prev) => {
       const existing = prev.find((i) => i.id === item.id)
       if (existing) {
@@ -32,7 +35,23 @@ export function CartProvider({ children }) {
           i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
         )
       }
-      return [...prev, { ...item, quantity: 1 }]
+      const newItem = { ...item, quantity: 1 }
+      
+      // Set last add event for animation if sourcePosition is provided
+      if (sourcePosition) {
+        setLastAddEvent({
+          product: {
+            id: item.id,
+            name: item.name,
+            imageUrl: item.image || item.imageUrl,
+          },
+          sourcePosition,
+        })
+        // Clear after a short delay to allow animation to start
+        setTimeout(() => setLastAddEvent(null), 100)
+      }
+      
+      return [...prev, newItem]
     })
   }
 
@@ -59,9 +78,36 @@ export function CartProvider({ children }) {
 
   const clearCart = () => setCart([])
 
+  // Transform cart to match AddToCartAnimation expected structure
+  const cartForAnimation = useMemo(() => {
+    const items = cart.map(item => ({
+      product: {
+        id: item.id,
+        name: item.name,
+        imageUrl: item.image || item.imageUrl,
+      },
+      quantity: item.quantity || 1,
+    }))
+    
+    const itemCount = cart.reduce((total, item) => total + (item.quantity || 0), 0)
+    const total = cart.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 0), 0)
+    
+    return {
+      items,
+      itemCount,
+      total,
+    }
+  }, [cart])
+
   const value = useMemo(
     () => ({
+      // Keep original cart array for backward compatibility
       cart,
+      // Add animation-compatible structure
+      items: cartForAnimation.items,
+      itemCount: cartForAnimation.itemCount,
+      total: cartForAnimation.total,
+      lastAddEvent,
       addToCart,
       removeFromCart,
       updateQuantity,
@@ -70,7 +116,7 @@ export function CartProvider({ children }) {
       getCartItem,
       clearCart,
     }),
-    [cart]
+    [cart, cartForAnimation, lastAddEvent]
   )
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>

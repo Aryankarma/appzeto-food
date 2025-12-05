@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom"
 import { useState, useMemo, useCallback } from "react"
-import { Star, Clock, MapPin, ShoppingCart, Bell, Wallet, ChevronDown, ArrowDownUp, Timer, ArrowRight } from "lucide-react"
+import { Star, Clock, MapPin, ArrowDownUp, Timer, ArrowRight, ChevronDown } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import AnimatedPage from "../components/AnimatedPage"
 import { Card, CardContent } from "@/components/ui/card"
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { useLocationSelector } from "../components/UserLayout"
 import { useLocation } from "../hooks/useLocation"
 import { useCart } from "../context/CartContext"
-import { FaLocationDot } from "react-icons/fa6"
+import PageNavbar from "../components/PageNavbar"
 import { foodImages } from "@/constants/images"
 import appzetoFoodLogo from "@/assets/appzetofoodlogo.jpeg"
 import under250Banner from "@/assets/under250banner.png"
@@ -161,25 +161,11 @@ const under250Restaurants = [
 ]
 
 export default function Under250() {
-  const { openLocationSelector } = useLocationSelector()
-  const { location, loading } = useLocation()
-  const { cart } = useCart()
+  const { location } = useLocation()
   const [activeCategory, setActiveCategory] = useState(null)
   const [showSortPopup, setShowSortPopup] = useState(false)
   const [selectedSort, setSelectedSort] = useState(null)
   const [under30MinsFilter, setUnder30MinsFilter] = useState(false)
-
-  const cityName = location?.city || "Select"
-  const stateName = location?.state || "Location"
-
-  const cartCount = useMemo(() =>
-    cart.reduce((total, item) => total + (item.quantity || 0), 0),
-    [cart]
-  )
-
-  const handleLocationClick = useCallback(() => {
-    openLocationSelector()
-  }, [openLocationSelector])
 
   const sortOptions = [
     { id: null, label: 'Relevance' },
@@ -212,117 +198,7 @@ export default function Under250() {
         </div>
 
         {/* Navbar */}
-        <nav className="relative z-20 w-full px-3 sm:px-6 lg:px-8 py-1.5 sm:py-3 backdrop-blur-sm">
-          <div className="flex items-center justify-between gap-3 sm:gap-4">
-            {/* Left: Logo & Location */}
-            <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-              {/* Logo */}
-              <Link to="/user" className="hidden sm:block flex-shrink-0 transition-opacity hover:opacity-80">
-                <img
-                  src={appzetoFoodLogo}
-                  alt="Appzeto Food"
-                  className="h-9 w-9 sm:h-10 sm:w-10 rounded-full object-cover shadow-lg ring-2 ring-white/30"
-                />
-              </Link>
-
-              {/* Location Button */}
-              <Button
-                variant="ghost"
-                onClick={handleLocationClick}
-                disabled={loading}
-                className="h-auto px-3 py-2 sm:px-4 sm:py-2.5 hover:bg-white/20 transition-colors rounded-lg flex-shrink-0"
-              >
-                {loading ? (
-                  <span className="text-sm font-bold text-black">Loading...</span>
-                ) : (
-                  <div className="flex flex-col items-start min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <FaLocationDot className="h-6 w-6 sm:h-7 sm:w-7 text-black flex-shrink-0" fill="black" strokeWidth={2} />
-                      <span className="text-lg sm:text-xl font-bold text-black truncate max-w-[120px] sm:max-w-[180px]">
-                        {cityName}
-                      </span>
-                      <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 text-black flex-shrink-0" strokeWidth={2.5} />
-                    </div>
-                    {location?.state && (
-                      <span className="text-xs font-bold text-black truncate max-w-[120px] sm:max-w-[180px] mt-0.5">
-                        {stateName}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </Button>
-            </div>
-
-            {/* Right: Actions */}
-            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-              {/* Wallet Icon */}
-              <Link to="/user/wallet">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-full p-0 hover:opacity-80 transition-opacity"
-                  title="Wallet"
-                >
-                  <div className="h-full w-full rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center ring-2 ring-gray-800/30">
-                    <Wallet className="h-4 w-4 sm:h-5 sm:w-5 text-gray-800" strokeWidth={2} />
-                  </div>
-                </Button>
-              </Link>
-
-              {/* Notifications Icon */}
-              <Link to="/user/notifications">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="relative h-8 w-8 sm:h-9 sm:w-9 rounded-full p-0 hover:opacity-80 transition-opacity"
-                  title="Notifications"
-                >
-                  <div className="h-full w-full rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center ring-2 ring-gray-800/30">
-                    <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-gray-800" strokeWidth={2} />
-                  </div>
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center ring-2 ring-gray-800/30">
-                    <span className="text-[9px] font-bold text-white">3</span>
-                  </span>
-                </Button>
-              </Link>
-
-              {/* Cart Icon */}
-              <Link to="/user/cart">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="relative h-8 w-8 sm:h-9 sm:w-9 rounded-full p-0 hover:opacity-80 transition-opacity"
-                  title="Cart"
-                >
-                  <div className="h-full w-full rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center ring-2 ring-gray-800/30">
-                    <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 text-gray-800" strokeWidth={2} />
-                  </div>
-                  {cartCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center ring-2 ring-gray-800/30">
-                      <span className="text-[9px] font-bold text-white">{cartCount > 99 ? "99+" : cartCount}</span>
-                    </span>
-                  )}
-                </Button>
-              </Link>
-
-              {/* Profile */}
-              <Link to="/user/profile">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-full p-0 hover:opacity-80 transition-opacity"
-                  title="Profile"
-                >
-                  <div className="h-full w-full rounded-full bg-blue-100 flex items-center justify-center shadow-lg ring-2 ring-gray-800/30">
-                    <span className="text-green-600 text-xs sm:text-sm font-extrabold">
-                      A
-                    </span>
-                  </div>
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </nav>
+        <PageNavbar textColor="black" zIndex={20} showProfile={true} />
       </div>
 
       {/* Content Section */}

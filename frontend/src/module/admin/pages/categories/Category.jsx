@@ -171,7 +171,7 @@ export default function Category() {
               className="h-5 px-1.5 rounded-md flex items-center gap-1 whitespace-nowrap shrink-0 transition-all bg-white border border-gray-200 hover:bg-gray-50"
             >
               <SlidersHorizontal className="h-2.5 w-2.5" />
-              <span className="text-[10px] font-semibold text-gray-900">Filters</span>
+              <span className="text-[10px] font-bold text-black">Filters</span>
             </Button>
             {[
               { id: 'delivery-under-30', label: 'Under 30 mins' },
@@ -189,7 +189,7 @@ export default function Category() {
                       : 'bg-white border border-gray-200 hover:bg-gray-50'
                   }`}
                 >
-                  <span className={`text-[10px] font-semibold ${isActive ? 'text-white' : 'text-gray-900'}`}>{filter.label}</span>
+                  <span className={`text-[10px] font-bold ${isActive ? 'text-white' : 'text-black'}`}>{filter.label}</span>
                 </Button>
               )
             })}
@@ -215,7 +215,7 @@ export default function Category() {
                   }`}
                 >
                   {Icon && <Icon className={`h-2.5 w-2.5 ${isActive ? 'text-white' : 'text-gray-900'}`} />}
-                  <span className={`text-[10px] font-semibold ${isActive ? 'text-white' : 'text-gray-900'}`}>{filter.label}</span>
+                  <span className={`text-[10px] font-bold ${isActive ? 'text-white' : 'text-black'}`}>{filter.label}</span>
                 </Button>
               )
             })}

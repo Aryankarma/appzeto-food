@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { Plus, Minus, ArrowLeft, ChevronRight, Clock, MapPin, Phone, FileText, Utensils, Tag, Percent, Truck, Leaf, Share2, Crown, ChevronUp, ChevronDown, X, Check, Settings, CreditCard, Wallet, Building2 } from "lucide-react"
+import { Plus, Minus, ArrowLeft, ChevronRight, Clock, MapPin, Phone, FileText, Utensils, Tag, Percent, Truck, Leaf, Share2, Crown, ChevronUp, ChevronDown, X, Check, Settings, CreditCard, Wallet, Building2, Sparkles } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import confetti from "canvas-confetti"
 
 import AnimatedPage from "../../components/AnimatedPage"
 import { Button } from "@/components/ui/button"
@@ -91,7 +93,7 @@ export default function Cart() {
   const [sendCutlery, setSendCutlery] = useState(true)
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
   const [showBillDetails, setShowBillDetails] = useState(false)
-  const [showDiscountBanner, setShowDiscountBanner] = useState(false)
+  const [showDiscountBanner, setShowDiscountBanner] = useState(true)
   const [couponApplied, setCouponApplied] = useState(false)
   const [showPaymentSelection, setShowPaymentSelection] = useState(false)
   const [selectedPayment, setSelectedPayment] = useState(null)
@@ -119,6 +121,21 @@ export default function Cart() {
       }
     }
   }, [cart.length])
+
+  // Show payment selection modal only once if payment hasn't been selected before
+  useEffect(() => {
+    if (cart.length > 0 && !selectedPayment && !defaultPayment) {
+      const hasSeenPaymentSelection = localStorage.getItem('cartPaymentSelectionShown')
+      if (!hasSeenPaymentSelection) {
+        // Small delay to show payment selection after page loads
+        const timer = setTimeout(() => {
+          setShowPaymentSelection(true)
+          localStorage.setItem('cartPaymentSelectionShown', 'true')
+        }, 800)
+        return () => clearTimeout(timer)
+      }
+    }
+  }, [cart.length, selectedPayment, defaultPayment])
 
   // Scroll to top when payment selection modal opens
   useEffect(() => {
@@ -185,8 +202,39 @@ export default function Cart() {
   }
 
   const handleBannerApply = () => {
+    // Trigger confetti animation
+    const duration = 3000
+    const animationEnd = Date.now() + duration
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 10000 }
+
+    function randomInRange(min, max) {
+      return Math.random() * (max - min) + min
+    }
+
+    const interval = setInterval(function() {
+      const timeLeft = animationEnd - Date.now()
+
+      if (timeLeft <= 0) {
+        return clearInterval(interval)
+      }
+
+      const particleCount = 50 * (timeLeft / duration)
+      
+      // Launch confetti from multiple positions
+      confetti({
+        ...defaults,
+        particleCount,
+        origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+      })
+      confetti({
+        ...defaults,
+        particleCount,
+        origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+      })
+    }, 250)
+
     // Apply the coupon
-    const coupon = availableCoupons.find(c => c.code === "GETOFF80ON199") || availableCoupons[0]
+    const coupon = { code: "GETOFF220ON599", discount: 220, minOrder: 599, description: "Save ₹220 on orders above ₹599" }
     if (subtotal >= coupon.minOrder) {
       setCouponApplied(true)
       // Show applied animation, then close banner
@@ -195,7 +243,7 @@ export default function Cart() {
         setShowDiscountBanner(false)
         setCouponApplied(false)
         sessionStorage.setItem('cartDiscountBannerShown', 'true')
-      }, 1500)
+      }, 2000)
     } else {
       // If order value is less, just close the banner
       setShowDiscountBanner(false)
@@ -216,6 +264,8 @@ export default function Cart() {
   const handleSelectPayment = (payment) => {
     setSelectedPayment(payment)
     setShowPaymentSelection(false)
+    // Mark payment selection as shown in localStorage
+    localStorage.setItem('cartPaymentSelectionShown', 'true')
   }
 
   // Available payment methods
@@ -347,7 +397,7 @@ export default function Cart() {
   }
 
   return (
-    <AnimatedPage className="h-screen bg-gray-50 overflow-hidden flex flex-col !pb-0">
+    <div className="relative min-h-screen bg-white">
       {/* Header - Sticky at top */}
       <div className="bg-white border-b sticky top-0 z-20 flex-shrink-0">
         <div className="flex items-center justify-between px-3 py-2">
@@ -372,7 +422,7 @@ export default function Cart() {
       </div>
 
       {/* Scrollable Content Area */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden pb-24">
         {/* Savings Banner */}
         {savings > 0 && (
           <div className="bg-blue-100 px-4 py-2 flex-shrink-0">
@@ -398,7 +448,7 @@ export default function Cart() {
               <Button size="sm" variant="outline" className="h-7 text-xs border-red-600 text-red-600 hover:bg-red-50">
                 ADD
               </Button>
-              <p className="text-xs text-gray-500 mt-0.5">₹1</p>
+              <p className="text-xs text-center text-gray-500 mt-0.5">₹1</p>
             </div>
           </div>
         </div>
@@ -739,7 +789,7 @@ export default function Cart() {
       </div>
 
       {/* Bottom Sticky - Payment & Place Order */}
-      <div className="bg-white border-t shadow-lg z-30 flex-shrink-0 sticky bottom-0">
+      <div className="bg-white border-t shadow-lg z-30 flex-shrink-0 fixed bottom-0 left-0 right-0">
         <div className="flex items-center justify-between px-4 py-3">
           <button 
             onClick={() => setShowPaymentSelection(true)}
@@ -816,12 +866,16 @@ export default function Cart() {
             {/* Header */}
             <div className="bg-white border-b sticky top-0 z-10">
               <div className="flex items-center gap-3 px-4 py-3">
-                <button 
-                  onClick={() => setShowPaymentSelection(false)}
-                  className="h-8 w-8 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <ArrowLeft className="h-5 w-5 text-gray-700" />
-                </button>
+          <button 
+            onClick={() => {
+              setShowPaymentSelection(false)
+              // Mark payment selection as shown when user closes it
+              localStorage.setItem('cartPaymentSelectionShown', 'true')
+            }}
+            className="h-8 w-8 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <ArrowLeft className="h-5 w-5 text-gray-700" />
+          </button>
                 <span className="font-semibold text-gray-800">Bill total: ₹{total.toFixed(2)}</span>
               </div>
             </div>
@@ -943,126 +997,212 @@ export default function Cart() {
       )}
 
       {/* Discount Banner Modal */}
-      {showDiscountBanner && (
-        <div 
-          className="fixed inset-0 z-[1000] pointer-events-none"
-          style={{ 
-            animation: 'fadeInBackdrop 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards'
-          }}
-        >
-          {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={handleCloseBanner}
-            style={{ pointerEvents: 'auto' }}
-          />
-          
-          {/* Banner Modal - Fixed at bottom */}
-          <div 
-            className="fixed left-0 right-0 bottom-0 z-[1001] pointer-events-auto"
-            style={{ 
-              animation: 'slideUpBannerSmooth 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
-              willChange: 'transform'
-            }}
+      <AnimatePresence>
+        {showDiscountBanner && (
+          <motion.div 
+            className="fixed inset-0 z-[1000]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
           >
-            <div className="w-full max-w-md mx-auto px-4 pb-6">
-              <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
-                {/* Decorative gradient background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-blue-50 to-purple-50 opacity-60" />
-                
-                {/* Animated shimmer effect */}
-                <div 
-                  className="absolute inset-0 opacity-30"
-                  style={{
-                    background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
-                    animation: 'shimmerBanner 3s infinite'
-                  }}
-                />
+            {/* Backdrop */}
+            <motion.div 
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              onClick={handleCloseBanner}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            />
+            
+            {/* Banner Modal - Centered */}
+            <div className="fixed inset-0 z-[1001] flex items-center justify-center p-4 pointer-events-none">
+              <motion.div
+                className="relative w-full max-w-sm pointer-events-auto"
+                initial={{ scale: 0.8, opacity: 0, y: 50 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.8, opacity: 0, y: 50 }}
+                transition={{ 
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 30
+                }}
+              >
+                <div className="relative bg-gradient-to-br from-blue-50 via-sky-50 to-blue-100 rounded-3xl shadow-2xl overflow-hidden">
+                  {/* Close button - Black circle with white X */}
+                  <motion.button
+                    onClick={handleCloseBanner}
+                    className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-black flex items-center justify-center hover:bg-gray-800 transition-colors shadow-lg"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <X className="h-4 w-4 text-white" strokeWidth={3} />
+                  </motion.button>
 
-                {/* Close button */}
-                <button
-                  onClick={handleCloseBanner}
-                  className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-all duration-200 shadow-sm hover:scale-110"
-                >
-                  <X className="h-4 w-4 text-gray-600" />
-                </button>
-
-                {/* Content */}
-                <div className="relative px-6 py-6">
-                  {/* Applied State */}
-                  {couponApplied ? (
-                    <div 
-                      className="space-y-4 text-center"
-                      style={{ animation: 'scaleInBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards' }}
-                    >
-                      <div className="relative inline-block">
-                        {/* Pulsing ring */}
-                        <div 
-                          className="absolute inset-0 rounded-full bg-green-400 opacity-30"
-                          style={{ animation: 'pulseRing 1.5s ease-out infinite' }}
-                        />
-                        <div className="relative w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-xl">
-                          <Check className="h-10 w-10 text-white" strokeWidth={3} style={{ animation: 'checkMarkDraw 0.6s ease-out 0.2s both' }} />
-                        </div>
-                      </div>
-                      <h3 className="text-2xl font-bold text-gray-900">Coupon Applied!</h3>
-                      <p className="text-lg text-emerald-600 font-semibold">You saved ₹80 on this order</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-5">
-                      {/* Icon and Badge */}
-                      <div className="flex items-center justify-center gap-3">
-                        <div className="relative">
-                          {/* Glowing effect */}
-                          <div className="absolute inset-0 bg-emerald-400 rounded-full blur-xl opacity-50 animate-pulse" />
-                          <div className="relative w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-600 rounded-full flex items-center justify-center shadow-lg">
-                            <Percent className="h-7 w-7 text-white" strokeWidth={2.5} />
-                          </div>
-                        </div>
-                        <div className="px-3 py-1 bg-emerald-100 rounded-full">
-                          <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Exclusive Offer</span>
-                        </div>
-                      </div>
-
-                      {/* Offer Text */}
-                      <div className="text-center space-y-2">
-                        <h3 className="text-3xl font-extrabold text-gray-900">
-                          Save <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-green-600">₹80</span>
-                        </h3>
-                        <p className="text-base text-gray-600">
-                          Use coupon code
-                        </p>
-                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
-                          <code className="text-sm font-mono font-bold text-gray-900">GETOFF80ON199</code>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              navigator.clipboard.writeText('GETOFF80ON199')
-                            }}
-                            className="text-gray-500 hover:text-gray-700 transition-colors"
-                            title="Copy code"
+                  {/* Content */}
+                  <div className="relative px-8 py-10">
+                    {/* Applied State */}
+                    <AnimatePresence mode="wait">
+                      {couponApplied ? (
+                        <motion.div 
+                          className="space-y-6 text-center"
+                          initial={{ scale: 0, opacity: 0, rotate: -180 }}
+                          animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                          exit={{ scale: 0, opacity: 0, rotate: 180 }}
+                          transition={{ 
+                            type: "spring",
+                            stiffness: 200,
+                            damping: 15
+                          }}
+                        >
+                          <motion.div 
+                            className="relative inline-block"
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
                           >
-                            <FileText className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
+                            {/* Pulsing rings */}
+                            <motion.div 
+                              className="absolute inset-0 rounded-full bg-green-400"
+                              initial={{ scale: 0, opacity: 0.8 }}
+                              animate={{ scale: 2, opacity: 0 }}
+                              transition={{ duration: 1.5, repeat: Infinity }}
+                            />
+                            <motion.div 
+                              className="absolute inset-0 rounded-full bg-green-400"
+                              initial={{ scale: 0, opacity: 0.6 }}
+                              animate={{ scale: 2.5, opacity: 0 }}
+                              transition={{ duration: 1.5, delay: 0.3, repeat: Infinity }}
+                            />
+                            <div className="relative w-24 h-24 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-2xl">
+                              <motion.div
+                                initial={{ pathLength: 0 }}
+                                animate={{ pathLength: 1 }}
+                                transition={{ duration: 0.6, delay: 0.3 }}
+                              >
+                                <Check className="h-12 w-12 text-white" strokeWidth={3} />
+                              </motion.div>
+                            </div>
+                          </motion.div>
+                          <motion.h3 
+                            className="text-3xl font-bold text-gray-900"
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.4 }}
+                          >
+                            Coupon Applied!
+                          </motion.h3>
+                          <motion.p 
+                            className="text-xl text-emerald-600 font-semibold"
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.5 }}
+                          >
+                            You saved ₹220 on this order
+                          </motion.p>
+                        </motion.div>
+                      ) : (
+                        <motion.div 
+                          className="space-y-6"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                        >
+                          {/* Percentage Icon with Spotlight Effect */}
+                          <div className="flex justify-center">
+                            <motion.div 
+                              className="relative"
+                              initial={{ scale: 0, rotate: -180 }}
+                              animate={{ scale: 1, rotate: 0 }}
+                              transition={{ 
+                                type: "spring",
+                                stiffness: 200,
+                                damping: 15,
+                                delay: 0.2
+                              }}
+                            >
+                              {/* White radial lines (spotlight effect) */}
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                {[...Array(12)].map((_, i) => (
+                                  <motion.div
+                                    key={i}
+                                    className="absolute w-1 bg-white/40 rounded-full"
+                                    style={{
+                                      height: '80px',
+                                      transformOrigin: 'center',
+                                      transform: `rotate(${i * 30}deg) translateY(-40px)`
+                                    }}
+                                    initial={{ opacity: 0, scale: 0 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: 0.4 + i * 0.02 }}
+                                  />
+                                ))}
+                              </div>
+                              {/* Large percentage icon */}
+                              <motion.div 
+                                className="relative w-24 h-24 bg-gradient-to-br from-blue-500 to-sky-600 rounded-full flex items-center justify-center shadow-2xl"
+                                whileHover={{ scale: 1.1, rotate: 360 }}
+                                transition={{ duration: 0.6 }}
+                              >
+                                <Percent className="h-12 w-12 text-white" strokeWidth={2.5} />
+                              </motion.div>
+                            </motion.div>
+                          </div>
 
-                      {/* Apply Button */}
-                      <button
-                        onClick={handleBannerApply}
-                        className="w-full bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-bold py-4 px-6 rounded-2xl shadow-xl transition-all duration-300 text-base transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
-                      >
-                        <Tag className="h-5 w-5" />
-                        <span>Apply Coupon</span>
-                      </button>
-                    </div>
-                  )}
+                          {/* Exclusively For You Text */}
+                          <motion.div 
+                            className="text-center"
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.3 }}
+                          >
+                            <div className="flex items-center justify-center gap-2 mb-4">
+                              <Sparkles className="h-5 w-5 text-yellow-400" fill="currentColor" />
+                              <span className="text-base font-bold text-gray-900">EXCLUSIVELY FOR YOU</span>
+                              <Sparkles className="h-5 w-5 text-yellow-400" fill="currentColor" />
+                            </div>
+                          </motion.div>
+
+                          {/* Offer Text */}
+                          <motion.div 
+                            className="text-center space-y-3"
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.4 }}
+                          >
+                            <h3 className="text-4xl font-extrabold text-gray-900">
+                              Save <span className="text-blue-600">₹220</span> on this order
+                            </h3>
+                            <p className="text-base text-gray-600">
+                              with coupon <span className="font-semibold text-gray-800">'GETOFF220ON599'</span>
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              Tap on 'APPLY' to avail this
+                            </p>
+                          </motion.div>
+
+                          {/* Apply Button */}
+                          <motion.button
+                            onClick={handleBannerApply}
+                            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-2xl shadow-xl transition-all duration-300 text-lg flex items-center justify-center gap-2"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.5 }}
+                          >
+                            <span>APPLY</span>
+                          </motion.button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </div>
-              </div>
+              </motion.div>
             </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Placing Order Modal */}
       {showPlacingOrder && (
@@ -1457,6 +1597,6 @@ export default function Cart() {
           stroke-dashoffset: 0;
         }
       `}</style>
-    </AnimatedPage>
+    </div>
   )
 }

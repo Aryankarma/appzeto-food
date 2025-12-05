@@ -105,7 +105,7 @@ export default function SubscriptionOrders() {
             <div className="relative">
               <button className="px-4 py-2.5 text-sm font-medium rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-all">
                 <Download className="w-4 h-4" />
-                <span>Export</span>
+                <span className="text-black font-bold">Export</span>
                 <ChevronDown className="w-3 h-3" />
               </button>
             </div>
@@ -116,7 +116,7 @@ export default function SubscriptionOrders() {
               }`}
             >
               <Filter className="w-4 h-4" />
-              <span>Filters</span>
+              <span className="text-black font-bold">Filters</span>
               {activeFiltersCount > 0 && (
                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 text-white rounded-full text-[10px] flex items-center justify-center font-bold">
                   {activeFiltersCount}

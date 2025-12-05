@@ -450,7 +450,7 @@ export default function SearchResults() {
           className="h-9 px-3 rounded-lg flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 font-medium bg-white border border-gray-200 hover:bg-gray-50 text-gray-700"
         >
           <SlidersHorizontal className="h-4 w-4" />
-          <span className="text-sm">Filters</span>
+          <span className="text-sm font-bold text-black">Filters</span>
           <ChevronDown className="h-3 w-3" />
         </Button>
 
@@ -474,7 +474,7 @@ export default function SearchResults() {
               {filter.hasIcon && filter.id === 'flat-50-off' && (
                 <span className="text-blue-500 text-xs">★</span>
               )}
-              <span className="text-sm">{filter.label}</span>
+              <span className="text-sm font-bold text-black">{filter.label}</span>
                                     </Button>
           )
         })}

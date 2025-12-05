@@ -170,7 +170,7 @@ export default function Gourmet() {
             className="h-7 sm:h-8 px-2 sm:px-3 rounded-md flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 font-medium transition-all bg-white border border-gray-200 hover:bg-gray-50 text-gray-700"
           >
             <SlidersHorizontal className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="text-xs sm:text-sm font-medium">Filters</span>
+            <span className="text-xs sm:text-sm font-bold text-black">Filters</span>
             <ChevronDown className="h-3 w-3" />
           </Button>
 
@@ -194,7 +194,7 @@ export default function Gourmet() {
                     : 'bg-white border border-gray-200 hover:bg-gray-50 text-gray-600'
                 }`}
               >
-                <span className="text-xs sm:text-sm font-medium">{filter.label}</span>
+                <span className="text-xs sm:text-sm font-bold text-black">{filter.label}</span>
               </Button>
             )
           })}

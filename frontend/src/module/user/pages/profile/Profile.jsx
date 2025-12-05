@@ -22,7 +22,8 @@ import {
   AlertTriangle,
   Accessibility as AccessibilityIcon,
   Settings as SettingsIcon,
-  Power
+  Power,
+  ShoppingCart
 } from "lucide-react"
 
 import AnimatedPage from "../../components/AnimatedPage"
@@ -130,6 +131,22 @@ export default function Profile() {
 
         {/* Account Options */}
         <div className="space-y-2 mb-3">
+
+        <Link to="/user/cart" className="block">
+              <Card className="bg-white py-0 rounded-xl shadow-sm border-0 cursor-pointer hover:shadow-md transition-shadow">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-gray-100 rounded-full p-2">
+                      <ShoppingCart className="h-5 w-5 text-gray-700" />
+                    </div>
+                    <span className="text-base font-medium text-gray-900">Your cart</span>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-gray-400" />
+                </CardContent>
+              </Card>
+            </Link>
+
+            
           <Link to="/user/profile/edit" className="block">
             <Card className="bg-white py-0 rounded-xl shadow-sm border-0 cursor-pointer hover:shadow-md transition-shadow">
               <CardContent className="p-4 flex items-center justify-between">
@@ -245,6 +262,7 @@ export default function Profile() {
                 </CardContent>
               </Card>
             </Link>
+
 
             <Card className="bg-white py-0 rounded-xl shadow-sm border-0 cursor-pointer hover:shadow-md transition-shadow">
               <CardContent className="p-4 flex items-center justify-between">

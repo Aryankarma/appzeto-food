@@ -1,7 +1,6 @@
 import { Outlet, useLocation } from "react-router-dom"
 import { useEffect, useState, createContext, useContext } from "react"
 import { ProfileProvider } from "../context/ProfileContext"
-import Navbar from "./Navbar"
 import LocationPrompt from "./LocationPrompt"
 import { CartProvider } from "../context/CartContext"
 import { OrdersProvider } from "../context/OrdersContext"
@@ -87,13 +86,16 @@ export default function UserLayout() {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
   }, [location.pathname, location.search, location.hash])
 
-  // Show bottom navigation only on home page, dining page, and under-250 page
+  // Show bottom navigation only on home page, dining page, under-250 page, and profile page
   const showBottomNav = location.pathname === "/" || 
                         location.pathname === "/user" ||
                         location.pathname === "/dining" ||
                         location.pathname === "/user/dining" ||
                         location.pathname === "/under-250" ||
-                        location.pathname === "/user/under-250"
+                        location.pathname === "/user/under-250" ||
+                        location.pathname === "/profile" ||
+                        location.pathname === "/user/profile" ||
+                        location.pathname.startsWith("/user/profile")
 
   return (
     <CartProvider>

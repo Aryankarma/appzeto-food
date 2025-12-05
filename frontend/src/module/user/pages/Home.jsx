@@ -1,6 +1,7 @@
 import { useSearchParams, Link, useNavigate } from "react-router-dom"
 import { useRef, useEffect, useState, useMemo, useCallback } from "react"
-import { Star, Clock, MapPin, Heart, Search, Tag, Flame, ShoppingBag, ShoppingCart, Mic, SlidersHorizontal, ChevronDown, CheckCircle2, Bell, Wallet, Bookmark, BadgePercent, X, ArrowDownUp, Timer, CalendarClock, ShieldCheck, IndianRupee, UtensilsCrossed, Leaf, AlertCircle, Loader2 } from "lucide-react"
+import { createPortal } from "react-dom"
+import { Star, Clock, MapPin, Heart, Search, Tag, Flame, ShoppingBag, ShoppingCart, Mic, SlidersHorizontal, CheckCircle2, Bookmark, BadgePercent, X, ArrowDownUp, Timer, CalendarClock, ShieldCheck, IndianRupee, UtensilsCrossed, Leaf, AlertCircle, Loader2, Plus, Check, Share2 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import Footer from "../components/Footer"
 import AddToCartButton from "../components/AddToCartButton"
@@ -14,8 +15,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useSearchOverlay, useLocationSelector } from "../components/UserLayout"
-import { FaLocationDot } from "react-icons/fa6";
+import PageNavbar from "../components/PageNavbar"
 
 // Import shared food images - prevents duplication
 import { foodImages } from "@/constants/images"
@@ -363,6 +365,14 @@ export default function Home() {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0)
   const isHandlingSwitchOff = useRef(false)
 
+  // Swipe functionality for hero banner carousel
+  const touchStartX = useRef(0)
+  const touchStartY = useRef(0)
+  const touchEndX = useRef(0)
+  const touchEndY = useRef(0)
+  const isSwiping = useRef(false)
+  const autoSlideIntervalRef = useRef(null)
+
   // Handle vegMode toggle - show popup when turned ON or OFF
   useEffect(() => {
     // Skip if we're handling switch off confirmation
@@ -420,11 +430,114 @@ export default function Home() {
 
   // Auto-cycle hero banner images
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentBannerIndex((prev) => (prev + 1) % heroBannerImages.length)
+    autoSlideIntervalRef.current = setInterval(() => {
+      if (!isSwiping.current) {
+        setCurrentBannerIndex((prev) => (prev + 1) % heroBannerImages.length)
+      }
     }, 3500) // Change every 3.5 seconds
-    return () => clearInterval(interval)
+
+    return () => {
+      if (autoSlideIntervalRef.current) {
+        clearInterval(autoSlideIntervalRef.current)
+      }
+    }
   }, [])
+
+  // Helper function to reset auto-slide timer
+  const resetAutoSlide = useCallback(() => {
+    if (autoSlideIntervalRef.current) {
+      clearInterval(autoSlideIntervalRef.current)
+    }
+    autoSlideIntervalRef.current = setInterval(() => {
+      if (!isSwiping.current) {
+        setCurrentBannerIndex((prev) => (prev + 1) % heroBannerImages.length)
+      }
+    }, 3500)
+  }, [])
+
+  // Swipe handlers for hero banner carousel
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX
+    touchStartY.current = e.touches[0].clientY
+    isSwiping.current = true
+  }
+
+  const handleTouchMove = (e) => {
+    touchEndX.current = e.touches[0].clientX
+    touchEndY.current = e.touches[0].clientY
+  }
+
+  const handleTouchEnd = () => {
+    if (!isSwiping.current) return
+
+    const deltaX = touchEndX.current - touchStartX.current
+    const deltaY = Math.abs(touchEndY.current - touchStartY.current)
+    const minSwipeDistance = 50 // Minimum distance for a swipe
+
+    // Check if it's a horizontal swipe (not vertical scroll)
+    if (Math.abs(deltaX) > minSwipeDistance && Math.abs(deltaX) > deltaY) {
+      if (deltaX > 0) {
+        // Swipe right - go to previous image
+        setCurrentBannerIndex((prev) => (prev - 1 + heroBannerImages.length) % heroBannerImages.length)
+      } else {
+        // Swipe left - go to next image
+        setCurrentBannerIndex((prev) => (prev + 1) % heroBannerImages.length)
+      }
+      // Reset auto-slide timer after manual swipe
+      resetAutoSlide()
+    }
+
+    // Reset swipe state after a short delay
+    setTimeout(() => {
+      isSwiping.current = false
+    }, 300)
+
+    // Reset touch positions
+    touchStartX.current = 0
+    touchStartY.current = 0
+    touchEndX.current = 0
+    touchEndY.current = 0
+  }
+
+  // Mouse handlers for desktop drag support
+  const handleMouseDown = (e) => {
+    touchStartX.current = e.clientX
+    touchStartY.current = e.clientY
+    isSwiping.current = true
+  }
+
+  const handleMouseMove = (e) => {
+    if (!isSwiping.current) return
+    touchEndX.current = e.clientX
+    touchEndY.current = e.clientY
+  }
+
+  const handleMouseUp = () => {
+    if (!isSwiping.current) return
+
+    const deltaX = touchEndX.current - touchStartX.current
+    const deltaY = Math.abs(touchEndY.current - touchStartY.current)
+    const minSwipeDistance = 50
+
+    if (Math.abs(deltaX) > minSwipeDistance && Math.abs(deltaX) > deltaY) {
+      if (deltaX > 0) {
+        setCurrentBannerIndex((prev) => (prev - 1 + heroBannerImages.length) % heroBannerImages.length)
+      } else {
+        setCurrentBannerIndex((prev) => (prev + 1) % heroBannerImages.length)
+      }
+      // Reset auto-slide timer after manual swipe
+      resetAutoSlide()
+    }
+
+    setTimeout(() => {
+      isSwiping.current = false
+    }, 300)
+
+    touchStartX.current = 0
+    touchStartY.current = 0
+    touchEndX.current = 0
+    touchEndY.current = 0
+  }
   const [activeFilters, setActiveFilters] = useState(new Set())
   const [sortBy, setSortBy] = useState(null) // null, 'price-low', 'price-high', 'rating-high', 'rating-low'
   const [selectedCuisine, setSelectedCuisine] = useState(null)
@@ -433,13 +546,16 @@ export default function Home() {
   const [isLoadingFilterResults, setIsLoadingFilterResults] = useState(false)
   const categoryScrollRef = useRef(null)
   const gsapAnimationsRef = useRef([])
-  const { addFavorite, removeFavorite, isFavorite } = useProfile()
+  const { addFavorite, removeFavorite, isFavorite, getFavorites } = useProfile()
   const { addToCart, cart } = useCart()
   const { location, loading, requestLocation } = useLocation()
-  
+  const [showToast, setShowToast] = useState(false)
+  const [showManageCollections, setShowManageCollections] = useState(false)
+  const [selectedRestaurantSlug, setSelectedRestaurantSlug] = useState(null)
+
   // Memoize cartCount to prevent recalculation on every render - use cart directly
-  const cartCount = useMemo(() => 
-    cart.reduce((total, item) => total + (item.quantity || 0), 0), 
+  const cartCount = useMemo(() =>
+    cart.reduce((total, item) => total + (item.quantity || 0), 0),
     [cart]
   )
 
@@ -448,7 +564,7 @@ export default function Home() {
 
   // Mock points value - replace with actual points from context/store
   const userPoints = 99
-  
+
   const [placeholderIndex, setPlaceholderIndex] = useState(0)
 
   // Simple filter toggle function
@@ -676,15 +792,15 @@ export default function Home() {
         {/* Background Elements - Reduced to 2 blobs with CSS animations for better performance */}
         <div className="absolute inset-0 overflow-hidden opacity-20">
           {/* Top right blob - CSS animation */}
-          <div 
-            style={{ 
+          <div
+            style={{
               animation: 'blob 8s ease-in-out infinite',
               willChange: 'transform'
             }}
           />
           {/* Bottom left blob - CSS animation */}
-          <div 
-            style={{ 
+          <div
+            style={{
               animation: 'blob-reverse 10s ease-in-out infinite',
               willChange: 'transform'
             }}
@@ -780,138 +896,39 @@ export default function Home() {
 
       {/* Unified Navbar & Hero Section */}
       <div className="relative w-full overflow-hidden" style={{ minHeight: '39vh' }}>
-        
+
 
         {/* Hero Banner Carousel Background */}
-        <div className="absolute top-0 left-0 right-0 bottom-0 z-0">
+        <div
+          className="absolute top-0 left-0 right-0 bottom-0 z-0 cursor-grab active:cursor-grabbing"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+        >
           {heroBannerImages.map((image, index) => (
             <img
               key={index}
               src={image}
               alt={`Hero Banner ${index + 1}`}
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${
-                index === currentBannerIndex ? 'opacity-100' : 'opacity-0'
-              }`}
-              style={{ 
-                objectPosition: 'center center', 
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${index === currentBannerIndex ? 'opacity-100' : 'opacity-0'
+                }`}
+              style={{
+                objectPosition: 'center center',
                 minHeight: '100%',
+                userSelect: 'none',
+                pointerEvents: 'none',
               }}
+              draggable={false}
             />
           ))}
         </div>
 
         {/* Navbar */}
-        <nav className="relative z-20 w-full px-3 sm:px-6 lg:px-8 py-1.5 sm:py-3 backdrop-blur-sm">
-        <div className="flex items-center justify-between gap-3 sm:gap-4">
-          {/* Left: Logo & Location */}
-          <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-            {/* Logo */}
-            <Link to="/user" className="hidden sm:block flex-shrink-0 transition-opacity hover:opacity-80">
-              <img
-                src={appzetoFoodLogo}
-                alt="Appzeto Food"
-                className="h-9 w-9 sm:h-10 sm:w-10 rounded-full object-cover shadow-lg ring-2 ring-white/30"
-              />
-            </Link>
-
-            {/* Location Button */}
-            <Button
-              variant="ghost"
-              onClick={handleLocationClick}
-              disabled={loading}
-              className="h-auto px-3 py-2 sm:px-4 sm:py-2.5 hover:bg-white/20 transition-colors rounded-lg flex-shrink-0"
-            >
-              {loading ? (
-                <span className="text-sm font-bold text-white drop-shadow-lg">Loading...</span>
-              ) : (
-                <div className="flex flex-col items-start min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <FaLocationDot className="h-6 w-6 sm:h-7 sm:w-7 text-white flex-shrink-0 drop-shadow-lg" fill="white" strokeWidth={2} />
-                    <span className="text-lg sm:text-xl font-bold text-white truncate max-w-[120px] sm:max-w-[180px] drop-shadow-lg">
-                      {cityName}
-                    </span>
-                    <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 text-white drop-shadow-lg flex-shrink-0" strokeWidth={2.5} />
-                  </div>
-                  {location?.state && (
-                    <span className="text-xs font-bold text-white/90 truncate max-w-[120px] sm:max-w-[180px] mt-0.5 drop-shadow-md">
-                      {stateName}
-                    </span>
-                  )}
-                </div>
-              )}
-            </Button>
-          </div>
-
-          {/* Right: Actions */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-            {/* Wallet Icon */}
-            <Link to="/user/wallet">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 sm:h-9 sm:w-9 rounded-full p-0 hover:opacity-80 transition-opacity"
-                title="Wallet"
-              >
-                <div className="h-full w-full rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center ring-2 ring-white/30">
-                  <Wallet className="h-4 w-4 sm:h-5 sm:w-5 text-gray-800" strokeWidth={2} />
-                </div>
-              </Button>
-            </Link>
-
-            {/* Notifications Icon */}
-            <Link to="/user/notifications">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative h-8 w-8 sm:h-9 sm:w-9 rounded-full p-0 hover:opacity-80 transition-opacity"
-                title="Notifications"
-              >
-                <div className="h-full w-full rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center ring-2 ring-white/30">
-                  <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-gray-800" strokeWidth={2} />
-                </div>
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center ring-2 ring-white/50">
-                  <span className="text-[9px] font-bold text-white">3</span>
-                </span>
-              </Button>
-            </Link>
-
-            {/* Cart Icon */}
-            <Link to="/user/cart">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative h-8 w-8 sm:h-9 sm:w-9 rounded-full p-0 hover:opacity-80 transition-opacity"
-                title="Cart"
-              >
-                <div className="h-full w-full rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center ring-2 ring-white/30">
-                  <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 text-gray-800" strokeWidth={2} />
-                </div>
-                {cartCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center ring-2 ring-white/50">
-                    <span className="text-[9px] font-bold text-white">{cartCount > 99 ? "99+" : cartCount}</span>
-                  </span>
-                )}
-              </Button>
-            </Link>
-
-            {/* Profile */}
-            <Link to="/user/profile">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-full p-0 hover:opacity-80 transition-opacity"
-                title="Profile"
-                >
-                  <div className="h-full w-full rounded-full bg-blue-100 flex items-center justify-center shadow-lg ring-2 ring-white/30">
-                    <span className="text-green-600 text-xs sm:text-sm font-extrabold">
-                      A
-                    </span>
-                  </div>
-                </Button>
-                </Link>
-          </div>
-        </div>
-        </nav>
+        <PageNavbar textColor="white" zIndex={20} />
 
         {/* Hero Section */}
         <section className="relative z-20 w-full py-0 sm:py-0">
@@ -1038,7 +1055,7 @@ export default function Home() {
 
         {/* Filters */}
         <section className="py-1">
-          <div 
+          <div
             className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide pb-1"
             style={{
               scrollbarWidth: "none",
@@ -1052,7 +1069,7 @@ export default function Home() {
               className="h-7 sm:h-8 px-2 sm:px-3 rounded-md flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 font-medium transition-all bg-white border border-gray-200 hover:bg-gray-50 text-gray-700"
             >
               <SlidersHorizontal className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="text-xs sm:text-sm font-medium">Filters</span>
+              <span className="text-xs sm:text-sm font-bold text-black">Filters</span>
             </Button>
 
             {/* Filter Buttons */}
@@ -1075,16 +1092,15 @@ export default function Home() {
                     setTimeout(() => {
                       setIsLoadingFilterResults(false)
                     }, 500)
-  }
                   }
-                  className={`h-7 sm:h-8 px-2 sm:px-3 rounded-md flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 transition-all font-medium ${
-                    isActive
+                  }
+                  className={`h-7 sm:h-8 px-2 sm:px-3 rounded-md flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 transition-all font-medium ${isActive
                       ? 'bg-green-600 text-white border border-green-600 hover:bg-green-600/90'
                       : 'bg-white border border-gray-200 hover:bg-gray-50 text-gray-600'
-                  }`}
+                    }`}
                 >
                   {Icon && <Icon className={`h-3 w-3 sm:h-4 sm:w-4 ${isActive ? 'fill-white' : ''}`} />}
-                  <span className="text-xs sm:text-sm font-medium">{filter.label}</span>
+                  <span className="text-xs sm:text-sm font-bold text-black">{filter.label}</span>
                 </Button>
               )
             })}
@@ -1096,7 +1112,7 @@ export default function Home() {
           <h2 className="text-xs sm:text-sm font-semibold text-gray-400 tracking-widest uppercase mb-2 sm:mb-3 px-1">
             Explore More
           </h2>
-          <div 
+          <div
             className="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-hide pb-2"
             style={{
               scrollbarWidth: "none",
@@ -1104,33 +1120,33 @@ export default function Home() {
             }}
           >
             {[
-              { 
-                id: 'offers', 
-                label: 'Offers', 
+              {
+                id: 'offers',
+                label: 'Offers',
                 image: exploreOffers,
                 href: '/user/offers'
               },
-              { 
-                id: 'gourmet', 
-                label: 'Gourmet', 
+              {
+                id: 'gourmet',
+                label: 'Gourmet',
                 image: exploreGourmet,
                 href: '/user/gourmet'
               },
-              { 
-                id: 'top10', 
-                label: 'Top 10', 
+              {
+                id: 'top10',
+                label: 'Top 10',
                 image: exploreTop10,
                 href: '/user/top-10'
               },
-              { 
-                id: 'collection', 
-                label: 'Collections', 
+              {
+                id: 'collection',
+                label: 'Collections',
                 image: exploreCollection,
                 href: '/user/collections'
               },
-              { 
-                id: 'giftcard', 
-                label: 'Gift Card', 
+              {
+                id: 'giftcard',
+                label: 'Gift Card',
                 image: exploreGiftCard,
                 href: '/user/gift-card'
               },
@@ -1138,8 +1154,8 @@ export default function Home() {
               <Link key={item.id} to={item.href} className="flex-shrink-0 bg-white">
                 <div className="flex flex-col items-center gap-2.5 w-24 sm:w-28 md:w-32 group">
                   <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-2xl bg-white flex items-center justify-center shadow-sm group-hover:shadow-lg group-hover:scale-105 transition-all duration-300 overflow-hidden p-2.5">
-                    <img 
-                      src={item.image} 
+                    <img
+                      src={item.image}
                       alt={item.label}
                       className="w-full h-full object-contain"
                     />
@@ -1176,96 +1192,116 @@ export default function Home() {
               </div>
             )}
             <div className={`grid grid-cols-1 gap-2 sm:gap-3 pt-1 sm:pt-1.5 ${isLoadingFilterResults ? 'opacity-50' : 'opacity-100'} transition-opacity duration-300`}>
-            {filteredRestaurants.map((restaurant, index) => {
-              const restaurantSlug = restaurant.name.toLowerCase().replace(/\s+/g, "-")
-              // Direct favorite check - isFavorite is already memoized in context
-              const favorite = isFavorite(restaurantSlug)
+              {filteredRestaurants.map((restaurant, index) => {
+                const restaurantSlug = restaurant.name.toLowerCase().replace(/\s+/g, "-")
+                // Direct favorite check - isFavorite is already memoized in context
+                const favorite = isFavorite(restaurantSlug)
 
-              const handleToggleFavorite = (e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                if (favorite) {
-                  removeFavorite(restaurantSlug)
-                } else {
-                  addFavorite({
-                    slug: restaurantSlug,
-                    name: restaurant.name,
-                    cuisine: restaurant.cuisine,
-                    rating: restaurant.rating,
-                    deliveryTime: restaurant.deliveryTime,
-                    distance: restaurant.distance,
-                    priceRange: restaurant.priceRange,
-                    image: restaurant.image
-                  })
+                const handleToggleFavorite = (e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  if (favorite) {
+                    // If already bookmarked, show Manage Collections modal
+                    setSelectedRestaurantSlug(restaurantSlug)
+                    setShowManageCollections(true)
+                  } else {
+                    // Add to favorites and show toast
+                    addFavorite({
+                      slug: restaurantSlug,
+                      name: restaurant.name,
+                      cuisine: restaurant.cuisine,
+                      rating: restaurant.rating,
+                      deliveryTime: restaurant.deliveryTime,
+                      distance: restaurant.distance,
+                      priceRange: restaurant.priceRange,
+                      image: restaurant.image
+                    })
+                    setShowToast(true)
+                    setTimeout(() => {
+                      setShowToast(false)
+                    }, 3000)
+                  }
                 }
-              }
 
-              return (
-                <ScrollRevealSimple key={restaurant.id} delay={index * 0.1}>
-                  <Link to={`/user/restaurants/${restaurantSlug}`}>
-                    <Card className="overflow-hidden gap-0 cursor-pointer border-0 group bg-white shadow-md hover:shadow-xl transition-all duration-300 py-0 rounded-2xl">
-                      {/* Image Section */}
-                      <div className="relative h-48 sm:h-56 md:h-60 w-full overflow-hidden rounded-t-2xl">
-                        <img
-                          src={restaurant.image}
-                          alt={restaurant.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                        
-                        {/* Featured Dish Badge - Top Left */}
-                        <div className="absolute top-3 left-3">
-                          <div className="bg-gray-800/80 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium">
-                            {restaurant.featuredDish} · ₹{restaurant.featuredPrice}
+                return (
+                  <ScrollRevealSimple key={restaurant.id} delay={index * 0.1}>
+                    <Link to={`/user/restaurants/${restaurantSlug}`}>
+                      <Card className="overflow-hidden gap-0 cursor-pointer border-0 group bg-white shadow-md hover:shadow-xl transition-all duration-300 py-0 rounded-2xl">
+                        {/* Image Section */}
+                        <div className="relative h-48 sm:h-56 md:h-60 w-full overflow-hidden rounded-t-2xl">
+                          <img
+                            src={restaurant.image}
+                            alt={restaurant.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+
+                          {/* Featured Dish Badge - Top Left */}
+                          <div className="absolute top-3 left-3">
+                            <div className="bg-gray-800/80 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium">
+                              {restaurant.featuredDish} · ₹{restaurant.featuredPrice}
+                            </div>
                           </div>
+
+                          {/* Bookmark Icon - Top Right */}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleToggleFavorite}
+                            className={`absolute top-3 right-3 h-9 w-9  rounded-full border flex items-center justify-center transition-all duration-300 ${favorite
+                                ? "border-red-500 bg-red-50 text-red-500"
+                                : "border-white bg-white/90 text-gray-600 hover:bg-white"
+                              }`}
+                          >
+
+                            <Bookmark
+                              className={`h-5 w-5 transition-all duration-300 ${favorite ? "fill-red-500" : ""
+                                }`} />                       </Button>
+                          {/* FREE delivery Badge - Bottom Left (only for first 3 restaurants) */}
+                          {index < 3 && (
+                            <div className="absolute bottom-0 left-0 sm:bottom-0 sm:left-0 z-10">
+                              <div className="bg-gradient-to-r from-blue-600 via-blue-500/80 to-transparent text-white px-2.5 py-1 rounded-r-sm text-[10px] sm:text-xs font-bold shadow-lg backdrop-blur-sm">
+                                FREE delivery
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        
-                        {/* Bookmark Icon - Top Right */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-3 right-3 h-9 w-9 bg-white/90 backdrop-blur-sm rounded-lg hover:bg-white transition-colors"
-                          onClick={handleToggleFavorite}
-                        >
-                          <Bookmark className={`h-5 w-5 ${favorite ? "fill-gray-800 text-gray-800" : "text-gray-600"}`} strokeWidth={2} />
-                        </Button>
-                      </div>
-                      
-                      {/* Content Section */}
-                      <CardContent className="p-3 sm:p-4 pt-3 sm:pt-4">
-                        {/* Restaurant Name & Rating */}
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-lg sm:text-xl font-bold text-gray-900 line-clamp-1">
-                              {restaurant.name}
-                            </h3>
+
+                        {/* Content Section */}
+                        <CardContent className="p-3 sm:p-4 pt-3 sm:pt-4">
+                          {/* Restaurant Name & Rating */}
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-lg sm:text-xl font-bold text-gray-900 line-clamp-1">
+                                {restaurant.name}
+                              </h3>
+                            </div>
+                            <div className="flex-shrink-0 bg-green-600 text-white px-2 py-1 rounded-lg flex items-center gap-1">
+                              <span className="text-sm font-bold">{restaurant.rating}</span>
+                              <Star className="h-3 w-3 fill-white text-white" />
+                            </div>
                           </div>
-                          <div className="flex-shrink-0 bg-green-600 text-white px-2 py-1 rounded-lg flex items-center gap-1">
-                            <span className="text-sm font-bold">{restaurant.rating}</span>
-                            <Star className="h-3 w-3 fill-white text-white" />
+
+                          {/* Delivery Time & Distance */}
+                          <div className="flex items-center gap-1 text-sm text-gray-500 mb-2">
+                            <Clock className="h-4 w-4" strokeWidth={1.5} />
+                            <span className="font-medium">{restaurant.deliveryTime}</span>
+                            <span className="mx-1">|</span>
+                            <span className="font-medium">{restaurant.distance}</span>
                           </div>
-                        </div>
-                        
-                        {/* Delivery Time & Distance */}
-                        <div className="flex items-center gap-1 text-sm text-gray-500 mb-2">
-                          <Clock className="h-4 w-4" strokeWidth={1.5} />
-                          <span className="font-medium">{restaurant.deliveryTime}</span>
-                          <span className="mx-1">|</span>
-                          <span className="font-medium">{restaurant.distance}</span>
-                        </div>
-                        
-                        {/* Offer Badge */}
-                        {restaurant.offer && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <BadgePercent className="h-4 w-4 text-blue-600" strokeWidth={2} />
-                            <span className="text-gray-700 font-medium">{restaurant.offer}</span>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </Link>
-                </ScrollRevealSimple>
-              )
-            })}
+
+                          {/* Offer Badge */}
+                          {restaurant.offer && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <BadgePercent className="h-4 w-4 text-blue-600" strokeWidth={2} />
+                              <span className="text-gray-700 font-medium">{restaurant.offer}</span>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  </ScrollRevealSimple>
+                )
+              })}
             </div>
           </div>
           <div className="flex justify-center pt-2 sm:pt-3">
@@ -1283,17 +1319,17 @@ export default function Home() {
       {isFilterOpen && (
         <div className="fixed inset-0 z-[100]">
           {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-black/50" 
+          <div
+            className="absolute inset-0 bg-black/50"
             onClick={() => setIsFilterOpen(false)}
           />
-          
+
           {/* Modal Content */}
           <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] flex flex-col animate-[slideUp_0.3s_ease-out]">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-4 border-b">
               <h2 className="text-lg font-bold text-gray-900">Filters and sorting</h2>
-              <button 
+              <button
                 onClick={() => {
                   setActiveFilters(new Set())
                   setSortBy(null)
@@ -1304,7 +1340,7 @@ export default function Home() {
                 Clear all
               </button>
             </div>
-            
+
             {/* Body */}
             <div className="flex flex-1 overflow-hidden">
               {/* Left Sidebar - Tabs */}
@@ -1331,9 +1367,8 @@ export default function Home() {
                           section.scrollIntoView({ behavior: 'smooth', block: 'start' })
                         }
                       }}
-                      className={`flex flex-col items-center gap-1 py-4 px-2 text-center relative transition-colors ${
-                        isActive ? 'bg-white text-green-600' : 'text-gray-500 hover:bg-gray-100'
-                      }`}
+                      className={`flex flex-col items-center gap-1 py-4 px-2 text-center relative transition-colors ${isActive ? 'bg-white text-green-600' : 'text-gray-500 hover:bg-gray-100'
+                        }`}
                     >
                       {isActive && (
                         <div className="absolute left-0 top-0 bottom-0 w-1 bg-green-600 rounded-r" />
@@ -1344,11 +1379,11 @@ export default function Home() {
                   )
                 })}
               </div>
-              
+
               {/* Right Content Area - Scrollable */}
               <div ref={rightContentRef} className="flex-1 overflow-y-auto p-4">
                 {/* Sort By Tab */}
-                <div 
+                <div
                   ref={el => filterSectionRefs.current['sort'] = el}
                   data-section-id="sort"
                   className="space-y-4 mb-8"
@@ -1365,11 +1400,10 @@ export default function Home() {
                       <button
                         key={option.id || 'relevance'}
                         onClick={() => setSortBy(option.id)}
-                        className={`px-4 py-3 rounded-xl border text-left transition-colors ${
-                          sortBy === option.id
+                        className={`px-4 py-3 rounded-xl border text-left transition-colors ${sortBy === option.id
                             ? 'border-green-600 bg-green-50'
                             : 'border-gray-200 hover:border-green-600'
-                        }`}
+                          }`}
                       >
                         <span className={`text-sm font-medium ${sortBy === option.id ? 'text-green-600' : 'text-gray-700'}`}>
                           {option.label}
@@ -1378,77 +1412,72 @@ export default function Home() {
                     ))}
                   </div>
                 </div>
-                
+
                 {/* Time Tab */}
-                <div 
+                <div
                   ref={el => filterSectionRefs.current['time'] = el}
                   data-section-id="time"
                   className="space-y-4 mb-8"
                 >
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Delivery Time</h3>
                   <div className="grid grid-cols-2 gap-3">
-                    <button 
+                    <button
                       onClick={() => toggleFilter('delivery-under-30')}
-                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${
-                        activeFilters.has('delivery-under-30') 
-                          ? 'border-green-600 bg-green-50' 
+                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${activeFilters.has('delivery-under-30')
+                          ? 'border-green-600 bg-green-50'
                           : 'border-gray-200 hover:border-green-600'
-                      }`}
+                        }`}
                     >
                       <Timer className={`h-6 w-6 ${activeFilters.has('delivery-under-30') ? 'text-green-600' : 'text-gray-600'}`} strokeWidth={1.5} />
                       <span className={`text-sm font-medium ${activeFilters.has('delivery-under-30') ? 'text-green-600' : 'text-gray-700'}`}>Under 30 mins</span>
                     </button>
-                    <button 
+                    <button
                       onClick={() => toggleFilter('delivery-under-45')}
-                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${
-                        activeFilters.has('delivery-under-45') 
-                          ? 'border-green-600 bg-green-50' 
+                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${activeFilters.has('delivery-under-45')
+                          ? 'border-green-600 bg-green-50'
                           : 'border-gray-200 hover:border-green-600'
-                      }`}
+                        }`}
                     >
                       <Timer className={`h-6 w-6 ${activeFilters.has('delivery-under-45') ? 'text-green-600' : 'text-gray-600'}`} strokeWidth={1.5} />
                       <span className={`text-sm font-medium ${activeFilters.has('delivery-under-45') ? 'text-green-600' : 'text-gray-700'}`}>Under 45 mins</span>
                     </button>
                   </div>
                 </div>
-                
+
                 {/* Rating Tab */}
-                <div 
+                <div
                   ref={el => filterSectionRefs.current['rating'] = el}
                   data-section-id="rating"
                   className="space-y-4 mb-8"
                 >
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Restaurant Rating</h3>
                   <div className="grid grid-cols-2 gap-3">
-                    <button 
+                    <button
                       onClick={() => toggleFilter('rating-35-plus')}
-                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${
-                        activeFilters.has('rating-35-plus') 
-                          ? 'border-green-600 bg-green-50' 
+                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${activeFilters.has('rating-35-plus')
+                          ? 'border-green-600 bg-green-50'
                           : 'border-gray-200 hover:border-green-600'
-                      }`}
+                        }`}
                     >
                       <Star className={`h-6 w-6 ${activeFilters.has('rating-35-plus') ? 'text-green-600 fill-green-600' : 'text-gray-400'}`} />
                       <span className={`text-sm font-medium ${activeFilters.has('rating-35-plus') ? 'text-green-600' : 'text-gray-700'}`}>Rated 3.5+</span>
                     </button>
-                    <button 
+                    <button
                       onClick={() => toggleFilter('rating-4-plus')}
-                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${
-                        activeFilters.has('rating-4-plus') 
-                          ? 'border-green-600 bg-green-50' 
+                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${activeFilters.has('rating-4-plus')
+                          ? 'border-green-600 bg-green-50'
                           : 'border-gray-200 hover:border-green-600'
-                      }`}
+                        }`}
                     >
                       <Star className={`h-6 w-6 ${activeFilters.has('rating-4-plus') ? 'text-green-600 fill-green-600' : 'text-gray-400'}`} />
                       <span className={`text-sm font-medium ${activeFilters.has('rating-4-plus') ? 'text-green-600' : 'text-gray-700'}`}>Rated 4.0+</span>
                     </button>
-                    <button 
+                    <button
                       onClick={() => toggleFilter('rating-45-plus')}
-                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${
-                        activeFilters.has('rating-45-plus') 
-                          ? 'border-green-600 bg-green-50' 
+                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${activeFilters.has('rating-45-plus')
+                          ? 'border-green-600 bg-green-50'
                           : 'border-gray-200 hover:border-green-600'
-                      }`}
+                        }`}
                     >
                       <Star className={`h-6 w-6 ${activeFilters.has('rating-45-plus') ? 'text-green-600 fill-green-600' : 'text-gray-400'}`} />
                       <span className={`text-sm font-medium ${activeFilters.has('rating-45-plus') ? 'text-green-600' : 'text-gray-700'}`}>Rated 4.5+</span>
@@ -1457,63 +1486,59 @@ export default function Home() {
                 </div>
 
                 {/* Distance Tab */}
-                <div 
+                <div
                   ref={el => filterSectionRefs.current['distance'] = el}
                   data-section-id="distance"
                   className="space-y-4 mb-8"
                 >
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Distance</h3>
                   <div className="grid grid-cols-2 gap-3">
-                    <button 
+                    <button
                       onClick={() => toggleFilter('distance-under-1km')}
-                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${
-                        activeFilters.has('distance-under-1km') 
-                          ? 'border-green-600 bg-green-50' 
+                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${activeFilters.has('distance-under-1km')
+                          ? 'border-green-600 bg-green-50'
                           : 'border-gray-200 hover:border-green-600'
-                      }`}
+                        }`}
                     >
                       <MapPin className={`h-6 w-6 ${activeFilters.has('distance-under-1km') ? 'text-green-600' : 'text-gray-600'}`} strokeWidth={1.5} />
                       <span className={`text-sm font-medium ${activeFilters.has('distance-under-1km') ? 'text-green-600' : 'text-gray-700'}`}>Under 1 km</span>
                     </button>
-                    <button 
+                    <button
                       onClick={() => toggleFilter('distance-under-2km')}
-                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${
-                        activeFilters.has('distance-under-2km') 
-                          ? 'border-green-600 bg-green-50' 
+                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${activeFilters.has('distance-under-2km')
+                          ? 'border-green-600 bg-green-50'
                           : 'border-gray-200 hover:border-green-600'
-                      }`}
+                        }`}
                     >
                       <MapPin className={`h-6 w-6 ${activeFilters.has('distance-under-2km') ? 'text-green-600' : 'text-gray-600'}`} strokeWidth={1.5} />
                       <span className={`text-sm font-medium ${activeFilters.has('distance-under-2km') ? 'text-green-600' : 'text-gray-700'}`}>Under 2 km</span>
                     </button>
                   </div>
                 </div>
-                
+
                 {/* Price Tab */}
-                <div 
+                <div
                   ref={el => filterSectionRefs.current['price'] = el}
                   data-section-id="price"
                   className="space-y-4 mb-8"
                 >
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Dish Price</h3>
                   <div className="flex flex-col gap-3">
-                    <button 
+                    <button
                       onClick={() => toggleFilter('price-under-200')}
-                      className={`px-4 py-3 rounded-xl border text-left transition-colors ${
-                        activeFilters.has('price-under-200') 
-                          ? 'border-green-600 bg-green-50' 
+                      className={`px-4 py-3 rounded-xl border text-left transition-colors ${activeFilters.has('price-under-200')
+                          ? 'border-green-600 bg-green-50'
                           : 'border-gray-200 hover:border-green-600'
-                      }`}
+                        }`}
                     >
                       <span className={`text-sm font-medium ${activeFilters.has('price-under-200') ? 'text-green-600' : 'text-gray-700'}`}>Under ₹200</span>
                     </button>
-                    <button 
+                    <button
                       onClick={() => toggleFilter('price-under-500')}
-                      className={`px-4 py-3 rounded-xl border text-left transition-colors ${
-                        activeFilters.has('price-under-500') 
-                          ? 'border-green-600 bg-green-50' 
+                      className={`px-4 py-3 rounded-xl border text-left transition-colors ${activeFilters.has('price-under-500')
+                          ? 'border-green-600 bg-green-50'
                           : 'border-gray-200 hover:border-green-600'
-                      }`}
+                        }`}
                     >
                       <span className={`text-sm font-medium ${activeFilters.has('price-under-500') ? 'text-green-600' : 'text-gray-700'}`}>Under ₹500</span>
                     </button>
@@ -1521,7 +1546,7 @@ export default function Home() {
                 </div>
 
                 {/* Cuisine Tab */}
-                <div 
+                <div
                   ref={el => filterSectionRefs.current['cuisine'] = el}
                   data-section-id="cuisine"
                   className="space-y-4 mb-8"
@@ -1532,11 +1557,10 @@ export default function Home() {
                       <button
                         key={cuisine}
                         onClick={() => setSelectedCuisine(selectedCuisine === cuisine ? null : cuisine)}
-                        className={`px-4 py-3 rounded-xl border text-center transition-colors ${
-                          selectedCuisine === cuisine
+                        className={`px-4 py-3 rounded-xl border text-center transition-colors ${selectedCuisine === cuisine
                             ? 'border-green-600 bg-green-50'
                             : 'border-gray-200 hover:border-green-600'
-                        }`}
+                          }`}
                       >
                         <span className={`text-sm font-medium ${selectedCuisine === cuisine ? 'text-green-600' : 'text-gray-700'}`}>
                           {cuisine}
@@ -1545,7 +1569,7 @@ export default function Home() {
                     ))}
                   </div>
                 </div>
-                
+
                 {/* Trust Markers Tab */}
                 {activeFilterTab === 'trust' && (
                   <div className="space-y-4">
@@ -1562,16 +1586,16 @@ export default function Home() {
                 )}
               </div>
             </div>
-            
+
             {/* Footer */}
             <div className="flex items-center gap-4 px-4 py-4 border-t bg-white">
-              <button 
+              <button
                 onClick={() => setIsFilterOpen(false)}
                 className="flex-1 py-3 text-center font-semibold text-gray-700"
               >
                 Close
               </button>
-              <button 
+              <button
                 onClick={() => {
                   setIsLoadingFilterResults(true)
                   setIsFilterOpen(false)
@@ -1580,11 +1604,10 @@ export default function Home() {
                     setIsLoadingFilterResults(false)
                   }, 1000)
                 }}
-                className={`flex-1 py-3 font-semibold rounded-xl transition-colors ${
-                  activeFilters.size > 0 || sortBy || selectedCuisine
+                className={`flex-1 py-3 font-semibold rounded-xl transition-colors ${activeFilters.size > 0 || sortBy || selectedCuisine
                     ? 'bg-green-600 text-white hover:bg-green-700'
                     : 'bg-gray-200 text-gray-500'
-                }`}
+                  }`}
               >
                 {activeFilters.size > 0 || sortBy || selectedCuisine
                   ? `Show ${filteredRestaurants.length} results`
@@ -1613,15 +1636,15 @@ export default function Home() {
               }}
               className="fixed inset-0 bg-black/30 z-[9998] backdrop-blur-sm"
             />
-            
+
             {/* Popup */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: -10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: -10 }}
-              transition={{ 
-                type: "spring", 
-                damping: 25, 
+              transition={{
+                type: "spring",
+                damping: 25,
                 stiffness: 300,
                 mass: 0.8
               }}
@@ -1633,22 +1656,22 @@ export default function Home() {
               onClick={(e) => e.stopPropagation()}
             >
               {/* Pointer Triangle */}
-              <div 
+              <div
                 className="absolute -top-2 right-5 w-3 h-3 bg-white transform rotate-45"
                 style={{
                   boxShadow: '-2px -2px 4px rgba(0,0,0,0.1)'
                 }}
               />
-              
+
               {/* Title */}
               <h3 className="text-base font-bold text-gray-900 mb-3">
                 See veg dishes from
               </h3>
-              
+
               {/* Radio Options */}
               <div className="space-y-2 mb-4">
                 {/* All restaurants */}
-                <label 
+                <label
                   className="flex items-center gap-2.5 cursor-pointer p-1.5 rounded-lg hover:bg-gray-50 transition-colors"
                   onClick={() => setVegModeOption("all")}
                 >
@@ -1661,11 +1684,10 @@ export default function Home() {
                       onChange={() => setVegModeOption("all")}
                       className="sr-only"
                     />
-                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
-                      vegModeOption === "all" 
-                        ? "border-green-600 bg-green-600" 
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${vegModeOption === "all"
+                        ? "border-green-600 bg-green-600"
                         : "border-gray-300 bg-white"
-                    }`}>
+                      }`}>
                       {vegModeOption === "all" && (
                         <div className="w-1.5 h-1.5 rounded-full bg-white" />
                       )}
@@ -1675,9 +1697,9 @@ export default function Home() {
                     All restaurants
                   </span>
                 </label>
-                
+
                 {/* Pure Veg restaurants only */}
-                <label 
+                <label
                   className="flex items-center gap-2.5 cursor-pointer p-1.5 rounded-lg hover:bg-gray-50 transition-colors"
                   onClick={() => setVegModeOption("pure-veg")}
                 >
@@ -1690,11 +1712,10 @@ export default function Home() {
                       onChange={() => setVegModeOption("pure-veg")}
                       className="sr-only"
                     />
-                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
-                      vegModeOption === "pure-veg" 
-                        ? "border-green-600 bg-green-600" 
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${vegModeOption === "pure-veg"
+                        ? "border-green-600 bg-green-600"
                         : "border-gray-300 bg-white"
-                    }`}>
+                      }`}>
                       {vegModeOption === "pure-veg" && (
                         <div className="w-1.5 h-1.5 rounded-full bg-white" />
                       )}
@@ -1705,7 +1726,7 @@ export default function Home() {
                   </span>
                 </label>
               </div>
-              
+
               {/* Apply Button */}
               <button
                 onClick={() => {
@@ -1722,7 +1743,7 @@ export default function Home() {
               >
                 Apply
               </button>
-              
+
               {/* More settings link */}
               <button
                 onClick={() => {
@@ -1758,15 +1779,15 @@ export default function Home() {
               }}
               className="fixed inset-0 bg-black/50 z-[9998] backdrop-blur-sm"
             />
-            
+
             {/* Popup */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ 
-                type: "spring", 
-                damping: 25, 
+              transition={{
+                type: "spring",
+                damping: 25,
                 stiffness: 300,
                 mass: 0.8
               }}
@@ -1780,17 +1801,17 @@ export default function Home() {
                     <AlertCircle className="w-20 h-20 text-white bg-red-500/90 rounded-full p-2" strokeWidth={2.5} />
                   </div>
                 </div>
-                
+
                 {/* Title */}
                 <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
                   Switch off Veg Mode?
                 </h2>
-                
+
                 {/* Description */}
                 <p className="text-gray-600 text-center mb-6 text-sm">
                   You'll see all restaurants, including those serving non-veg dishes
                 </p>
-                
+
                 {/* Buttons */}
                 <div className="space-y-3">
                   <button
@@ -1809,7 +1830,7 @@ export default function Home() {
                   >
                     Switch off
                   </button>
-                  
+
                   <button
                     onClick={() => {
                       setShowSwitchOffPopup(false)
@@ -1909,80 +1930,80 @@ export default function Home() {
         )}
       </AnimatePresence> */}
 
-<AnimatePresence>
-      {isApplyingVegMode && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          className="fixed inset-0 z-[10000] bg-white flex items-center justify-center"
+      <AnimatePresence>
+        {isApplyingVegMode && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-[10000] bg-white flex items-center justify-center"
           >
-          <div className="relative w-32 h-32 flex items-center justify-center w-full">
-            {/* Animated circles - positioned absolutely at the center */}
-            {[...Array(8)].map((_, i) => {
-              const baseSize = 112
-              const maxSize = 600
-              return (
-                <motion.div
-                  key={i}
-                  initial={{
-                    scale: 1,
-                    opacity: 0,
-                  }}
-                  animate={{
-                    scale: maxSize / baseSize,
-                    opacity: [0, 0.4, 0.2, 0],
-                  }}
-                  transition={{
-                    duration: 2.5,
-                    repeat: Number.POSITIVE_INFINITY,
-                    ease: "easeOut",
-                    delay: i * 0.3,
-                  }}
-                  className="absolute rounded-full border border-green-300"
-                  style={{
-                    width: baseSize,
-                    height: baseSize,
-                    // left: "50%",
-                    // top: "50%",
-                    // transform: "translate(-50%, -50%)",
-                    // transformOrigin: "center center",
-                  }}
-                />
-              )
-            })}
+            <div className="relative w-32 h-32 flex items-center justify-center w-full">
+              {/* Animated circles - positioned absolutely at the center */}
+              {[...Array(8)].map((_, i) => {
+                const baseSize = 112
+                const maxSize = 600
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{
+                      scale: 1,
+                      opacity: 0,
+                    }}
+                    animate={{
+                      scale: maxSize / baseSize,
+                      opacity: [0, 0.4, 0.2, 0],
+                    }}
+                    transition={{
+                      duration: 2.5,
+                      repeat: Number.POSITIVE_INFINITY,
+                      ease: "easeOut",
+                      delay: i * 0.3,
+                    }}
+                    className="absolute rounded-full border border-green-300"
+                    style={{
+                      width: baseSize,
+                      height: baseSize,
+                      // left: "50%",
+                      // top: "50%",
+                      // transform: "translate(-50%, -50%)",
+                      // transformOrigin: "center center",
+                    }}
+                  />
+                )
+              })}
 
-            {/* 100% VEG badge - absolute positioning at exact center */}
-            <motion.div
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{
-                type: "spring",
-                stiffness: 200,
-                damping: 15,
-                delay: 0.1,
-              }}
-              className="absolute z-10 w-28 h-28 rounded-full border-2 border-green-600 bg-white flex flex-col items-center justify-center shadow-sm"
-              style={{
-                // left: "50%",
-                // top: "50%",
-                // transform: "translate(-50%, -50%)",
-              }}
-            >
+              {/* 100% VEG badge - absolute positioning at exact center */}
               <motion.div
-                className="flex flex-col items-center"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 15,
+                  delay: 0.1,
+                }}
+                className="absolute z-10 w-28 h-28 rounded-full border-2 border-green-600 bg-white flex flex-col items-center justify-center shadow-sm"
+                style={{
+                  // left: "50%",
+                  // top: "50%",
+                  // transform: "translate(-50%, -50%)",
+                }}
               >
-                <span className="text-green-600 font-extrabold text-3xl leading-none">100%</span>
-                <span className="text-green-600 font-extrabold text-3xl leading-none mt-0.5">VEG</span>
+                <motion.div
+                  className="flex flex-col items-center"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <span className="text-green-600 font-extrabold text-3xl leading-none">100%</span>
+                  <span className="text-green-600 font-extrabold text-3xl leading-none mt-0.5">VEG</span>
+                </motion.div>
               </motion.div>
-            </motion.div>
 
-            {/* Text below badge */}
-            <motion.p
+              {/* Text below badge */}
+              <motion.p
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
@@ -1990,10 +2011,10 @@ export default function Home() {
               >
                 Explore veg dishes from all restaurants
               </motion.p>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
 
       {/* Loading Screen - Switching Off Veg Mode */}
@@ -2031,7 +2052,7 @@ export default function Home() {
                   }}
                   className="absolute w-16 h-16 border-[4px] border-transparent border-t-pink-500 border-r-pink-500 rounded-full"
                 />
-                
+
                 {/* Inner Circle - Spins Counter-clockwise */}
                 <motion.div
                   animate={{ rotate: -360 }}
@@ -2045,7 +2066,7 @@ export default function Home() {
                   className="absolute w-12 h-12 border-[4px] border-transparent border-r-pink-500 rounded-full"
                 />
               </motion.div>
-              
+
               {/* Loading Text */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -2074,6 +2095,137 @@ export default function Home() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Toast Notification - Fixed to viewport bottom */}
+      {typeof window !== "undefined" &&
+        createPortal(
+          <AnimatePresence>
+            {showToast && (
+              <motion.div
+                initial={{ y: 100, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 100, opacity: 0 }}
+                transition={{ duration: 0.3, type: "spring", damping: 25 }}
+                className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[10001] bg-black text-white px-6 py-3 rounded-lg shadow-2xl"
+              >
+                <p className="text-sm font-medium">Added to bookmark</p>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
+
+      {/* Manage Collections Modal */}
+      {typeof window !== "undefined" &&
+        createPortal(
+          <AnimatePresence>
+            {showManageCollections && (
+              <>
+                {/* Backdrop */}
+                <motion.div
+                  className="fixed inset-0 bg-black/40 z-[9999]"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  onClick={() => setShowManageCollections(false)}
+                />
+
+                {/* Manage Collections Bottom Sheet */}
+                <motion.div
+                  className="fixed left-0 right-0 bottom-0 z-[10000] bg-white rounded-t-3xl shadow-2xl"
+                  initial={{ y: "100%" }}
+                  animate={{ y: 0 }}
+                  exit={{ y: "100%" }}
+                  transition={{ duration: 0.2, type: "spring", damping: 30, stiffness: 400 }}
+                >
+                  {/* Header */}
+                  <div className="flex items-center justify-between px-4 pt-6 pb-4 border-b border-gray-200">
+                    <h2 className="text-lg font-bold text-gray-900">Manage Collections</h2>
+                    <button
+                      onClick={() => setShowManageCollections(false)}
+                      className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center hover:bg-gray-800 transition-colors"
+                    >
+                      <X className="h-4 w-4 text-white" />
+                    </button>
+                  </div>
+
+                  {/* Collections List */}
+                  <div className="px-4 py-4 space-y-2 max-h-[60vh] overflow-y-auto">
+                    {/* Bookmarks Collection */}
+                    <button
+                      className="w-full flex items-start gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        // Don't close modal on click, let checkbox handle it
+                      }}
+                    >
+                      <div className="h-12 w-12 rounded-lg bg-pink-100 flex items-center justify-center flex-shrink-0">
+                        <Bookmark className="h-6 w-6 text-red-500 fill-red-500" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <div className="flex items-center justify-between">
+                          <span className="text-base font-medium text-gray-900">Bookmarks</span>
+                          {selectedRestaurantSlug && (
+                            <Checkbox
+                              checked={isFavorite(selectedRestaurantSlug)}
+                              onCheckedChange={(checked) => {
+                                if (!checked) {
+                                  removeFavorite(selectedRestaurantSlug)
+                                  setSelectedRestaurantSlug(null)
+                                  setShowManageCollections(false)
+                                }
+                              }}
+                              className="h-5 w-5 rounded border-2 border-red-500 data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          )}
+                          {!selectedRestaurantSlug && (
+                            <div className="h-5 w-5 rounded border-2 border-red-500 bg-red-500 flex items-center justify-center">
+                              <Check className="h-3 w-3 text-white" />
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-500 mt-1">
+                          {getFavorites().length} restaurant{getFavorites().length !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                    </button>
+
+                    {/* Create new Collection */}
+                    <button
+                      className="w-full flex items-start gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors"
+                      onClick={() => setShowManageCollections(false)}
+                    >
+                      <div className="h-12 w-12 rounded-lg bg-pink-100 flex items-center justify-center flex-shrink-0">
+                        <Plus className="h-6 w-6 text-red-500" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <span className="text-base font-medium text-gray-900">
+                          Create new Collection
+                        </span>
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* Done Button */}
+                  <div className="border-t border-gray-200 px-4 py-4">
+                    <Button
+                      className="w-full bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 rounded-lg font-medium"
+                      onClick={() => {
+                        setSelectedRestaurantSlug(null)
+                        setShowManageCollections(false)
+                      }}
+                    >
+                      Done
+                    </Button>
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
 
       <StickyCartCard />
     </div>

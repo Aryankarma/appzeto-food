@@ -11,7 +11,7 @@ import {
 import { useLocation } from "../hooks/useLocation"
 import { useCart } from "../context/CartContext"
 import { useLocationSelector } from "./UserLayout"
-import appzetoFoodLogo from "@/assets/appzetofoodlogo.jpeg"
+import appzetoLogo from "@/assets/appzetologo.png"
 
 export default function Navbar() {
   const { location, loading } = useLocation()
@@ -27,25 +27,14 @@ export default function Navbar() {
   }
 
   // Mock points value - replace with actual points from context/store
+  const userPoints = 99
+
   return (
     <nav className="z-50 w-full backdrop-blur-md bg-gradient-to-b from-page-bg/80 via-page-bg/50 to-page-bg/20 border-b border-gray-200/50">
       <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8">
         <div className="flex h-16 sm:h-18 md:h-20 items-center justify-between gap-2 sm:gap-3 md:gap-4">
-          {/* Logo and Location */}
-
-
-
-
+          {/* Location Section */}
           <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-            {/* Appzeto Food Logo - Hidden on mobile */}
-            <Link to="/user" className="hidden sm:flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-              <img
-                src={appzetoFoodLogo}
-                alt="Appzeto Food Logo"
-                className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full object-cover"
-              />
-            </Link>
-            
             {/* Location - 2 Row Layout */}
             <Button
               variant="ghost"
@@ -71,6 +60,15 @@ export default function Navbar() {
               )}
             </Button>
           </div>
+
+          {/* Appzeto Logo - Centered between sections */}
+          <Link to="/user" className="flex items-center justify-center flex-shrink-0">
+            <img
+              src={appzetoLogo}
+              alt="Appzeto Logo"
+              className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 object-contain"
+            />
+          </Link>
 
           {/* Right Side Actions - Profile, Points, Cart */}
           <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
@@ -113,6 +111,9 @@ export default function Navbar() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
+                <Link to="/user/cart">
+                  <DropdownMenuItem>YOUR CART</DropdownMenuItem>
+                </Link>
                 <Link to="/user/profile">
                   <DropdownMenuItem>Profile</DropdownMenuItem>
                 </Link>

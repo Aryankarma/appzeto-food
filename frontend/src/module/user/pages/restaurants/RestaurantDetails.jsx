@@ -31,8 +31,10 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 import AnimatedPage from "../../components/AnimatedPage"
 import { useCart } from "../../context/CartContext"
+import AddToCartAnimation from "../../components/AddToCartAnimation"
 
 // Restaurant data - matching the structure
 const restaurantsData = {
@@ -2964,6 +2966,7 @@ export default function RestaurantDetails() {
   const [bookmarkedItems, setBookmarkedItems] = useState(new Set())
   const [showToast, setShowToast] = useState(false)
   const [showManageCollections, setShowManageCollections] = useState(false)
+  const [selectedItemId, setSelectedItemId] = useState(null)
   const [showItemDetail, setShowItemDetail] = useState(false)
   const [selectedItem, setSelectedItem] = useState(null)
   const [showFilterSheet, setShowFilterSheet] = useState(false)
@@ -3002,7 +3005,7 @@ export default function RestaurantDetails() {
   }, [restaurant.name])
 
   // Helper function to update item quantity in both local state and cart
-  const updateItemQuantity = (item, newQuantity) => {
+  const updateItemQuantity = (item, newQuantity, event = null) => {
     // Update local state
     setQuantities((prev) => ({
       ...prev,
@@ -3020,6 +3023,16 @@ export default function RestaurantDetails() {
       originalPrice: item.originalPrice,
     }
 
+    // Get source position for animation from event target
+    let sourcePosition = null
+    if (event && event.currentTarget) {
+      const rect = event.currentTarget.getBoundingClientRect()
+      sourcePosition = {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      }
+    }
+
     // Update cart context
     if (newQuantity <= 0) {
       removeFromCart(item.id)
@@ -3029,7 +3042,8 @@ export default function RestaurantDetails() {
         updateQuantity(item.id, newQuantity)
       } else {
         // Add to cart first (adds with quantity 1), then update to desired quantity
-        addToCart(cartItem)
+        // Only pass sourcePosition when adding a new item (not when updating quantity)
+        addToCart(cartItem, sourcePosition)
         if (newQuantity > 1) {
           updateQuantity(item.id, newQuantity)
         }
@@ -3069,6 +3083,7 @@ export default function RestaurantDetails() {
       const newSet = new Set(prev)
       if (newSet.has(itemId)) {
         // If already bookmarked, show Manage Collections modal
+        setSelectedItemId(itemId)
         setShowManageCollections(true)
         return newSet // Don't remove bookmark
       } else {
@@ -3576,7 +3591,7 @@ export default function RestaurantDetails() {
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation()
-                                        updateItemQuantity(item, 1)
+                                        updateItemQuantity(item, 1, e)
                                       }}
                                       className="text-white font-semibold text-sm hover:bg-red-500 rounded px-2 py-0.5 transition-colors"
                                     >
@@ -3775,7 +3790,7 @@ export default function RestaurantDetails() {
                                               <button
                                                 onClick={(e) => {
                                                   e.stopPropagation()
-                                                  updateItemQuantity(item, 1)
+                                                  updateItemQuantity(item, 1, e)
                                                 }}
                                                 className="text-white font-semibold text-sm hover:bg-red-500 rounded px-2 py-0.5 transition-colors"
                                               >
@@ -4303,7 +4318,10 @@ export default function RestaurantDetails() {
                     {/* Bookmarks Collection */}
                     <button
                       className="w-full flex items-start gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors"
-                      onClick={() => setShowManageCollections(false)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        // Don't close modal on click, let checkbox handle it
+                      }}
                     >
                       <div className="h-12 w-12 rounded-lg bg-pink-100 flex items-center justify-center flex-shrink-0">
                         <Bookmark className="h-6 w-6 text-red-500 fill-red-500" />
@@ -4311,9 +4329,29 @@ export default function RestaurantDetails() {
                       <div className="flex-1 text-left">
                         <div className="flex items-center justify-between">
                           <span className="text-base font-medium text-gray-900">Bookmarks</span>
-                          <div className="h-5 w-5 rounded border-2 border-red-500 bg-red-500 flex items-center justify-center">
-                            <Check className="h-3 w-3 text-white" />
-                          </div>
+                          {selectedItemId && (
+                            <Checkbox
+                              checked={bookmarkedItems.has(selectedItemId)}
+                              onCheckedChange={(checked) => {
+                                if (!checked) {
+                                  setBookmarkedItems((prev) => {
+                                    const newSet = new Set(prev)
+                                    newSet.delete(selectedItemId)
+                                    return newSet
+                                  })
+                                  setSelectedItemId(null)
+                                  setShowManageCollections(false)
+                                }
+                              }}
+                              className="h-5 w-5 rounded border-2 border-red-500 data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          )}
+                          {!selectedItemId && (
+                            <div className="h-5 w-5 rounded border-2 border-red-500 bg-red-500 flex items-center justify-center">
+                              <Check className="h-3 w-3 text-white" />
+                            </div>
+                          )}
                         </div>
                         <p className="text-sm text-gray-500 mt-1">
                           {bookmarkedItems.size} dishes • 0 restaurant
@@ -4341,7 +4379,10 @@ export default function RestaurantDetails() {
                   <div className="border-t border-gray-200 px-4 py-4">
                     <Button
                       className="w-full bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 rounded-lg font-medium"
-                      onClick={() => setShowManageCollections(false)}
+                      onClick={() => {
+                        setSelectedItemId(null)
+                        setShowManageCollections(false)
+                      }}
                     >
                       Done
                     </Button>
@@ -4936,6 +4977,13 @@ export default function RestaurantDetails() {
           </AnimatePresence>,
           document.body
         )}
+
+      {/* Add to Cart Animation Component */}
+      <AddToCartAnimation 
+        bottomOffset={96}
+        linkTo="/user/cart"
+        hideOnPages={true}
+      />
     </AnimatedPage>
   )
 }

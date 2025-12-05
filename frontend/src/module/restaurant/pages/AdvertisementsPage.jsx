@@ -158,7 +158,7 @@ export default function AdvertisementsPage() {
                   transition={{ type: "spring", stiffness: 500, damping: 30 }}
                 />
               )}
-              <span className="relative z-10">
+              <span className="relative z-10 text-black font-bold">
                 {filter.label} {filter.count > 0 && filter.count}
               </span>
             </motion.button>
