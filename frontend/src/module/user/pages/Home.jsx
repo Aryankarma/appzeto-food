@@ -62,17 +62,20 @@ const categories = [
 
 // Animated placeholder for search - moved outside component to prevent recreation
 const placeholders = [
-  "Search for food, cuisines...",
-  "Looking for Biryani?",
-  "Try Pizza or Burgers",
-  "Explore Chinese cuisine",
-  "Find your favorite dessert"
+  "Search \"burger\"",
+  "Search \"biryani\"",
+  "Search \"pizza\"",
+  "Search \"desserts\"",
+  "Search \"chinese\"",
+  "Search \"thali\"",
+  "Search \"momos\"",
+  "Search \"dosa\""
 ]
 
 // Deals data - moved outside component
 const dealsData = [
   { id: 1, title: "50% Off First Order", description: "Get 50% off on your first order above ₹1667", discount: "50%", color: "from-red-500 to-pink-500" },
-  { id: 2, title: "Free Delivery", description: "Free delivery on orders above ₹1245", discount: "FREE", color: "from-green-500 to-emerald-500" },
+  { id: 2, title: "Free Delivery", description: "Free delivery on orders above ₹1245", discount: "FREE", color: "from-green-600 to-emerald-500" },
   { id: 3, title: "Buy 2 Get 1", description: "Buy any 2 items and get 1 free", discount: "B2G1", color: "from-purple-500 to-indigo-500" },
   { id: 4, title: "Weekend Special", description: "Extra 20% off on weekends", discount: "20%", color: "from-blue-500 to-cyan-500" },
 ]
@@ -427,6 +430,7 @@ export default function Home() {
   const [selectedCuisine, setSelectedCuisine] = useState(null)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [activeFilterTab, setActiveFilterTab] = useState('sort')
+  const [isLoadingFilterResults, setIsLoadingFilterResults] = useState(false)
   const categoryScrollRef = useRef(null)
   const gsapAnimationsRef = useRef([])
   const { addFavorite, removeFavorite, isFavorite } = useProfile()
@@ -632,11 +636,11 @@ export default function Home() {
   // Removed GSAP animations - using CSS and ScrollReveal components instead for better performance
   // Auto-scroll removed - manual scroll only
 
-  // Animated placeholder cycling
+  // Animated placeholder cycling - same as RestaurantDetails highlight offer animation
   useEffect(() => {
     const interval = setInterval(() => {
       setPlaceholderIndex((prev) => (prev + 1) % placeholders.length)
-    }, 3000) // Change placeholder every 3 seconds
+    }, 2000) // Change placeholder every 2 seconds (same as RestaurantDetails)
 
     return () => clearInterval(interval)
   }, []) // placeholders is a constant, no need for dependency
@@ -899,8 +903,8 @@ export default function Home() {
                 title="Profile"
                 >
                   <div className="h-full w-full rounded-full bg-blue-100 flex items-center justify-center shadow-lg ring-2 ring-white/30">
-                    <span className="text-primary-orange text-xs sm:text-sm font-extrabold">
-                      AK
+                    <span className="text-green-600 text-xs sm:text-sm font-extrabold">
+                      A
                     </span>
                   </div>
                 </Button>
@@ -919,22 +923,40 @@ export default function Home() {
               <div className="flex-1 relative animate-[slideUp_0.4s_ease-out]">
                 <div className="relative bg-white rounded-xl shadow-lg border border-gray-200 p-1 sm:p-1.5 transition-all duration-300 hover:shadow-xl">
                   <div className="flex items-center gap-2 sm:gap-3">
-                    <Search className="h-4 w-4 sm:h-4 sm:w-4 text-green-500 flex-shrink-0 ml-2 sm:ml-3" strokeWidth={2.5} />
+                    <Search className="h-4 w-4 sm:h-4 sm:w-4 text-green-600 flex-shrink-0 ml-2 sm:ml-3" strokeWidth={2.5} />
                     <div className="flex-1 relative">
-                      <Input
-                        value={heroSearch}
-                        onChange={(e) => setHeroSearch(e.target.value)}
-                        onFocus={handleSearchFocus}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && heroSearch.trim()) {
-                            navigate(`/user/search?q=${encodeURIComponent(heroSearch.trim())}`)
-                            closeSearch()
-                            setHeroSearch("")
-                          }
-                        }}
-                        className="pl-0 pr-2 h-8 sm:h-9 w-full bg-transparent border-0 text-sm sm:text-base font-semibold text-gray-700 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-full placeholder:font-semibold placeholder:text-gray-400"
-                        placeholder="Search &quot;burger&quot;"
-                      />
+                      <div className="relative w-full">
+                        <Input
+                          value={heroSearch}
+                          onChange={(e) => setHeroSearch(e.target.value)}
+                          onFocus={handleSearchFocus}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && heroSearch.trim()) {
+                              navigate(`/user/search?q=${encodeURIComponent(heroSearch.trim())}`)
+                              closeSearch()
+                              setHeroSearch("")
+                            }
+                          }}
+                          className="pl-0 pr-2 h-8 sm:h-9 w-full bg-transparent border-0 text-sm sm:text-base font-semibold text-gray-700 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-full"
+                        />
+                        {/* Animated placeholder - same animation as RestaurantDetails highlight offer */}
+                        {!heroSearch && (
+                          <div className="absolute left-0 top-1/2 -translate-y-1/2 pointer-events-none h-5 overflow-hidden">
+                            <AnimatePresence mode="wait">
+                              <motion.span
+                                key={placeholderIndex}
+                                initial={{ y: 16, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                exit={{ y: -16, opacity: 0 }}
+                                transition={{ duration: 0.3 }}
+                                className="text-sm sm:text-base font-semibold text-gray-400 inline-block"
+                              >
+                                {placeholders[placeholderIndex]}
+                              </motion.span>
+                            </AnimatePresence>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <button
                       type="button"
@@ -956,7 +978,7 @@ export default function Home() {
                 <Switch
                   checked={vegMode}
                   onCheckedChange={setVegMode}
-                  className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300 w-9 h-4 sm:w-10 sm:h-5 shadow-lg [&_[data-slot=switch-thumb]]:bg-white [&_[data-slot=switch-thumb]]:h-3 [&_[data-slot=switch-thumb]]:w-3 sm:[&_[data-slot=switch-thumb]]:h-4 sm:[&_[data-slot=switch-thumb]]:w-4 [&_[data-slot=switch-thumb]]:data-[state=checked]:translate-x-5 sm:[&_[data-slot=switch-thumb]]:data-[state=checked]:translate-x-5 [&_[data-slot=switch-thumb]]:data-[state=unchecked]:translate-x-0"
+                  className="data-[state=checked]:bg-green-600 data-[state=unchecked]:bg-gray-300 w-9 h-4 sm:w-10 sm:h-5 shadow-lg [&_[data-slot=switch-thumb]]:bg-white [&_[data-slot=switch-thumb]]:h-3 [&_[data-slot=switch-thumb]]:w-3 sm:[&_[data-slot=switch-thumb]]:h-4 sm:[&_[data-slot=switch-thumb]]:w-4 [&_[data-slot=switch-thumb]]:data-[state=checked]:translate-x-5 sm:[&_[data-slot=switch-thumb]]:data-[state=checked]:translate-x-5 [&_[data-slot=switch-thumb]]:data-[state=unchecked]:translate-x-0"
                 />
               </div>
             </div>
@@ -1046,10 +1068,18 @@ export default function Home() {
                 <Button
                   key={filter.id}
                   variant="outline"
-                  onClick={() => toggleFilter(filter.id)}
+                  onClick={() => {
+                    toggleFilter(filter.id)
+                    setIsLoadingFilterResults(true)
+                    // Simulate loading for 1 second
+                    setTimeout(() => {
+                      setIsLoadingFilterResults(false)
+                    }, 500)
+  }
+                  }
                   className={`h-7 sm:h-8 px-2 sm:px-3 rounded-md flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 transition-all font-medium ${
                     isActive
-                      ? 'bg-primary-orange text-white border border-primary-orange hover:bg-primary-orange/90'
+                      ? 'bg-green-600 text-white border border-green-600 hover:bg-green-600/90'
                       : 'bg-white border border-gray-200 hover:bg-gray-50 text-gray-600'
                   }`}
                 >
@@ -1067,7 +1097,7 @@ export default function Home() {
             Explore More
           </h2>
           <div 
-            className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide pb-2"
+            className="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-hide pb-2"
             style={{
               scrollbarWidth: "none",
               msOverflowStyle: "none",
@@ -1135,7 +1165,17 @@ export default function Home() {
               <span className="text-base sm:text-lg text-gray-500 font-normal">Featured</span>
             </div>
           </TextRevealSimple>
-          <div className="grid grid-cols-1 gap-2 sm:gap-3 pt-1 sm:pt-1.5">
+          <div className="relative">
+            {/* Loading Overlay */}
+            {isLoadingFilterResults && (
+              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg min-h-[400px]">
+                <div className="flex flex-col items-center gap-3">
+                  <Loader2 className="h-8 w-8 text-green-600 animate-spin" strokeWidth={2.5} />
+                  <span className="text-sm font-medium text-gray-700">Loading restaurants...</span>
+                </div>
+              </div>
+            )}
+            <div className={`grid grid-cols-1 gap-2 sm:gap-3 pt-1 sm:pt-1.5 ${isLoadingFilterResults ? 'opacity-50' : 'opacity-100'} transition-opacity duration-300`}>
             {filteredRestaurants.map((restaurant, index) => {
               const restaurantSlug = restaurant.name.toLowerCase().replace(/\s+/g, "-")
               // Direct favorite check - isFavorite is already memoized in context
@@ -1226,10 +1266,11 @@ export default function Home() {
                 </ScrollRevealSimple>
               )
             })}
+            </div>
           </div>
           <div className="flex justify-center pt-2 sm:pt-3">
             {/* <Link to="/user/restaurants">
-              <Button variant="outline" className="bg-transparent outline-none text-primary-orange hover:opacity-80 border-none underline shadow-none  text-xs sm:text-sm md:text-base sm:hidden">
+              <Button variant="outline" className="bg-transparent outline-none text-green-600 hover:opacity-80 border-none underline shadow-none  text-xs sm:text-sm md:text-base sm:hidden">
                 See All Restaurants
               </Button>
             </Link> */}
@@ -1326,8 +1367,8 @@ export default function Home() {
                         onClick={() => setSortBy(option.id)}
                         className={`px-4 py-3 rounded-xl border text-left transition-colors ${
                           sortBy === option.id
-                            ? 'border-green-500 bg-green-50'
-                            : 'border-gray-200 hover:border-green-500'
+                            ? 'border-green-600 bg-green-50'
+                            : 'border-gray-200 hover:border-green-600'
                         }`}
                       >
                         <span className={`text-sm font-medium ${sortBy === option.id ? 'text-green-600' : 'text-gray-700'}`}>
@@ -1350,8 +1391,8 @@ export default function Home() {
                       onClick={() => toggleFilter('delivery-under-30')}
                       className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${
                         activeFilters.has('delivery-under-30') 
-                          ? 'border-green-500 bg-green-50' 
-                          : 'border-gray-200 hover:border-green-500'
+                          ? 'border-green-600 bg-green-50' 
+                          : 'border-gray-200 hover:border-green-600'
                       }`}
                     >
                       <Timer className={`h-6 w-6 ${activeFilters.has('delivery-under-30') ? 'text-green-600' : 'text-gray-600'}`} strokeWidth={1.5} />
@@ -1361,8 +1402,8 @@ export default function Home() {
                       onClick={() => toggleFilter('delivery-under-45')}
                       className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${
                         activeFilters.has('delivery-under-45') 
-                          ? 'border-green-500 bg-green-50' 
-                          : 'border-gray-200 hover:border-green-500'
+                          ? 'border-green-600 bg-green-50' 
+                          : 'border-gray-200 hover:border-green-600'
                       }`}
                     >
                       <Timer className={`h-6 w-6 ${activeFilters.has('delivery-under-45') ? 'text-green-600' : 'text-gray-600'}`} strokeWidth={1.5} />
@@ -1383,8 +1424,8 @@ export default function Home() {
                       onClick={() => toggleFilter('rating-35-plus')}
                       className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${
                         activeFilters.has('rating-35-plus') 
-                          ? 'border-green-500 bg-green-50' 
-                          : 'border-gray-200 hover:border-green-500'
+                          ? 'border-green-600 bg-green-50' 
+                          : 'border-gray-200 hover:border-green-600'
                       }`}
                     >
                       <Star className={`h-6 w-6 ${activeFilters.has('rating-35-plus') ? 'text-green-600 fill-green-600' : 'text-gray-400'}`} />
@@ -1394,8 +1435,8 @@ export default function Home() {
                       onClick={() => toggleFilter('rating-4-plus')}
                       className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${
                         activeFilters.has('rating-4-plus') 
-                          ? 'border-green-500 bg-green-50' 
-                          : 'border-gray-200 hover:border-green-500'
+                          ? 'border-green-600 bg-green-50' 
+                          : 'border-gray-200 hover:border-green-600'
                       }`}
                     >
                       <Star className={`h-6 w-6 ${activeFilters.has('rating-4-plus') ? 'text-green-600 fill-green-600' : 'text-gray-400'}`} />
@@ -1405,8 +1446,8 @@ export default function Home() {
                       onClick={() => toggleFilter('rating-45-plus')}
                       className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${
                         activeFilters.has('rating-45-plus') 
-                          ? 'border-green-500 bg-green-50' 
-                          : 'border-gray-200 hover:border-green-500'
+                          ? 'border-green-600 bg-green-50' 
+                          : 'border-gray-200 hover:border-green-600'
                       }`}
                     >
                       <Star className={`h-6 w-6 ${activeFilters.has('rating-45-plus') ? 'text-green-600 fill-green-600' : 'text-gray-400'}`} />
@@ -1427,8 +1468,8 @@ export default function Home() {
                       onClick={() => toggleFilter('distance-under-1km')}
                       className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${
                         activeFilters.has('distance-under-1km') 
-                          ? 'border-green-500 bg-green-50' 
-                          : 'border-gray-200 hover:border-green-500'
+                          ? 'border-green-600 bg-green-50' 
+                          : 'border-gray-200 hover:border-green-600'
                       }`}
                     >
                       <MapPin className={`h-6 w-6 ${activeFilters.has('distance-under-1km') ? 'text-green-600' : 'text-gray-600'}`} strokeWidth={1.5} />
@@ -1438,8 +1479,8 @@ export default function Home() {
                       onClick={() => toggleFilter('distance-under-2km')}
                       className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${
                         activeFilters.has('distance-under-2km') 
-                          ? 'border-green-500 bg-green-50' 
-                          : 'border-gray-200 hover:border-green-500'
+                          ? 'border-green-600 bg-green-50' 
+                          : 'border-gray-200 hover:border-green-600'
                       }`}
                     >
                       <MapPin className={`h-6 w-6 ${activeFilters.has('distance-under-2km') ? 'text-green-600' : 'text-gray-600'}`} strokeWidth={1.5} />
@@ -1460,8 +1501,8 @@ export default function Home() {
                       onClick={() => toggleFilter('price-under-200')}
                       className={`px-4 py-3 rounded-xl border text-left transition-colors ${
                         activeFilters.has('price-under-200') 
-                          ? 'border-green-500 bg-green-50' 
-                          : 'border-gray-200 hover:border-green-500'
+                          ? 'border-green-600 bg-green-50' 
+                          : 'border-gray-200 hover:border-green-600'
                       }`}
                     >
                       <span className={`text-sm font-medium ${activeFilters.has('price-under-200') ? 'text-green-600' : 'text-gray-700'}`}>Under ₹200</span>
@@ -1470,8 +1511,8 @@ export default function Home() {
                       onClick={() => toggleFilter('price-under-500')}
                       className={`px-4 py-3 rounded-xl border text-left transition-colors ${
                         activeFilters.has('price-under-500') 
-                          ? 'border-green-500 bg-green-50' 
-                          : 'border-gray-200 hover:border-green-500'
+                          ? 'border-green-600 bg-green-50' 
+                          : 'border-gray-200 hover:border-green-600'
                       }`}
                     >
                       <span className={`text-sm font-medium ${activeFilters.has('price-under-500') ? 'text-green-600' : 'text-gray-700'}`}>Under ₹500</span>
@@ -1493,8 +1534,8 @@ export default function Home() {
                         onClick={() => setSelectedCuisine(selectedCuisine === cuisine ? null : cuisine)}
                         className={`px-4 py-3 rounded-xl border text-center transition-colors ${
                           selectedCuisine === cuisine
-                            ? 'border-green-500 bg-green-50'
-                            : 'border-gray-200 hover:border-green-500'
+                            ? 'border-green-600 bg-green-50'
+                            : 'border-gray-200 hover:border-green-600'
                         }`}
                       >
                         <span className={`text-sm font-medium ${selectedCuisine === cuisine ? 'text-green-600' : 'text-gray-700'}`}>
@@ -1510,10 +1551,10 @@ export default function Home() {
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-gray-900">Trust Markers</h3>
                     <div className="flex flex-col gap-3">
-                      <button className="px-4 py-3 rounded-xl border border-gray-200 hover:border-green-500 text-left transition-colors">
+                      <button className="px-4 py-3 rounded-xl border border-gray-200 hover:border-green-600 text-left transition-colors">
                         <span className="text-sm font-medium text-gray-700">Top Rated</span>
                       </button>
-                      <button className="px-4 py-3 rounded-xl border border-gray-200 hover:border-green-500 text-left transition-colors">
+                      <button className="px-4 py-3 rounded-xl border border-gray-200 hover:border-green-600 text-left transition-colors">
                         <span className="text-sm font-medium text-gray-700">Trusted by 1000+ users</span>
                       </button>
                     </div>
@@ -1531,7 +1572,14 @@ export default function Home() {
                 Close
               </button>
               <button 
-                onClick={() => setIsFilterOpen(false)}
+                onClick={() => {
+                  setIsLoadingFilterResults(true)
+                  setIsFilterOpen(false)
+                  // Simulate loading for 1 second
+                  setTimeout(() => {
+                    setIsLoadingFilterResults(false)
+                  }, 1000)
+                }}
                 className={`flex-1 py-3 font-semibold rounded-xl transition-colors ${
                   activeFilters.size > 0 || sortBy || selectedCuisine
                     ? 'bg-green-600 text-white hover:bg-green-700'
@@ -1915,7 +1963,7 @@ export default function Home() {
                 damping: 15,
                 delay: 0.1,
               }}
-              className="absolute z-10 w-28 h-28 rounded-full border-2 border-green-500 bg-white flex flex-col items-center justify-center shadow-sm"
+              className="absolute z-10 w-28 h-28 rounded-full border-2 border-green-600 bg-white flex flex-col items-center justify-center shadow-sm"
               style={{
                 // left: "50%",
                 // top: "50%",

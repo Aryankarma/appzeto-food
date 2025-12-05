@@ -3037,18 +3037,19 @@ export default function RestaurantDetails() {
     }
   }
 
-  // Menu categories
-  const menuCategories = [
-    { name: "Recommended for you", count: 25 },
-    { name: "Sweets", count: 88, hasPlusIcon: true },
-    { name: "Shree Annam", count: 9 },
-    { name: "Indori Breakfast", count: 19 },
-    { name: "Combos", count: 2 },
-    { name: "Special Thali", count: 6 },
-    { name: "Platters", count: 2 },
-    { name: "Meal", count: 6 },
-    { name: "Soups", count: 7 },
-  ]
+  // Menu categories - dynamically generated from restaurant menu sections
+  const menuCategories = restaurant.menuSections?.map((section, index) => {
+    const sectionTitle = index === 0 ? "Recommended for you" : section.title
+    const itemCount = section.items?.length || 0
+    const subsectionCount = section.subsections?.reduce((sum, sub) => sum + (sub.items?.length || 0), 0) || 0
+    const totalCount = itemCount + subsectionCount
+    
+    return {
+      name: sectionTitle,
+      count: totalCount,
+      sectionIndex: index,
+    }
+  }) || []
 
   // Count active filters
   const getActiveFilterCount = () => {
@@ -3411,8 +3412,12 @@ export default function RestaurantDetails() {
         {/* Menu Items Section */}
         {restaurant.menuSections && restaurant.menuSections.length > 0 && (
           <div className="px-4 py-6 space-y-6">
-            {restaurant.menuSections.map((section, sectionIndex) => (
-              <div key={sectionIndex} className="space-y-4">
+            {restaurant.menuSections.map((section, sectionIndex) => {
+              const sectionTitle = sectionIndex === 0 ? "Recommended for you" : section.title
+              const sectionId = `menu-section-${sectionIndex}`
+              
+              return (
+              <div key={sectionIndex} id={sectionId} className="space-y-4 scroll-mt-20">
                 {/* Section Header */}
                 {sectionIndex === 0 && (
                   <div>
@@ -3825,7 +3830,8 @@ export default function RestaurantDetails() {
                   </div>
                 )}
               </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
@@ -3879,15 +3885,22 @@ export default function RestaurantDetails() {
                           onClick={() => {
                             setShowMenuSheet(false)
                             // Scroll to category section
+                            setTimeout(() => {
+                              const sectionId = `menu-section-${category.sectionIndex}`
+                              const sectionElement = document.getElementById(sectionId)
+                              if (sectionElement) {
+                                sectionElement.scrollIntoView({ 
+                                  behavior: 'smooth', 
+                                  block: 'start' 
+                                })
+                              }
+                            }, 300) // Small delay to allow sheet to close
                           }}
                         >
                           <span className="text-base font-medium text-gray-900">
                             {category.name}
                           </span>
                           <div className="flex items-center gap-2">
-                            {category.hasPlusIcon && (
-                              <Plus className="h-4 w-4 text-red-500" />
-                            )}
                             <span className="text-sm text-gray-500">
                               {category.count}
                             </span>
