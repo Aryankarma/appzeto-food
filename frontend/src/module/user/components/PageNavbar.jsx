@@ -78,7 +78,7 @@ export default function PageNavbar({
           <img
             src={appzetoLogo}
             alt="Appzeto Logo"
-            className="h-11 w-18 sm:h-10 sm:w-10 md:h-12 md:w-12 object-contain"
+            className="h-12 w-20 mr-3 sm:h-10 sm:w-10 md:h-12 md:w-12 object-contain"
           />
         </Link>
 
