@@ -86,18 +86,18 @@ export default function Profile() {
               </div>
             </div>
             
-            {/* Zomato Gold Banner */}
+            {/* Appzeto Gold Banner */}
             <div className="bg-black rounded-none p-4 flex items-center justify-between -mx-4 mb-0 cursor-pointer">
               <div className="flex items-center gap-3">
                 <Crown className="h-5 w-5 text-yellow-400" fill="currentColor" />
-                <span className="text-yellow-400 font-medium">Join Zomato Gold</span>
+                <span className="text-yellow-400 font-medium">Join Appzeto Gold</span>
               </div>
               <ChevronRight className="h-5 w-5 text-white" />
             </div>
           </CardContent>
         </Card>
 
-        {/* Zomato Money and Coupons - Side by Side */}
+        {/* Appzeto Money and Coupons - Side by Side */}
         <div className="grid grid-cols-2 gap-3 mt-3 mb-3">
           <Link to="/user/wallet" className="h-full">
             <Card className="bg-white py-0 rounded-xl shadow-sm border-0 cursor-pointer hover:shadow-md transition-shadow h-full">
@@ -107,7 +107,7 @@ export default function Profile() {
                     <Wallet className="h-5 w-5 text-gray-700" />
                   </div>
                 </div>
-                <p className="text-sm font-medium text-gray-900 mb-1">Zomato Money</p>
+                <p className="text-sm font-medium text-gray-900 mb-1">Appzeto Money</p>
                 <p className="text-base font-semibold text-gray-900">₹0</p>
               </CardContent>
             </Card>
