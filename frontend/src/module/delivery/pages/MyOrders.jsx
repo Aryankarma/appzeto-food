@@ -10,7 +10,8 @@ import {
   Clock,
   MapPin,
   CheckCircle,
-  DollarSign
+  DollarSign,
+  Sparkles
 } from "lucide-react"
 import { formatCurrency } from "../../restaurant/utils/currency"
 import { 
@@ -582,6 +583,13 @@ export default function MyOrders() {
               </span>
             </div>
             <span className="text-[10px] text-gray-600 font-medium">Request</span>
+          </button>
+          <button 
+            onClick={() => navigate("/delivery/gig")}
+            className="flex flex-col items-center gap-1 p-2 text-gray-600"
+          >
+            <Sparkles className="w-6 h-6" />
+            <span className="text-[10px] text-gray-600 font-medium">Gig</span>
           </button>
           <button className="flex flex-col items-center gap-1 p-2 text-[#ff8100]">
             <UtensilsCrossed className="w-6 h-6" />

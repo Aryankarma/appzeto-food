@@ -11,7 +11,8 @@ import {
   ChefHat,
   MapPin,
   Navigation,
-  X
+  X,
+  Sparkles
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -314,6 +315,13 @@ export default function OrderRequestPage() {
               </span>
             </div>
             <span className="text-[10px] text-[#ff8100] font-medium">Request</span>
+          </button>
+          <button 
+            onClick={() => navigate("/delivery/gig")}
+            className="flex flex-col items-center gap-1 p-2 text-gray-600"
+          >
+            <Sparkles className="w-6 h-6" />
+            <span className="text-[10px] text-gray-600 font-medium">Gig</span>
           </button>
           <button 
             onClick={() => navigate("/delivery/orders")}

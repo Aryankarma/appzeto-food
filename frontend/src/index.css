@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "leaflet/dist/leaflet.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -211,6 +212,27 @@
   animation: slide-in-left 0.8s ease-out;
 }
 
-.animate-fade-down {
-  animation: fade-down 0.5s ease-out;
-}
+  .animate-fade-down {
+    animation: fade-down 0.5s ease-out;
+  }
+  
+  /* Leaflet map fixes */
+  .leaflet-container {
+    height: 100%;
+    width: 100%;
+    z-index: 1;
+  }
+  
+  .custom-marker {
+    background: transparent;
+    border: none;
+  }
+  
+  /* Touch interaction improvements */
+  .touch-none {
+    touch-action: none;
+  }
+  
+  .touch-pan-x {
+    touch-action: pan-x;
+  }

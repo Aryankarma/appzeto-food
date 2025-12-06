@@ -61,6 +61,8 @@ import Conversation from "@/module/delivery/pages/Conversation"
 import TermsAndConditions from "@/module/delivery/pages/TermsAndConditions"
 import PrivacyPolicy from "@/module/delivery/pages/PrivacyPolicy"
 import Notifications from "@/module/delivery/pages/Notifications"
+import GigBooking from "@/module/delivery/pages/GigBooking"
+import PickupDirectionsPage from "@/module/delivery/pages/PickupDirectionsPage"
 import AdminRouter from "@/module/admin/components/AdminRouter"
 
 // Component to redirect /user/* to /* (removing /user prefix)
@@ -128,6 +130,8 @@ export default function App() {
       <Route path="/delivery/notifications" element={<Notifications />} />
       <Route path="/delivery/orders" element={<MyOrders />} />
       <Route path="/delivery/requests" element={<OrderRequestPage />} />
+      <Route path="/delivery/gig" element={<GigBooking />} />
+      <Route path="/delivery/pickup-directions" element={<PickupDirectionsPage />} />
       <Route path="/delivery/profile" element={<ProfilePage />} />
       <Route path="/delivery/order/:orderId" element={<AcceptedOrderDetails />} />
       <Route path="/delivery/account" element={<MyAccount />} />
