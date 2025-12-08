@@ -254,30 +254,35 @@ export default function DeliveryHome() {
 
   // Get rider location when online
   useEffect(() => {
-    if (isOnline && bookedGigs.length > 0 && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setRiderLocation([position.coords.latitude, position.coords.longitude])
-        },
-        () => {
-          // Default to Indore, India if geolocation fails
-          setRiderLocation([28.2849, 76.1209])
-        }
-      )
+    if (isOnline && bookedGigs.length > 0) {
+      // Set default location immediately so map can render
+      setRiderLocation(prev => prev || [28.2849, 76.1209])
       
-      // Watch position updates
-      const watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          setRiderLocation([position.coords.latitude, position.coords.longitude])
-        },
-        () => {},
-        { enableHighAccuracy: true, maximumAge: 10000 }
-      )
-      
-      return () => navigator.geolocation.clearWatch(watchId)
-    } else if (isOnline && bookedGigs.length > 0) {
-      // Default location if geolocation not available
-      setRiderLocation([28.2849, 76.1209])
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setRiderLocation([position.coords.latitude, position.coords.longitude])
+          },
+          () => {
+            // Keep default location if geolocation fails
+            setRiderLocation(prev => prev || [28.2849, 76.1209])
+          }
+        )
+        
+        // Watch position updates
+        const watchId = navigator.geolocation.watchPosition(
+          (position) => {
+            setRiderLocation([position.coords.latitude, position.coords.longitude])
+          },
+          () => {},
+          { enableHighAccuracy: true, maximumAge: 10000 }
+        )
+        
+        return () => navigator.geolocation.clearWatch(watchId)
+      } else {
+        // Default location if geolocation not available
+        setRiderLocation(prev => prev || [28.2849, 76.1209])
+      }
     }
   }, [isOnline, bookedGigs.length])
 
@@ -487,7 +492,8 @@ export default function DeliveryHome() {
   const nextSlot = getNextAvailableSlot()
 
   // Render map view when online and has booked gig
-  if (isOnline && bookedGigs.length > 0 && riderLocation) {
+  // Show map even if riderLocation is not set yet (will show loading state)
+  if (isOnline && bookedGigs.length > 0) {
     return (
       <div className="min-h-screen bg-gray-900 overflow-hidden relative">
         {/* Header Section */}

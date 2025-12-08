@@ -225,12 +225,17 @@ export default function GigBooking() {
       const onlineSuccess = goOnline()
       if (onlineSuccess) {
         toast.success("Gig booked successfully! You are now online.")
+        // Navigate to home page to show map with restaurants
+        clearSelectedSlots()
+        setTimeout(() => {
+          navigate("/delivery", { replace: false })
+        }, 500) // Small delay to ensure state is updated
       } else {
         toast.success("Gig booked successfully!")
+        clearSelectedSlots()
+        setActiveTab("history")
+        navigate("/delivery/gig?tab=history", { replace: true })
       }
-      clearSelectedSlots()
-      setActiveTab("history")
-      navigate("/delivery/gig?tab=history", { replace: true })
     } else {
       toast.error("Failed to book gig")
     }
