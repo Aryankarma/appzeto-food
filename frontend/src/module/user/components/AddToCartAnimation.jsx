@@ -61,8 +61,33 @@ export default function AddToCartAnimation({
           const startY = pillRect.top + pillRect.height / 2; // Vertical center of pill
 
           // Calculate current viewport position accounting for scroll changes
-          const currentScrollX = window.pageXOffset || window.scrollX || 0
-          const currentScrollY = window.pageYOffset || window.scrollY || 0
+          // Check multiple sources to get accurate scroll position
+          const getScrollX = () => {
+            if (window.scrollX !== undefined) return window.scrollX
+            if (window.pageXOffset !== undefined) return window.pageXOffset
+            if (document.documentElement && document.documentElement.scrollLeft !== undefined) {
+              return document.documentElement.scrollLeft
+            }
+            if (document.body && document.body.scrollLeft !== undefined) {
+              return document.body.scrollLeft
+            }
+            return 0
+          }
+          
+          const getScrollY = () => {
+            if (window.scrollY !== undefined) return window.scrollY
+            if (window.pageYOffset !== undefined) return window.pageYOffset
+            if (document.documentElement && document.documentElement.scrollTop !== undefined) {
+              return document.documentElement.scrollTop
+            }
+            if (document.body && document.body.scrollTop !== undefined) {
+              return document.body.scrollTop
+            }
+            return 0
+          }
+          
+          const currentScrollX = getScrollX()
+          const currentScrollY = getScrollY()
           
           // Determine target position (support both new format with viewportX/Y and old format with x/y)
           let targetX, targetY
@@ -175,8 +200,33 @@ export default function AddToCartAnimation({
           const endY = pillRect.top + pillRect.height / 2; // Vertical center of pill
 
           // Calculate current viewport position accounting for scroll changes
-          const currentScrollX = window.pageXOffset || window.scrollX || 0
-          const currentScrollY = window.pageYOffset || window.scrollY || 0
+          // Check multiple sources to get accurate scroll position
+          const getScrollX = () => {
+            if (window.scrollX !== undefined) return window.scrollX
+            if (window.pageXOffset !== undefined) return window.pageXOffset
+            if (document.documentElement && document.documentElement.scrollLeft !== undefined) {
+              return document.documentElement.scrollLeft
+            }
+            if (document.body && document.body.scrollLeft !== undefined) {
+              return document.body.scrollLeft
+            }
+            return 0
+          }
+          
+          const getScrollY = () => {
+            if (window.scrollY !== undefined) return window.scrollY
+            if (window.pageYOffset !== undefined) return window.pageYOffset
+            if (document.documentElement && document.documentElement.scrollTop !== undefined) {
+              return document.documentElement.scrollTop
+            }
+            if (document.body && document.body.scrollTop !== undefined) {
+              return document.body.scrollTop
+            }
+            return 0
+          }
+          
+          const currentScrollX = getScrollX()
+          const currentScrollY = getScrollY()
           
           // Determine source position (support both new format with viewportX/Y and old format with x/y)
           let sourceX, sourceY

@@ -3228,7 +3228,7 @@ export default function RestaurantDetails() {
   }, [highlightOffers.length])
 
   return (
-    <AnimatedPage className="min-h-screen bg-white flex flex-col">
+    <AnimatedPage id="scrollingelement" className="min-h-screen bg-white flex flex-col">
       {/* Header - Back, Search, Menu (like reference image) */}
       <div className="px-4 pt-3 pb-2 bg-white">
         <div className="flex items-center justify-between">
