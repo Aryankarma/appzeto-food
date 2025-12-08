@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from 'react-leaflet'
 import L from 'leaflet'
+import { useGigStore } from "../store/gigStore"
 import { 
   ChevronDown,
   Phone,
@@ -46,7 +47,8 @@ function MapUpdater({ center }) {
 export default function PickupDirectionsPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const [riderLocation, setRiderLocation] = useState(null)
+  const { goOffline } = useGigStore()
+  const [riderLocation, setRiderLocation] = useState([28.2849, 76.1209]) // Set default immediately
   const [expandedRestaurant, setExpandedRestaurant] = useState(null)
   const [routePolylines, setRoutePolylines] = useState([])
   const [reachedButtonProgress, setReachedButtonProgress] = useState(0)
@@ -73,19 +75,29 @@ export default function PickupDirectionsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [acceptedRestaurants])
 
-  // Get rider location
+  // Get rider location - update with actual location if available
   useEffect(() => {
+    // Default location is already set, now try to get actual location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setRiderLocation([position.coords.latitude, position.coords.longitude])
         },
         () => {
-          setRiderLocation([28.2849, 76.1209]) // Default location
+          // Keep default location if geolocation fails
         }
       )
-    } else {
-      setRiderLocation([28.2849, 76.1209])
+      
+      // Watch position updates
+      const watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          setRiderLocation([position.coords.latitude, position.coords.longitude])
+        },
+        () => {},
+        { enableHighAccuracy: true, maximumAge: 10000 }
+      )
+      
+      return () => navigator.geolocation.clearWatch(watchId)
     }
   }, [])
 
@@ -277,13 +289,15 @@ export default function PickupDirectionsPage() {
       setTimeout(() => {
         setShowSuccessAnimation(true)
         
-        // Hide animation and reset after showing message
+        // Hide animation, go offline, and navigate to home after showing message
         setTimeout(() => {
           setShowSuccessAnimation(false)
           setReachedButtonProgress(0)
           setIsAnimatingToComplete(false)
-          // TODO: Implement reached pickup logic (navigate or update state)
-          console.log('Reached pickup!')
+          
+          // Go offline and navigate to home
+          goOffline()
+          navigate("/delivery", { replace: true })
         }, 3000) // Show success message for 3 seconds
       }, 400) // Wait for button animation to complete
     } else {
@@ -357,7 +371,7 @@ export default function PickupDirectionsPage() {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.2, duration: 0.5 }}
       >
-        {riderLocation && (
+        {riderLocation ? (
           <MapContainer
             key={`map-${riderLocation[0]}-${riderLocation[1]}`}
             center={riderLocation}
@@ -400,6 +414,17 @@ export default function PickupDirectionsPage() {
               />
             ))}
           </MapContainer>
+        ) : (
+          <div className="flex items-center justify-center h-full bg-gray-200">
+            <div className="text-center">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                className="w-12 h-12 border-4 border-[#ff8100] border-t-transparent rounded-full mx-auto mb-4"
+              />
+              <p className="text-gray-600">Loading map...</p>
+            </div>
+          </div>
         )}
 
         {/* Map Zoom Controls */}
