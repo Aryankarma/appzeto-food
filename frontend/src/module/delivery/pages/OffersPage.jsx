@@ -199,7 +199,7 @@ export default function OffersPage() {
   return (
     <div className="min-h-screen bg-white overflow-x-hidden pb-24 md:pb-24">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-4 md:py-6 flex items-center justify-between sticky top-0 z-10">
+      <div className="bg-white border-b border-gray-200 px-4 py-4 md:py-6 flex items-center justify-between rounded-b-3xl md:rounded-b-none sticky top-0 z-10">
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate(-1)}
@@ -215,7 +215,7 @@ export default function OffersPage() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="px-4 py-4 bg-white border-b border-gray-200">
+      <div className="px-4 py-4 bg-white border-b border-gray-200 rounded-b-3xl md:rounded-b-none">
         <div className="flex gap-3">
           <button
             onClick={() => {

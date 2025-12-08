@@ -336,7 +336,7 @@ export default function PickupDirectionsPage() {
     >
       {/* Top Bar */}
       <motion.div
-        className="absolute top-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-sm px-4 py-3 flex items-center justify-between"
+        className="absolute top-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-sm px-4 py-3 flex items-center justify-between rounded-b-3xl md:rounded-b-none"
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1, duration: 0.4 }}

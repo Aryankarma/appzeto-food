@@ -124,7 +124,7 @@ export default function OrderRequestPage() {
   return (
     <div className="min-h-screen bg-[#f6e9dc]  overflow-x-hidden">
       {/* Top Navigation Bar */}
-      <div className="bg-white px-4 py-4 flex items-center justify-between sticky top-0 z-10 border-b border-gray-200">
+      <div className="bg-white px-4 py-4 flex items-center justify-between sticky top-0 z-10 border-b border-gray-200 rounded-b-3xl md:rounded-b-none">
         {/* Online Toggle */}
         <button
           onClick={() => setIsOnline(!isOnline)}
