@@ -1,6 +1,6 @@
-import { Link } from "react-router-dom"
-import { useState, useMemo, useCallback } from "react"
-import { Star, Clock, MapPin, ArrowDownUp, Timer, ArrowRight, ChevronDown } from "lucide-react"
+import { Link, useNavigate } from "react-router-dom"
+import { useState, useMemo, useCallback, useEffect } from "react"
+import { Star, Clock, MapPin, ArrowDownUp, Timer, ArrowRight, ChevronDown, Bookmark, Share2, Plus, Minus, X } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import AnimatedPage from "../components/AnimatedPage"
 import { Card, CardContent } from "@/components/ui/card"
@@ -12,6 +12,7 @@ import PageNavbar from "../components/PageNavbar"
 import { foodImages } from "@/constants/images"
 import appzetoFoodLogo from "@/assets/appzetofoodlogo.jpeg"
 import under250Banner from "@/assets/under250banner.png"
+import AddToCartAnimation from "../components/AddToCartAnimation"
 
 
 const categories = [
@@ -162,10 +163,16 @@ const under250Restaurants = [
 
 export default function Under250() {
   const { location } = useLocation()
+  const navigate = useNavigate()
+  const { addToCart, updateQuantity, removeFromCart, getCartItem, cart } = useCart()
   const [activeCategory, setActiveCategory] = useState(null)
   const [showSortPopup, setShowSortPopup] = useState(false)
   const [selectedSort, setSelectedSort] = useState(null)
   const [under30MinsFilter, setUnder30MinsFilter] = useState(false)
+  const [showItemDetail, setShowItemDetail] = useState(false)
+  const [selectedItem, setSelectedItem] = useState(null)
+  const [quantities, setQuantities] = useState({})
+  const [bookmarkedItems, setBookmarkedItems] = useState(new Set())
 
   const sortOptions = [
     { id: null, label: 'Relevance' },
@@ -181,6 +188,121 @@ export default function Under250() {
   const handleApply = () => {
     setShowSortPopup(false)
     // Apply sorting logic here if needed
+  }
+
+  // Sync quantities from cart on mount
+  useEffect(() => {
+    const cartQuantities = {}
+    cart.forEach((item) => {
+      cartQuantities[item.id] = item.quantity || 0
+    })
+    setQuantities(cartQuantities)
+  }, [cart])
+
+  // Helper function to update item quantity in both local state and cart
+  const updateItemQuantity = (item, newQuantity, event = null, restaurantName = null) => {
+    // Update local state
+    setQuantities((prev) => ({
+      ...prev,
+      [item.id]: newQuantity,
+    }))
+
+    // Find restaurant name from the item or use provided parameter
+    const restaurant = restaurantName || item.restaurant || "Under 250"
+
+    // Prepare cart item with all required properties
+    const cartItem = {
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      image: item.image,
+      restaurant: restaurant,
+      description: item.description || "",
+      originalPrice: item.originalPrice || item.price,
+    }
+
+    // Get source position for animation from event target
+    let sourcePosition = null
+    if (event) {
+      let buttonElement = event.currentTarget
+      if (!buttonElement && event.target) {
+        buttonElement = event.target.closest('button') || event.target
+      }
+      
+      if (buttonElement) {
+        const rect = buttonElement.getBoundingClientRect()
+        const scrollX = window.pageXOffset || window.scrollX || 0
+        const scrollY = window.pageYOffset || window.scrollY || 0
+        
+        sourcePosition = {
+          viewportX: rect.left + rect.width / 2,
+          viewportY: rect.top + rect.height / 2,
+          scrollX: scrollX,
+          scrollY: scrollY,
+          itemId: item.id,
+        }
+      }
+    }
+
+    // Update cart context
+    if (newQuantity <= 0) {
+      const productInfo = {
+        id: item.id,
+        name: item.name,
+        imageUrl: item.image,
+      }
+      removeFromCart(item.id, sourcePosition, productInfo)
+    } else {
+      const existingCartItem = getCartItem(item.id)
+      if (existingCartItem) {
+        const productInfo = {
+          id: item.id,
+          name: item.name,
+          imageUrl: item.image,
+        }
+        
+        if (newQuantity > existingCartItem.quantity && sourcePosition) {
+          addToCart(cartItem, sourcePosition)
+          if (newQuantity > existingCartItem.quantity + 1) {
+            updateQuantity(item.id, newQuantity)
+          }
+        } else if (newQuantity < existingCartItem.quantity && sourcePosition) {
+          updateQuantity(item.id, newQuantity, sourcePosition, productInfo)
+        } else {
+          updateQuantity(item.id, newQuantity)
+        }
+      } else {
+        addToCart(cartItem, sourcePosition)
+        if (newQuantity > 1) {
+          updateQuantity(item.id, newQuantity)
+        }
+      }
+    }
+  }
+
+  const handleItemClick = (item, restaurant) => {
+    // Add restaurant info to item for display
+    const itemWithRestaurant = {
+      ...item,
+      restaurant: restaurant.name,
+      description: item.description || `${item.name} from ${restaurant.name}`,
+      customisable: item.customisable || false,
+      notEligibleForCoupons: item.notEligibleForCoupons || false,
+    }
+    setSelectedItem(itemWithRestaurant)
+    setShowItemDetail(true)
+  }
+
+  const handleBookmarkClick = (itemId) => {
+    setBookmarkedItems((prev) => {
+      const newSet = new Set(prev)
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId)
+      } else {
+        newSet.add(itemId)
+      }
+      return newSet
+    })
   }
 
   return (
@@ -332,10 +454,13 @@ export default function Under250() {
                       overflowY: "hidden",
                     }}
                   >
-                    {restaurant.menuItems.map((item) => (
+                    {restaurant.menuItems.map((item) => {
+                      const quantity = quantities[item.id] || 0
+                      return (
                       <div
                         key={item.id}
-                        className="flex-shrink-0 w-[200px] sm:w-[220px] bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+                        className="flex-shrink-0 w-[200px] sm:w-[220px] bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => handleItemClick(item, restaurant)}
                       >
                         {/* Item Image */}
                         <div className="relative w-full h-32 sm:h-36 overflow-hidden">
@@ -376,17 +501,34 @@ export default function Under250() {
                                 <p className="text-xs text-gray-500">Best price</p>
                               )}
                             </div>
-                            <Button
-                              variant={"outline"}
-                              size="sm"
-                              className="bg-green-600/10 text-green-500 border-green-500 hover:bg-green-700 hover:text-white h-7 px-3 text-xs"
-                            >
-                              View cart
-                            </Button>
+                            {quantity > 0 ? (
+                              <Link to="/user/cart" onClick={(e) => e.stopPropagation()}>
+                                <Button
+                                  variant={"outline"}
+                                  size="sm"
+                                  className="bg-green-600/10 text-green-500 border-green-500 hover:bg-green-700 hover:text-white h-7 px-3 text-xs"
+                                >
+                                  View cart
+                                </Button>
+                              </Link>
+                            ) : (
+                              <Button
+                                variant={"outline"}
+                                size="sm"
+                                className="bg-green-600/10 text-green-500 border-green-500 hover:bg-green-700 hover:text-white h-7 px-3 text-xs"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleItemClick(item, restaurant)
+                                }}
+                              >
+                                Add
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </div>
-                    ))}
+                      )
+                    })}
                   </div>
 
                   {/* View Full Menu Button */}
@@ -489,6 +631,191 @@ export default function Under250() {
           </>
         )}
       </AnimatePresence>
+
+      {/* Item Detail Popup */}
+      <AnimatePresence>
+        {showItemDetail && selectedItem && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              className="fixed inset-0 bg-black/40 z-[9999]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setShowItemDetail(false)}
+            />
+
+            {/* Item Detail Bottom Sheet */}
+            <motion.div
+              className="fixed left-0 right-0 bottom-0 z-[10000] bg-white rounded-t-3xl shadow-2xl max-h-[90vh] flex flex-col"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ duration: 0.15, type: "spring", damping: 30, stiffness: 400 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close Button - Centered Overlapping */}
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
+                <button
+                  onClick={() => setShowItemDetail(false)}
+                  className="h-10 w-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-900 transition-colors shadow-lg"
+                >
+                  <X className="h-5 w-5 text-white" />
+                </button>
+              </div>
+
+              {/* Image Section */}
+              <div className="relative w-full h-64 overflow-hidden rounded-t-3xl">
+                <img
+                  src={selectedItem.image}
+                  alt={selectedItem.name}
+                  className="w-full h-full object-cover"
+                />
+                {/* Bookmark and Share Icons Overlay */}
+                <div className="absolute bottom-4 right-4 flex items-center gap-3">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleBookmarkClick(selectedItem.id)
+                    }}
+                    className={`h-10 w-10 rounded-full border flex items-center justify-center transition-all duration-300 ${
+                      bookmarkedItems.has(selectedItem.id)
+                        ? "border-red-500 bg-red-50 text-red-500"
+                        : "border-white bg-white/90 text-gray-600 hover:bg-white"
+                    }`}
+                  >
+                    <Bookmark
+                      className={`h-5 w-5 transition-all duration-300 ${
+                        bookmarkedItems.has(selectedItem.id) ? "fill-red-500" : ""
+                      }`}
+                    />
+                  </button>
+                  <button className="h-10 w-10 rounded-full border border-white bg-white/90 text-gray-600 hover:bg-white flex items-center justify-center transition-colors">
+                    <Share2 className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Content Section */}
+              <div className="flex-1 overflow-y-auto px-4 py-4">
+                {/* Item Name and Indicator */}
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2 flex-1">
+                    {selectedItem.isVeg && (
+                      <div className="h-5 w-5 rounded border-2 border-amber-700 bg-amber-50 flex items-center justify-center flex-shrink-0">
+                        <div className="h-2.5 w-2.5 rounded-full bg-amber-700" />
+                      </div>
+                    )}
+                    <h2 className="text-xl font-bold text-gray-900">
+                      {selectedItem.name}
+                    </h2>
+                  </div>
+                  {/* Bookmark and Share Icons (Desktop) */}
+                  <div className="hidden md:flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleBookmarkClick(selectedItem.id)
+                      }}
+                      className={`h-8 w-8 rounded-full border flex items-center justify-center transition-all duration-300 ${
+                        bookmarkedItems.has(selectedItem.id)
+                          ? "border-red-500 bg-red-50 text-red-500"
+                          : "border-gray-300 text-gray-400 hover:text-gray-600"
+                      }`}
+                    >
+                      <Bookmark
+                        className={`h-4 w-4 transition-all duration-300 ${
+                          bookmarkedItems.has(selectedItem.id) ? "fill-red-500" : ""
+                        }`}
+                      />
+                    </button>
+                    <button className="h-8 w-8 rounded-full border border-gray-300 text-gray-400 hover:text-gray-600 flex items-center justify-center transition-colors">
+                      <Share2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+                  {selectedItem.description || `${selectedItem.name} from ${selectedItem.restaurant || 'Under 250'}`}
+                </p>
+
+                {/* Highly Reordered Progress Bar */}
+                {selectedItem.customisable && (
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="flex-1 h-0.5 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-green-500 rounded-full" style={{ width: '50%' }} />
+                    </div>
+                    <span className="text-xs text-gray-600 font-medium whitespace-nowrap">
+                      highly reordered
+                    </span>
+                  </div>
+                )}
+
+                {/* Not Eligible for Coupons */}
+                {selectedItem.notEligibleForCoupons && (
+                  <p className="text-xs text-gray-500 font-medium mb-4">
+                    NOT ELIGIBLE FOR COUPONS
+                  </p>
+                )}
+              </div>
+
+              {/* Bottom Action Bar */}
+              <div className="border-t border-gray-200 px-4 py-4 bg-white">
+                <div className="flex items-center gap-4">
+                  {/* Quantity Selector */}
+                  <div className="flex items-center gap-3 border-2 border-gray-300 rounded-lg px-3 py-2">
+                    <button
+                      onClick={(e) =>
+                        updateItemQuantity(selectedItem, Math.max(0, (quantities[selectedItem.id] || 0) - 1), e)
+                      }
+                      disabled={(quantities[selectedItem.id] || 0) === 0}
+                      className="text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed"
+                    >
+                      <Minus className="h-5 w-5" />
+                    </button>
+                    <span className="text-lg font-semibold text-gray-900 min-w-[2rem] text-center">
+                      {quantities[selectedItem.id] || 0}
+                    </span>
+                    <button
+                      onClick={(e) =>
+                        updateItemQuantity(selectedItem, (quantities[selectedItem.id] || 0) + 1, e)
+                      }
+                      className="text-gray-600 hover:text-gray-900"
+                    >
+                      <Plus className="h-5 w-5" />
+                    </button>
+                  </div>
+
+                  {/* Add Item Button */}
+                  <Button
+                    className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-lg font-semibold flex items-center justify-center gap-2"
+                    onClick={(e) => {
+                      updateItemQuantity(selectedItem, (quantities[selectedItem.id] || 0) + 1, e)
+                    }}
+                  >
+                    <span>Add item</span>
+                    <div className="flex items-center gap-1">
+                      {selectedItem.originalPrice && selectedItem.originalPrice > selectedItem.price && (
+                        <span className="text-sm line-through text-red-200">
+                          ₹{Math.round(selectedItem.originalPrice)}
+                        </span>
+                      )}
+                      <span className="text-base font-bold">
+                        ₹{Math.round(selectedItem.price)}
+                      </span>
+                    </div>
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Add to Cart Animation */}
+      <AddToCartAnimation />
     </div>
   )
 }

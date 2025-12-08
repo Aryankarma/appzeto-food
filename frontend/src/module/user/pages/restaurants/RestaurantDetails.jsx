@@ -3024,25 +3024,76 @@ export default function RestaurantDetails() {
     }
 
     // Get source position for animation from event target
+    // Prefer currentTarget (the button) over target (might be icon inside button)
     let sourcePosition = null
-    if (event && event.currentTarget) {
-      const rect = event.currentTarget.getBoundingClientRect()
-      sourcePosition = {
-        x: rect.left + rect.width / 2,
-        y: rect.top + rect.height / 2,
+    if (event) {
+      // Use currentTarget (the button element) for accurate button position
+      // If currentTarget is not available, try to find the button element
+      let buttonElement = event.currentTarget
+      if (!buttonElement && event.target) {
+        // If we clicked on an icon inside, find the closest button
+        buttonElement = event.target.closest('button') || event.target
+      }
+      
+      if (buttonElement) {
+        // Store button reference and current viewport position
+        // We'll recalculate position right before animation to account for scroll
+        const rect = buttonElement.getBoundingClientRect()
+        const scrollX = window.pageXOffset || window.scrollX || 0
+        const scrollY = window.pageYOffset || window.scrollY || 0
+        
+        // Store both viewport position and scroll at capture time
+        // This allows us to adjust for scroll changes later
+        sourcePosition = {
+          // Viewport-relative position at capture time
+          viewportX: rect.left + rect.width / 2,
+          viewportY: rect.top + rect.height / 2,
+          // Scroll position at capture time
+          scrollX: scrollX,
+          scrollY: scrollY,
+          // Store button identifier to potentially find it again
+          itemId: item.id,
+        }
       }
     }
 
     // Update cart context
     if (newQuantity <= 0) {
-      removeFromCart(item.id)
+      // Pass sourcePosition and product info for removal animation
+      const productInfo = {
+        id: item.id,
+        name: item.name,
+        imageUrl: item.image,
+      }
+      removeFromCart(item.id, sourcePosition, productInfo)
     } else {
       const existingCartItem = getCartItem(item.id)
       if (existingCartItem) {
-        updateQuantity(item.id, newQuantity)
+        // Prepare product info for animation
+        const productInfo = {
+          id: item.id,
+          name: item.name,
+          imageUrl: item.image,
+        }
+        
+        // If incrementing quantity, trigger add animation with sourcePosition
+        if (newQuantity > existingCartItem.quantity && sourcePosition) {
+          addToCart(cartItem, sourcePosition)
+          if (newQuantity > existingCartItem.quantity + 1) {
+            updateQuantity(item.id, newQuantity)
+          }
+        } 
+        // If decreasing quantity, trigger removal animation with sourcePosition
+        else if (newQuantity < existingCartItem.quantity && sourcePosition) {
+          updateQuantity(item.id, newQuantity, sourcePosition, productInfo)
+        } 
+        // Otherwise just update quantity without animation
+        else {
+          updateQuantity(item.id, newQuantity)
+        }
       } else {
         // Add to cart first (adds with quantity 1), then update to desired quantity
-        // Only pass sourcePosition when adding a new item (not when updating quantity)
+        // Pass sourcePosition when adding a new item
         addToCart(cartItem, sourcePosition)
         if (newQuantity > 1) {
           updateQuantity(item.id, newQuantity)
@@ -3551,7 +3602,7 @@ export default function RestaurantDetails() {
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation()
-                                        updateItemQuantity(item, Math.max(0, quantity - 1))
+                                        updateItemQuantity(item, Math.max(0, quantity - 1), e)
                                       }}
                                       className="text-white hover:bg-red-500 rounded px-1.5 py-0.5 transition-colors"
                                     >
@@ -3563,14 +3614,14 @@ export default function RestaurantDetails() {
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation()
-                                        updateItemQuantity(item, quantity + 1)
+                                        updateItemQuantity(item, quantity + 1, e)
                                       }}
                                       className="text-white hover:bg-red-500 rounded px-1.5 py-0.5 transition-colors"
                                     >
                                       <Plus className="h-4 w-4" />
                                     </button>
                                   </motion.div>
-                                ) : expandedAddButtons.has(item.id) ? (
+                                ) : (
                                   <motion.div
                                     layoutId={`add-button-${item.id}`}
                                     initial={{ width: "auto", x: "-50%", opacity: 0, scale: 0.9 }}
@@ -3581,7 +3632,7 @@ export default function RestaurantDetails() {
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation()
-                                        updateItemQuantity(item, Math.max(0, (quantities[item.id] || 0) - 1))
+                                        updateItemQuantity(item, Math.max(0, (quantities[item.id] || 0) - 1), e)
                                       }}
                                       disabled
                                       className="text-white/50 rounded px-1.5 py-0.5 cursor-not-allowed"
@@ -3600,33 +3651,13 @@ export default function RestaurantDetails() {
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation()
-                                        updateItemQuantity(item, (quantities[item.id] || 0) + 1)
+                                        updateItemQuantity(item, (quantities[item.id] || 0) + 1, e)
                                       }}
                                       className="text-white hover:bg-red-500 rounded px-1.5 py-0.5 transition-colors"
                                     >
                                       <Plus className="h-4 w-4" />
                                     </button>
                                   </motion.div>
-                                ) : (
-                                  <motion.button
-                                    layoutId={`add-button-${item.id}`}
-                                    initial={{ opacity: 0, scale: 0.8 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    transition={{ duration: 0.2, type: "spring", damping: 20 }}
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      setExpandedAddButtons((prev) => {
-                                        const newSet = new Set(prev)
-                                        newSet.add(item.id)
-                                        return newSet
-                                      })
-                                    }}
-                                    className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 bg-red-400 hover:bg-red-500 text-white rounded-lg flex items-center gap-1.5 px-3 py-2 shadow-md transition-colors z-10 whitespace-nowrap"
-                                  >
-                                    <span className="text-sm font-semibold">ADD</span>
-                                    <Plus className="h-4 w-4" />
-                                  </motion.button>
                                 )}
                               </div>
                               {item.customisable && (
@@ -3750,7 +3781,7 @@ export default function RestaurantDetails() {
                                               <button
                                                 onClick={(e) => {
                                                   e.stopPropagation()
-                                                  updateItemQuantity(item, Math.max(0, quantity - 1))
+                                                  updateItemQuantity(item, Math.max(0, quantity - 1), e)
                                                 }}
                                                 className="text-white hover:bg-red-500 rounded px-1.5 py-0.5 transition-colors"
                                               >
@@ -3762,14 +3793,14 @@ export default function RestaurantDetails() {
                                               <button
                                                 onClick={(e) => {
                                                   e.stopPropagation()
-                                                  updateItemQuantity(item, quantity + 1)
+                                                  updateItemQuantity(item, quantity + 1, e)
                                                 }}
                                                 className="text-white hover:bg-red-500 rounded px-1.5 py-0.5 transition-colors"
                                               >
                                                 <Plus className="h-4 w-4" />
                                               </button>
                                             </motion.div>
-                                          ) : expandedAddButtons.has(item.id) ? (
+                                          ) : (
                                             <motion.div
                                               layoutId={`add-button-sub-${item.id}`}
                                               initial={{ width: "auto", x: "-50%", opacity: 0, scale: 0.9 }}
@@ -3780,7 +3811,7 @@ export default function RestaurantDetails() {
                                               <button
                                                 onClick={(e) => {
                                                   e.stopPropagation()
-                                                  updateItemQuantity(item, Math.max(0, (quantities[item.id] || 0) - 1))
+                                                  updateItemQuantity(item, Math.max(0, (quantities[item.id] || 0) - 1), e)
                                                 }}
                                                 disabled
                                                 className="text-white/50 rounded px-1.5 py-0.5 cursor-not-allowed"
@@ -3799,33 +3830,13 @@ export default function RestaurantDetails() {
                                               <button
                                                 onClick={(e) => {
                                                   e.stopPropagation()
-                                                  updateItemQuantity(item, (quantities[item.id] || 0) + 1)
+                                                  updateItemQuantity(item, (quantities[item.id] || 0) + 1, e)
                                                 }}
                                                 className="text-white hover:bg-red-500 rounded px-1.5 py-0.5 transition-colors"
                                               >
                                                 <Plus className="h-4 w-4" />
                                               </button>
                                             </motion.div>
-                                          ) : (
-                                            <motion.button
-                                              layoutId={`add-button-sub-${item.id}`}
-                                              initial={{ opacity: 0, scale: 0.8 }}
-                                              animate={{ opacity: 1, scale: 1 }}
-                                              whileTap={{ scale: 0.95 }}
-                                              transition={{ duration: 0.2, type: "spring", damping: 20 }}
-                                              onClick={(e) => {
-                                                e.stopPropagation()
-                                                setExpandedAddButtons((prev) => {
-                                                  const newSet = new Set(prev)
-                                                  newSet.add(item.id)
-                                                  return newSet
-                                                })
-                                              }}
-                                              className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 bg-red-400 hover:bg-red-500 text-white rounded-lg flex items-center gap-1.5 px-3 py-2 shadow-md transition-colors z-10 whitespace-nowrap"
-                                            >
-                                              <span className="text-sm font-semibold">ADD</span>
-                                              <Plus className="h-4 w-4" />
-                                            </motion.button>
                                           )}
                                         </div>
                                         {item.customisable && (
@@ -4529,8 +4540,8 @@ export default function RestaurantDetails() {
                       {/* Quantity Selector */}
                       <div className="flex items-center gap-3 border-2 border-gray-300 rounded-lg px-3 py-2">
                         <button
-                          onClick={() =>
-                            updateItemQuantity(selectedItem, Math.max(0, (quantities[selectedItem.id] || 0) - 1))
+                          onClick={(e) =>
+                            updateItemQuantity(selectedItem, Math.max(0, (quantities[selectedItem.id] || 0) - 1), e)
                           }
                           disabled={(quantities[selectedItem.id] || 0) === 0}
                           className="text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed"
@@ -4541,8 +4552,8 @@ export default function RestaurantDetails() {
                           {quantities[selectedItem.id] || 0}
                         </span>
                         <button
-                          onClick={() =>
-                            updateItemQuantity(selectedItem, (quantities[selectedItem.id] || 0) + 1)
+                          onClick={(e) =>
+                            updateItemQuantity(selectedItem, (quantities[selectedItem.id] || 0) + 1, e)
                           }
                           className="text-gray-600 hover:text-gray-900"
                         >
@@ -4553,8 +4564,8 @@ export default function RestaurantDetails() {
                       {/* Add Item Button */}
                       <Button
                         className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-lg font-semibold flex items-center justify-center gap-2"
-                        onClick={() => {
-                          updateItemQuantity(selectedItem, (quantities[selectedItem.id] || 0) + 1)
+                        onClick={(e) => {
+                          updateItemQuantity(selectedItem, (quantities[selectedItem.id] || 0) + 1, e)
                         }}
                       >
                         <span>Add item</span>

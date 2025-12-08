@@ -17,6 +17,8 @@ export function CartProvider({ children }) {
 
   // Track last add event for animation
   const [lastAddEvent, setLastAddEvent] = useState(null)
+  // Track last remove event for animation
+  const [lastRemoveEvent, setLastRemoveEvent] = useState(null)
 
   // Persist to localStorage whenever cart changes
   useEffect(() => {
@@ -31,6 +33,19 @@ export function CartProvider({ children }) {
     setCart((prev) => {
       const existing = prev.find((i) => i.id === item.id)
       if (existing) {
+        // Set last add event for animation when incrementing existing item
+        if (sourcePosition) {
+          setLastAddEvent({
+            product: {
+              id: item.id,
+              name: item.name,
+              imageUrl: item.image || item.imageUrl,
+            },
+            sourcePosition,
+          })
+          // Clear after animation completes (increased delay)
+          setTimeout(() => setLastAddEvent(null), 1500)
+        }
         return prev.map((i) =>
           i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
         )
@@ -47,26 +62,74 @@ export function CartProvider({ children }) {
           },
           sourcePosition,
         })
-        // Clear after a short delay to allow animation to start
-        setTimeout(() => setLastAddEvent(null), 100)
+        // Clear after animation completes (increased delay to allow full animation)
+        setTimeout(() => setLastAddEvent(null), 1500)
       }
       
       return [...prev, newItem]
     })
   }
 
-  const removeFromCart = (itemId) => {
-    setCart((prev) => prev.filter((i) => i.id !== itemId))
+  const removeFromCart = (itemId, sourcePosition = null, productInfo = null) => {
+    setCart((prev) => {
+      const itemToRemove = prev.find((i) => i.id === itemId)
+      if (itemToRemove && sourcePosition && productInfo) {
+        // Set last remove event for animation
+        setLastRemoveEvent({
+          product: {
+            id: productInfo.id || itemToRemove.id,
+            name: productInfo.name || itemToRemove.name,
+            imageUrl: productInfo.imageUrl || productInfo.image || itemToRemove.image || itemToRemove.imageUrl,
+          },
+          sourcePosition,
+        })
+        // Clear after animation completes
+        setTimeout(() => setLastRemoveEvent(null), 1500)
+      }
+      return prev.filter((i) => i.id !== itemId)
+    })
   }
 
-  const updateQuantity = (itemId, quantity) => {
+  const updateQuantity = (itemId, quantity, sourcePosition = null, productInfo = null) => {
     if (quantity <= 0) {
-      setCart((prev) => prev.filter((i) => i.id !== itemId))
+      setCart((prev) => {
+        const itemToRemove = prev.find((i) => i.id === itemId)
+        if (itemToRemove && sourcePosition && productInfo) {
+          // Set last remove event for animation
+          setLastRemoveEvent({
+            product: {
+              id: productInfo.id || itemToRemove.id,
+              name: productInfo.name || itemToRemove.name,
+              imageUrl: productInfo.imageUrl || productInfo.image || itemToRemove.image || itemToRemove.imageUrl,
+            },
+            sourcePosition,
+          })
+          // Clear after animation completes
+          setTimeout(() => setLastRemoveEvent(null), 1500)
+        }
+        return prev.filter((i) => i.id !== itemId)
+      })
       return
     }
-    setCart((prev) =>
-      prev.map((i) => (i.id === itemId ? { ...i, quantity } : i))
-    )
+    
+    // When quantity decreases (but not to 0), also trigger removal animation
+    setCart((prev) => {
+      const existingItem = prev.find((i) => i.id === itemId)
+      if (existingItem && quantity < existingItem.quantity && sourcePosition && productInfo) {
+        // Set last remove event for animation when decreasing quantity
+        setLastRemoveEvent({
+          product: {
+            id: productInfo.id || existingItem.id,
+            name: productInfo.name || existingItem.name,
+            imageUrl: productInfo.imageUrl || productInfo.image || existingItem.image || existingItem.imageUrl,
+          },
+          sourcePosition,
+        })
+        // Clear after animation completes
+        setTimeout(() => setLastRemoveEvent(null), 1500)
+      }
+      return prev.map((i) => (i.id === itemId ? { ...i, quantity } : i))
+    })
   }
 
   const getCartCount = () =>
@@ -108,6 +171,7 @@ export function CartProvider({ children }) {
       itemCount: cartForAnimation.itemCount,
       total: cartForAnimation.total,
       lastAddEvent,
+      lastRemoveEvent,
       addToCart,
       removeFromCart,
       updateQuantity,
@@ -116,7 +180,7 @@ export function CartProvider({ children }) {
       getCartItem,
       clearCart,
     }),
-    [cart, cartForAnimation, lastAddEvent]
+    [cart, cartForAnimation, lastAddEvent, lastRemoveEvent]
   )
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>

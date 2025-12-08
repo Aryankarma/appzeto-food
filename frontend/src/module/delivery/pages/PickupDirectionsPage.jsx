@@ -10,7 +10,8 @@ import {
   Navigation,
   X,
   RefreshCw,
-  ArrowRight
+  ArrowRight,
+  CheckCircle2
 } from "lucide-react"
 
 // Fix Leaflet default icon issue
@@ -51,6 +52,7 @@ export default function PickupDirectionsPage() {
   const [reachedButtonProgress, setReachedButtonProgress] = useState(0)
   const [isAnimatingToComplete, setIsAnimatingToComplete] = useState(false)
   const [bottomSheetExpanded, setBottomSheetExpanded] = useState(false)
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false)
   const reachedButtonRef = useRef(null)
   const bottomSheetRef = useRef(null)
   const handleRef = useRef(null)
@@ -271,18 +273,19 @@ export default function PickupDirectionsPage() {
       setIsAnimatingToComplete(true)
       setReachedButtonProgress(1)
       
-      // Handle reached pickup action
+      // Show success animation after button animation completes
       setTimeout(() => {
-        // TODO: Implement reached pickup logic
-        console.log('Reached pickup!')
-        // Navigate or update state as needed
+        setShowSuccessAnimation(true)
         
-        // Reset after action
+        // Hide animation and reset after showing message
         setTimeout(() => {
+          setShowSuccessAnimation(false)
           setReachedButtonProgress(0)
           setIsAnimatingToComplete(false)
-        }, 500)
-      }, 200)
+          // TODO: Implement reached pickup logic (navigate or update state)
+          console.log('Reached pickup!')
+        }, 3000) // Show success message for 3 seconds
+      }, 400) // Wait for button animation to complete
     } else {
       // Reset smoothly
       setReachedButtonProgress(0)
@@ -604,6 +607,117 @@ export default function PickupDirectionsPage() {
           </div>
         </motion.div>
       </div>
+
+      {/* Full Screen Success Animation */}
+      <AnimatePresence>
+        {showSuccessAnimation && (
+          <motion.div
+            className="fixed inset-0 z-[9999] bg-gray-900 flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            {/* Success Icon with Animation */}
+            <motion.div
+              className="flex flex-col items-center justify-center"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ 
+                type: "spring",
+                stiffness: 200,
+                damping: 20,
+                delay: 0.1
+              }}
+            >
+              {/* Checkmark Circle */}
+              <motion.div
+                className="relative mb-8"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 15,
+                  delay: 0.2
+                }}
+              >
+                {/* Outer ring animation */}
+                <motion.div
+                  className="absolute inset-0 rounded-full border-4 border-green-500"
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1.2, opacity: 0 }}
+                  transition={{
+                    duration: 0.6,
+                    delay: 0.3,
+                    repeat: Infinity,
+                    repeatDelay: 1
+                  }}
+                />
+                {/* Inner circle */}
+                <div className="w-32 h-32 bg-green-500 rounded-full flex items-center justify-center shadow-2xl">
+                  <CheckCircle2 className="w-20 h-20 text-white" strokeWidth={2.5} />
+                </div>
+              </motion.div>
+
+              {/* Success Message */}
+              <motion.div
+                className="text-center px-6"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4, duration: 0.5 }}
+              >
+                <motion.h2
+                  className="text-4xl font-bold text-white mb-4"
+                  initial={{ scale: 0.9 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
+                >
+                  Pickup Confirmed!
+                </motion.h2>
+                <motion.p
+                  className="text-xl text-white/80"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6, duration: 0.5 }}
+                >
+                  You have successfully reached the pickup location
+                </motion.p>
+              </motion.div>
+
+              {/* Animated particles/confetti effect */}
+              {[...Array(20)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute w-2 h-2 bg-green-400 rounded-full"
+                  initial={{
+                    x: 0,
+                    y: 0,
+                    opacity: 1,
+                    scale: 1
+                  }}
+                  animate={{
+                    x: (Math.random() - 0.5) * 400,
+                    y: (Math.random() - 0.5) * 400,
+                    opacity: 0,
+                    scale: 0
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    delay: 0.5 + i * 0.05,
+                    ease: "easeOut"
+                  }}
+                  style={{
+                    left: '50%',
+                    top: '50%'
+                  }}
+                />
+              ))}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   )
 }
