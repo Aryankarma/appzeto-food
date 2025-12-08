@@ -203,7 +203,7 @@ export default function UpdatesPage() {
       </div>
 
       {/* Stories Section */}
-      <div className="px-4 py-4 overflow-x-auto scrollbar-hide bg-gray-50">
+      <div className="px-4 py-4 overflow-x-auto scrollbar-hide bg-transparent">
         <div className="flex gap-4">
           {stories.map((story) => (
             <div
@@ -212,7 +212,7 @@ export default function UpdatesPage() {
               onClick={() => handleStoryClick(story)}
             >
               <div className="relative">
-                <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-300">
+                <div className="w-16 h-16 rounded-full overflow-hidden">
                   {story.isAdd ? (
                     <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
                       <img 
