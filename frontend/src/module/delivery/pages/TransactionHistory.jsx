@@ -3,11 +3,7 @@ import { motion } from "framer-motion"
 import { useNavigate, useLocation } from "react-router-dom"
 import { 
   ArrowLeft,
-  Filter,
-  Home,
-  FileText,
-  UtensilsCrossed,
-  User
+  Filter
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { 
@@ -267,44 +263,6 @@ export default function TransactionHistory() {
       </div>
 
 
-      {/* Bottom Navigation Bar - Mobile Only */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
-        <div className="flex items-center justify-around py-2 px-4">
-          <button 
-            onClick={() => navigate("/delivery")}
-            className="flex flex-col items-center gap-1 p-2 text-gray-600"
-          >
-            <Home className="w-6 h-6" />
-            <span className="text-[10px] text-gray-600 font-medium">Home</span>
-          </button>
-          <button 
-            onClick={() => navigate("/delivery/requests")}
-            className="flex flex-col items-center gap-1 p-2 text-gray-600 relative"
-          >
-            <div className="relative">
-              <FileText className="w-6 h-6" />
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                5
-              </span>
-            </div>
-            <span className="text-[10px] text-gray-600 font-medium">Request</span>
-          </button>
-          <button 
-            onClick={() => navigate("/delivery/orders")}
-            className="flex flex-col items-center gap-1 p-2 text-gray-600"
-          >
-            <UtensilsCrossed className="w-6 h-6" />
-            <span className="text-[10px] text-gray-600 font-medium">Orders</span>
-          </button>
-          <button 
-            onClick={() => navigate("/delivery/profile")}
-            className="flex flex-col items-center gap-1 p-2 text-gray-600"
-          >
-            <User className="w-6 h-6" />
-            <span className="text-[10px] text-gray-600 font-medium">Profile</span>
-          </button>
-        </div>
-      </div>
     </div>
   )
 }

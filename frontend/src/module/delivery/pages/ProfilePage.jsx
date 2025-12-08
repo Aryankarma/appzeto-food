@@ -7,54 +7,27 @@ import {
   FileText,
   UtensilsCrossed,
   User,
-  Edit,
-  Settings,
-  MessageSquare,
-  Wallet,
-  Wifi,
-  FileText as TermsIcon,
-  Shield,
-  Trash2,
-  LogOut,
-  LogIn,
-  UserPlus,
+  ArrowLeft,
+  ArrowRight,
+  Star,
+  Briefcase,
+  Bike,
+  Tag,
+  Headphones,
+  Ticket,
+  Car,
+  IndianRupee,
   Sparkles
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
-import { Switch } from "@/components/ui/switch"
 
 export default function ProfilePage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const [onlineStatus, setOnlineStatus] = useState(true)
   const [animationKey, setAnimationKey] = useState(0)
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem("delivery_authenticated") === "true"
-  })
   const profileRef = useRef(null)
-  const statsRef = useRef(null)
-  const optionsRef = useRef(null)
-
-  // Listen for authentication state changes
-  useEffect(() => {
-    const checkAuth = () => {
-      setIsAuthenticated(localStorage.getItem("delivery_authenticated") === "true")
-    }
-
-    // Check on mount
-    checkAuth()
-
-    // Listen for storage changes
-    window.addEventListener('storage', checkAuth)
-    
-    // Custom event for same-tab updates
-    window.addEventListener('deliveryAuthChanged', checkAuth)
-
-    return () => {
-      window.removeEventListener('storage', checkAuth)
-      window.removeEventListener('deliveryAuthChanged', checkAuth)
-    }
-  }, [])
+  const navButtonsRef = useRef(null)
+  const sectionsRef = useRef(null)
 
   useEffect(() => {
     // Initialize Lenis for smooth scrolling
@@ -77,11 +50,11 @@ export default function ProfilePage() {
       if (profileRef.current) {
         gsap.set(profileRef.current, { opacity: 0, y: 30 })
       }
-      if (statsRef.current) {
-        gsap.set(statsRef.current, { opacity: 0, y: 30 })
+      if (navButtonsRef.current) {
+        gsap.set(navButtonsRef.current, { opacity: 0, y: 30 })
       }
-      if (optionsRef.current) {
-        gsap.set(optionsRef.current, { opacity: 0, y: 30 })
+      if (sectionsRef.current) {
+        gsap.set(sectionsRef.current, { opacity: 0, y: 30 })
       }
 
       // GSAP animations
@@ -96,8 +69,8 @@ export default function ProfilePage() {
         })
       }
 
-      if (statsRef.current) {
-        tl.to(statsRef.current, {
+      if (navButtonsRef.current) {
+        tl.to(navButtonsRef.current, {
           opacity: 1,
           y: 0,
           duration: 0.6,
@@ -105,8 +78,8 @@ export default function ProfilePage() {
         }, "-=0.4")
       }
 
-      if (optionsRef.current) {
-        tl.to(optionsRef.current, {
+      if (sectionsRef.current) {
+        tl.to(sectionsRef.current, {
           opacity: 1,
           y: 0,
           duration: 0.6,
@@ -121,242 +94,171 @@ export default function ProfilePage() {
     }
   }, [location.pathname, animationKey])
 
-  // Get profile options based on authentication state
-  const getProfileOptions = () => {
-    const baseOptions = [
-      { id: "edit", label: "Edit Profile", icon: Edit },
-      { id: "settings", label: "Settings", icon: Settings },
-      { id: "conversation", label: "Conversation", icon: MessageSquare },
-      { id: "wallet", label: "Wallet", icon: Wallet },
-      { id: "terms", label: "Terms and Conditions", icon: TermsIcon },
-      { id: "privacy", label: "Privacy Policy", icon: Shield },
-      { id: "delete", label: "Delete Account", icon: Trash2, isDestructive: true },
-    ]
-
-    if (isAuthenticated) {
-      // If authenticated, show logout at the end
-      return [
-        ...baseOptions,
-        { id: "logout", label: "Logout", icon: LogOut, isDestructive: true }
-      ]
-    } else {
-      // If not authenticated, show only login at the top
-      return [
-        { id: "login", label: "Login", icon: LogIn, route: "/delivery/login" },
-        ...baseOptions
-      ]
+  // Listen for refresh events from bottom navigation
+  useEffect(() => {
+    const handleProfileRefresh = () => {
+      setAnimationKey(prev => prev + 1)
     }
-  }
 
-  const profileOptions = getProfileOptions()
+    window.addEventListener('deliveryProfileRefresh', handleProfileRefresh)
+
+    return () => {
+      window.removeEventListener('deliveryProfileRefresh', handleProfileRefresh)
+    }
+  }, [])
 
   return (
-    <div className="min-h-screen bg-[#f6e9dc] overflow-x-hidden">
-      {/* Header Section */}
-      <div className="bg-white border-b border-gray-200 px-4 py-4 md:py-3 flex items-center justify-center rounded-b-3xl md:rounded-b-none">
-        <h1 className="text-xl md:text-2xl font-bold text-gray-900">My Profile</h1>
-      </div>
-
+    <div className="min-h-screen bg-white text-gray-900 font-poppins overflow-x-hidden">
       {/* Main Content */}
       <div className="px-4 py-6 pb-24 md:pb-6">
-        {/* Profile Information Card */}
-        <div
-          ref={profileRef}
-          className="bg-[#ff8100] rounded-2xl p-4 md:p-6 mb-4 shadow-lg"
-        >
-          <div className="flex items-center gap-4">
-            <div className="flex-shrink-0">
+        {/* Back Button and Profile Section */}
+        <div ref={profileRef} className="mb-6">
+          {/* Back Button */}
+          <button
+            onClick={() => navigate(-1)}
+            className="mb-6"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+
+          {/* Profile Information */}
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <h2 className="text-2xl md:text-3xl font-bold">Manish Kumar Yadav</h2>
+                <ArrowRight className="w-5 h-5" />
+              </div>
+              <p className="text-gray-600 text-sm md:text-base mb-3">FE2411651</p>
+              <div className="inline-flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-full">
+                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                <span className="text-sm font-medium">4.7</span>
+              </div>
+            </div>
+            <div className="relative shrink-0 ml-4">
               <img 
                 src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"
                 alt="Profile"
-                className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-white object-cover"
+                className="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover"
               />
-            </div>
-            <div className="flex-1">
-              <h2 className="text-white text-xl md:text-2xl font-bold mb-1">Jhon Doe</h2>
-              <p className="text-white/90 text-sm md:text-base">+8801700000000</p>
+              <div className="absolute bottom-0 right-0 bg-gray-100 rounded-full p-2 border-2 border-white">
+                <Briefcase className="w-4 h-4" />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Shift Information */}
-        <div className="mb-6">
-          <p className="text-gray-700 text-sm md:text-base">
-            Shift: <span className="font-semibold">Morning (04:00 AM - 11:59 AM)</span>
-          </p>
-        </div>
-
-        {/* Statistics Cards */}
-        <div
-          ref={statsRef}
-          className="grid grid-cols-2 gap-4 mb-6"
-        >
-          <Card className="bg-white shadow-md border-0">
-            <CardContent className="p-4 text-center py-0 gap-0">
-              <p className="text-gray-900 text-3xl md:text-4xl font-bold mb-1">3</p>
-              <p className="text-gray-600 text-sm md:text-base">Total Order</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-white shadow-md border-0">
-            <CardContent className="p-4 text-center py-0 gap-0">
-              <p className="text-gray-900 text-3xl md:text-4xl font-bold mb-1">3</p>
-              <p className="text-gray-600 text-sm md:text-base">Complete Delivery</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Profile Options List */}
-        <div
-          ref={optionsRef}
-          className="space-y-2 md:space-y-3"
-        >
-          {/* Online Status */}
-          <Card className="bg-white shadow-sm border border-gray-100">
-            <CardContent className="px-2 md:px-4 py-1.5 md:py-3 gap-0">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 md:gap-3">
-                  <div className="bg-gray-100 rounded-full p-1.5 md:p-2">
-                    <Wifi className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
-                  </div>
-                  <span className="text-gray-900 font-medium text-xs md:text-base">Online Status</span>
-                </div>
-                <Switch
-                  checked={onlineStatus}
-                  onCheckedChange={setOnlineStatus}
-                  className="data-[state=checked]:bg-[#ff8100]"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Other Options */}
-          {profileOptions.map((option) => {
-            const Icon = option.icon
-            return (
-              <div key={option.id}>
-                <Card 
-                  onClick={() => {
-                    switch(option.id) {
-                      case "login":
-                        navigate("/delivery/login")
-                        break
-                      case "signup":
-                        navigate("/delivery/signup")
-                        break
-                      case "edit":
-                        navigate("/delivery/profile/edit")
-                        break
-                      case "settings":
-                        navigate("/delivery/profile/settings")
-                        break
-                      case "conversation":
-                        navigate("/delivery/profile/conversation")
-                        break
-                      case "wallet":
-                        navigate("/delivery/account")
-                        break
-                      case "terms":
-                        navigate("/delivery/profile/terms")
-                        break
-                      case "privacy":
-                        navigate("/delivery/profile/privacy")
-                        break
-                      case "delete":
-                        if (window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
-                          // TODO: Delete account API call
-                          console.log("Delete Account confirmed")
-                        }
-                        break
-                      case "logout":
-                        if (window.confirm("Are you sure you want to logout?")) {
-                          // Clear authentication state
-                          localStorage.removeItem("delivery_authenticated")
-                          localStorage.removeItem("delivery_user")
-                          setIsAuthenticated(false)
-                          // Dispatch custom event for same-tab updates
-                          window.dispatchEvent(new Event('deliveryAuthChanged'))
-                          // Redirect to login
-                          navigate("/delivery/login")
-                        }
-                        break
-                      default:
-                        if (option.route) {
-                          navigate(option.route)
-                        } else {
-                          console.log(`${option.label} clicked`)
-                        }
-                    }
-                  }}
-                  className="bg-white shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
-                >
-                  <CardContent className="px-2 md:px-4 py-1.5 md:py-3 gap-0">
-                    <div className="flex items-center gap-2 md:gap-3">
-                      <div className={`rounded-full p-1.5 md:p-2 ${option.isDestructive ? 'bg-red-100' : 'bg-gray-100'}`}>
-                        <Icon className={`w-4 h-4 md:w-5 md:h-5 ${option.isDestructive ? 'text-red-600' : 'text-gray-600'}`} />
-                      </div>
-                      <span className={`font-medium text-xs md:text-base flex-1 ${option.isDestructive ? 'text-red-600' : 'text-gray-900'}`}>
-                        {option.label}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Bottom Navigation Bar - Mobile Only */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
-        <div className="flex items-center justify-around py-2 px-4">
-          <button 
-            onClick={() => navigate("/delivery")}
-            className="flex flex-col items-center gap-1 p-2 text-gray-600"
+        {/* Navigation Buttons */}
+        <div ref={navButtonsRef} className="grid grid-cols-3 gap-3 mb-6">
+          <button
+            onClick={() => navigate("/delivery/gig?tab=history")}
+            className="bg-gray-100 rounded-lg p-4 flex flex-col items-center gap-2 hover:bg-gray-200 transition-colors"
           >
-            <Home className="w-6 h-6" />
-            <span className="text-[10px] text-gray-600 font-medium">Home</span>
-          </button>
-          <button 
-            onClick={() => navigate("/delivery/requests")}
-            className="flex flex-col items-center gap-1 p-2 text-gray-600 relative"
-          >
-            <div className="relative">
-              <FileText className="w-6 h-6" />
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                5
-              </span>
+            <div className="bg-white rounded-lg p-2">
+              <span className="text-xl font-bold">g</span>
             </div>
-            <span className="text-[10px] text-gray-600 font-medium">Request</span>
+            <span className="text-xs font-medium">Gigs history</span>
           </button>
-          <button 
-            onClick={() => navigate("/delivery/gig")}
-            className="flex flex-col items-center gap-1 p-2 text-gray-600"
-          >
-            <Sparkles className="w-6 h-6" />
-            <span className="text-[10px] text-gray-600 font-medium">Gig</span>
-          </button>
-          <button 
+          <button
             onClick={() => navigate("/delivery/orders")}
-            className="flex flex-col items-center gap-1 p-2 text-gray-600"
+            className="bg-gray-100 rounded-lg p-4 flex flex-col items-center gap-2 hover:bg-gray-200 transition-colors"
           >
-            <UtensilsCrossed className="w-6 h-6" />
-            <span className="text-[10px] text-gray-600 font-medium">Orders</span>
+            <div className="bg-white rounded-lg p-2">
+              <Bike className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-medium">Trips history</span>
           </button>
-          <button 
-            onClick={() => {
-              if (location.pathname === "/delivery/profile") {
-                setAnimationKey(prev => prev + 1)
-              } else {
-                navigate("/delivery/profile")
-              }
-            }}
-            className="flex flex-col items-center gap-1 p-2 text-[#ff8100]"
+          <button
+            onClick={() => {}}
+            className="bg-gray-100 rounded-lg p-4 flex flex-col items-center gap-2 hover:bg-gray-200 transition-colors"
           >
-            <User className="w-6 h-6" />
-            <span className="text-[10px] text-[#ff8100] font-medium">Profile</span>
+            <div className="bg-white rounded-lg p-2">
+              <Tag className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-medium">Your offers</span>
           </button>
         </div>
+
+        {/* Sections */}
+        <div ref={sectionsRef} className="space-y-4">
+          {/* Your fleet coach */}
+          <Card className="py-0 bg-gray-100 border-0 shadow-none">
+            <CardContent className="p-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-medium mb-1">Your fleet coach</h3>
+                <p className="text-gray-600 text-sm">Pavan Sharma</p>
+              </div>
+              <img 
+                src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=60&h=60&fit=crop&crop=face"
+                alt="Fleet Coach"
+                className="w-12 h-12 rounded-full object-cover"
+              />
+            </CardContent>
+          </Card>
+
+          {/* Referral bonus */}
+          <Card className="py-0 bg-gray-100 border-0 shadow-none">
+            <CardContent className="p-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-medium mb-1">₹2000 referral bonus</h3>
+                <p className="text-gray-600 text-sm">Refer your friend and earn</p>
+              </div>
+              <div className="flex items-center justify-center w-12 h-12">
+                <IndianRupee className="w-8 h-8 text-yellow-400" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Support Section */}
+          <div>
+            <h3 className="text-base font-medium mb-3 px-1">Support</h3>
+            <div className="space-y-0">
+              <Card 
+                onClick={() => {}}
+                className="bg-gray-100 py-0 border-0 shadow-none rounded-none first:rounded-t-lg last:rounded-b-lg cursor-pointer hover:bg-gray-200 transition-colors"
+              >
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Headphones className="w-5 h-5" />
+                    <span className="text-sm font-medium">Help centre</span>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-gray-400" />
+                </CardContent>
+              </Card>
+              <div className="h-px bg-gray-200"></div>
+              <Card 
+                onClick={() => {}}
+                className="bg-gray-100 py-0 border-0 shadow-none rounded-none first:rounded-t-lg last:rounded-b-lg cursor-pointer hover:bg-gray-200 transition-colors"
+              >
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Ticket className="w-5 h-5" />
+                    <span className="text-sm font-medium">Support tickets</span>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-gray-400" />
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Partner options Section */}
+          <div>
+            <h3 className="text-base font-medium mb-3 px-1">Partner options</h3>
+            <Card 
+              onClick={() => {}}
+              className="bg-gray-100 py-0 border-0 shadow-none rounded-lg cursor-pointer hover:bg-gray-200 transition-colors"
+            >
+              <CardContent className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Car className="w-5 h-5" />
+                  <span className="text-sm font-medium">Rest points</span>
+                </div>
+                <ArrowRight className="w-5 h-5 text-gray-400" />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
+
     </div>
   )
 }

@@ -21,7 +21,8 @@ import {
   Sunrise,
   Moon,
   Star,
-  XCircle
+  XCircle,
+  Gift
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -47,11 +48,27 @@ export default function GigBooking() {
   const navigate = useNavigate()
   const location = useLocation()
   const [animationKey, setAnimationKey] = useState(0)
-  const [activeTab, setActiveTab] = useState("book") // "book" or "history"
+  
+  // Get tab from URL parameter, default to "book"
+  const searchParams = new URLSearchParams(location.search)
+  const urlTab = searchParams.get("tab")
+  const [activeTab, setActiveTab] = useState(urlTab === "history" ? "history" : "book")
+  
   const [selectedDate, setSelectedDate] = useState(null)
   const [dateChangeKey, setDateChangeKey] = useState(0)
   const summaryRef = useRef(null)
   const slotsRef = useRef(null)
+  
+  // Update activeTab when URL parameter changes
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const tab = params.get("tab")
+    if (tab === "history") {
+      setActiveTab("history")
+    } else if (tab === "book" || !tab) {
+      setActiveTab("book")
+    }
+  }, [location.search])
   
   // Track date changes to reset animations
   const handleDateChange = (date) => {
@@ -131,6 +148,19 @@ export default function GigBooking() {
     }
   }, [location.pathname, animationKey])
 
+  // Listen for refresh events from bottom navigation
+  useEffect(() => {
+    const handleGigRefresh = () => {
+      setAnimationKey(prev => prev + 1)
+    }
+
+    window.addEventListener('deliveryGigRefresh', handleGigRefresh)
+
+    return () => {
+      window.removeEventListener('deliveryGigRefresh', handleGigRefresh)
+    }
+  }, [])
+
   // Handle slot selection with smooth scroll
   const handleSlotToggle = (slot) => {
     // Check if slot is already booked
@@ -200,6 +230,7 @@ export default function GigBooking() {
       }
       clearSelectedSlots()
       setActiveTab("history")
+      navigate("/delivery/gig?tab=history", { replace: true })
     } else {
       toast.error("Failed to book gig")
     }
@@ -269,7 +300,9 @@ export default function GigBooking() {
             <div className="bg-[#ff8100] rounded-lg p-1.5 md:p-1.5">
               <Calendar className="w-5 h-5 md:w-4 md:h-4 text-white" />
             </div>
-            <span className="text-[#ff8100] font-bold text-xl md:text-lg">Book Gig</span>
+            <span className="text-[#ff8100] font-bold text-xl md:text-lg">
+              {activeTab === "history" ? "Gig History" : "Book Gig"}
+            </span>
           </div>
         </div>
         {/* User Level Badge */}
@@ -285,12 +318,26 @@ export default function GigBooking() {
         </div>
       </div>
 
+      {/* View All Offers Button */}
+      <div className="px-4 pt-4 pb-4">
+        <Button
+          onClick={() => navigate("/delivery/offers")}
+          className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-3 rounded-lg shadow-md flex items-center justify-center gap-2"
+        >
+          <Gift className="w-5 h-5" />
+          <span>View All Offers</span>
+        </Button>
+      </div>
+
       {/* Main Content */}
-      <div className="px-4 py-6 pb-24 md:pb-6">
+      <div className="px-4 pt-4 pb-24 md:pb-6">
         {/* Tabs - Inspired by Orders Page */}
-        <div className="flex gap-3 mb-6">
+        <div className="flex gap-3 mb-4">
           <button
-            onClick={() => setActiveTab("book")}
+            onClick={() => {
+              setActiveTab("book")
+              navigate("/delivery/gig?tab=book", { replace: true })
+            }}
             className={`relative flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
               activeTab === "book"
                 ? "text-white"
@@ -307,7 +354,10 @@ export default function GigBooking() {
             <span className="relative z-10">Book Gig</span>
           </button>
           <button
-            onClick={() => setActiveTab("history")}
+            onClick={() => {
+              setActiveTab("history")
+              navigate("/delivery/gig?tab=history", { replace: true })
+            }}
             className={`relative flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
               activeTab === "history"
                 ? "text-white"
@@ -334,10 +384,10 @@ export default function GigBooking() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="space-y-6"
+              className="space-y-4"
             >
               {/* Date Picker - Improved UI */}
-              <div>
+              <div className="mb-4">
                 <h3 className="text-lg font-bold text-gray-800 mb-3">Select Date</h3>
                 <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                   {availableDates.map((dateObj, index) => {
@@ -438,7 +488,7 @@ export default function GigBooking() {
                               </div>
 
                               {/* Gig Slots */}
-                              <div className="p-2 space-y-2">
+                              <div className="px-3 py-3 space-y-2">
                                 <AnimatePresence>
                                   {category.slots.map((slot, slotIndex) => {
                                     const isSelected = isSlotSelected(slot)
@@ -458,7 +508,7 @@ export default function GigBooking() {
                                         }}
                                         onClick={() => !isBooked && handleSlotToggle(slot)}
                                         disabled={isBooked}
-                                        className={`w-full rounded-lg p-4 shadow-sm border transition-all ${
+                                        className={`w-full rounded-lg px-4 py-3 shadow-sm border transition-all ${
                                           isBooked
                                             ? "opacity-60 cursor-not-allowed border-gray-200 bg-gray-50"
                                             : isSelected
@@ -540,15 +590,15 @@ export default function GigBooking() {
                       stiffness: 300,
                       damping: 25
                     }}
-                    className="bg-white rounded-xl p-5 border-2 border-[#ff8100] shadow-lg"
+                    className="bg-white rounded-xl p-4 border-2 border-[#ff8100] shadow-lg"
                   >
-                    <div className="flex items-center gap-2 mb-4">
+                    <div className="flex items-center gap-2 mb-3">
                       <div className="bg-[#ff8100] rounded-full p-2">
                         <Calendar className="w-4 h-4 text-white" />
                       </div>
                       <h3 className="text-lg font-bold text-gray-800">Booking Summary</h3>
                     </div>
-                    <div className="space-y-3 text-sm">
+                    <div className="space-y-2 text-sm">
                       <motion.div 
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -591,13 +641,14 @@ export default function GigBooking() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
+                className="mt-4"
               >
                 <motion.button
                   onClick={handleBookGig}
                   disabled={!canBook}
                   whileHover={canBook ? { scale: 1.02, y: -2 } : {}}
                   whileTap={canBook ? { scale: 0.98 } : {}}
-                  className={`w-full py-6 text-lg font-semibold rounded-lg shadow-lg transition-all ${
+                  className={`w-full py-4 text-lg font-semibold rounded-lg shadow-lg transition-all ${
                     canBook
                       ? "bg-[#ff8100] hover:bg-[#e67300] text-white"
                       : "bg-gray-300 text-gray-500 cursor-not-allowed"
@@ -615,12 +666,13 @@ export default function GigBooking() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ delay: 0.35 }}
+                    className="mt-3"
                   >
                     <motion.button
                       onClick={handleGoOnline}
                       whileHover={{ scale: 1.02, y: -2 }}
                       whileTap={{ scale: 0.98 }}
-                      className="w-full py-6 text-lg font-semibold rounded-lg bg-green-600 hover:bg-green-700 text-white shadow-lg transition-all"
+                      className="w-full py-4 text-lg font-semibold rounded-lg bg-green-600 hover:bg-green-700 text-white shadow-lg transition-all"
                     >
                       Go Online
                     </motion.button>
@@ -636,12 +688,13 @@ export default function GigBooking() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ delay: 0.35 }}
+                    className="mt-3"
                   >
                     <motion.button
                       onClick={handleGoOffline}
                       whileHover={{ scale: 1.02, y: -2 }}
                       whileTap={{ scale: 0.98 }}
-                      className="w-full py-6 text-lg font-semibold rounded-lg bg-red-600 hover:bg-red-700 text-white shadow-lg transition-all"
+                      className="w-full py-4 text-lg font-semibold rounded-lg bg-red-600 hover:bg-red-700 text-white shadow-lg transition-all"
                     >
                       Go Offline
                     </motion.button>
@@ -661,7 +714,7 @@ export default function GigBooking() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="space-y-4"
+              className="space-y-3"
             >
               {sortedGigs.length === 0 ? (
                 <motion.div
@@ -698,8 +751,8 @@ export default function GigBooking() {
                     className="cursor-pointer"
                   >
                     <Card className="bg-white shadow-md hover:shadow-lg transition-shadow border-0">
-                      <CardContent className="p-5">
-                        <div className="flex items-start justify-between mb-4">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between mb-3">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
                               <div className="bg-[#ff8100]/10 rounded-lg p-1.5">
@@ -730,7 +783,7 @@ export default function GigBooking() {
                             {gig.status}
                           </motion.span>
                         </div>
-                        <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                        <div className="flex items-center justify-between pt-3 border-t border-gray-200">
                           <div className="flex items-center gap-3 text-sm">
                             <div className="flex items-center gap-1 text-gray-600">
                               <Clock className="w-4 h-4" />
@@ -764,52 +817,6 @@ export default function GigBooking() {
         </AnimatePresence>
       </div>
 
-      {/* Bottom Navigation Bar - Mobile Only */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
-        <div className="flex items-center justify-around py-2 px-4">
-          <button 
-            onClick={() => navigate("/delivery")}
-            className="flex flex-col items-center gap-1 p-2 text-gray-600"
-          >
-            <Home className="w-6 h-6" />
-            <span className="text-[10px] text-gray-600 font-medium">Home</span>
-          </button>
-          <button 
-            onClick={() => navigate("/delivery/requests")}
-            className="flex flex-col items-center gap-1 p-2 text-gray-600"
-          >
-            <FileText className="w-6 h-6" />
-            <span className="text-[10px] text-gray-600 font-medium">Request</span>
-          </button>
-          <button 
-            onClick={() => {
-              if (location.pathname === "/delivery/gig") {
-                setAnimationKey(prev => prev + 1)
-              } else {
-                navigate("/delivery/gig")
-              }
-            }}
-            className="flex flex-col items-center gap-1 p-2 text-[#ff8100]"
-          >
-            <Sparkles className="w-6 h-6" />
-            <span className="text-[10px] text-[#ff8100] font-medium">Gig</span>
-          </button>
-          <button 
-            onClick={() => navigate("/delivery/orders")}
-            className="flex flex-col items-center gap-1 p-2 text-gray-600"
-          >
-            <UtensilsCrossed className="w-6 h-6" />
-            <span className="text-[10px] text-gray-600 font-medium">Orders</span>
-          </button>
-          <button 
-            onClick={() => navigate("/delivery/profile")}
-            className="flex flex-col items-center gap-1 p-2 text-gray-600"
-          >
-            <User className="w-6 h-6" />
-            <span className="text-[10px] text-gray-600 font-medium">Profile</span>
-          </button>
-        </div>
-      </div>
     </div>
   )
 }

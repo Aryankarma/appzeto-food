@@ -27,9 +27,6 @@ import RestaurantLogin from "@/module/restaurant/pages/auth/Login"
 import RestaurantSignup from "@/module/restaurant/pages/auth/Signup"
 import RestaurantOTP from "@/module/restaurant/pages/auth/OTP"
 import RestaurantPanelRouter from "@/module/restaurant/panel/components/RestaurantPanelRouter"
-import DeliveryLogin from "@/module/delivery/pages/auth/Login"
-import DeliverySignup from "@/module/delivery/pages/auth/Signup"
-import DeliveryOTP from "@/module/delivery/pages/auth/OTP"
 import EditProfilePage from "@/module/restaurant/pages/EditProfilePage"
 import AdvertisementsPage from "@/module/restaurant/pages/AdvertisementsPage"
 import AdDetailsPage from "@/module/restaurant/pages/AdDetailsPage"
@@ -48,22 +45,8 @@ import RestaurantCategoriesPage from "@/module/restaurant/pages/RestaurantCatego
 import BusinessPlanPage from "@/module/restaurant/pages/BusinessPlanPage"
 import ConversationListPage from "@/module/restaurant/pages/ConversationListPage"
 import ChatDetailPage from "@/module/restaurant/pages/ChatDetailPage"
-import DeliveryHome from "@/module/delivery/pages/DeliveryHome"
-import MyOrders from "@/module/delivery/pages/MyOrders"
-import OrderRequestPage from "@/module/delivery/pages/OrderRequestPage"
-import ProfilePage from "@/module/delivery/pages/ProfilePage"
-import AcceptedOrderDetails from "@/module/delivery/pages/AcceptedOrderDetails"
-import MyAccount from "@/module/delivery/pages/MyAccount"
-import TransactionHistory from "@/module/delivery/pages/TransactionHistory"
-import EditProfile from "@/module/delivery/pages/EditProfile"
-import Settings from "@/module/delivery/pages/Settings"
-import Conversation from "@/module/delivery/pages/Conversation"
-import TermsAndConditions from "@/module/delivery/pages/TermsAndConditions"
-import PrivacyPolicy from "@/module/delivery/pages/PrivacyPolicy"
-import Notifications from "@/module/delivery/pages/Notifications"
-import GigBooking from "@/module/delivery/pages/GigBooking"
-import PickupDirectionsPage from "@/module/delivery/pages/PickupDirectionsPage"
 import AdminRouter from "@/module/admin/components/AdminRouter"
+import DeliveryRouter from "@/module/delivery/components/DeliveryRouter"
 
 // Component to redirect /user/* to /* (removing /user prefix)
 function UserPathRedirect() {
@@ -123,24 +106,7 @@ export default function App() {
       <Route path="/restaurant/business-plan" element={<BusinessPlanPage />} />
       <Route path="/restaurant/conversation" element={<ConversationListPage />} />
       <Route path="/restaurant/conversation/:conversationId" element={<ChatDetailPage />} />
-      <Route path="/delivery" element={<DeliveryHome />} />
-      <Route path="/delivery/login" element={<DeliveryLogin />} />
-      <Route path="/delivery/signup" element={<DeliverySignup />} />
-      <Route path="/delivery/otp" element={<DeliveryOTP />} />
-      <Route path="/delivery/notifications" element={<Notifications />} />
-      <Route path="/delivery/orders" element={<MyOrders />} />
-      <Route path="/delivery/requests" element={<OrderRequestPage />} />
-      <Route path="/delivery/gig" element={<GigBooking />} />
-      <Route path="/delivery/pickup-directions" element={<PickupDirectionsPage />} />
-      <Route path="/delivery/profile" element={<ProfilePage />} />
-      <Route path="/delivery/order/:orderId" element={<AcceptedOrderDetails />} />
-      <Route path="/delivery/account" element={<MyAccount />} />
-      <Route path="/delivery/transactions" element={<TransactionHistory />} />
-      <Route path="/delivery/profile/edit" element={<EditProfile />} />
-      <Route path="/delivery/profile/settings" element={<Settings />} />
-      <Route path="/delivery/profile/conversation" element={<Conversation />} />
-      <Route path="/delivery/profile/terms" element={<TermsAndConditions />} />
-      <Route path="/delivery/profile/privacy" element={<PrivacyPolicy />} />
+      <Route path="/delivery/*" element={<DeliveryRouter />} />
       <Route path="/admin/*" element={<AdminRouter />} />
       <Route path="/*" element={<UserRouter />} />
     </Routes>

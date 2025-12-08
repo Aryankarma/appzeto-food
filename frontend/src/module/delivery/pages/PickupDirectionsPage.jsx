@@ -50,10 +50,15 @@ export default function PickupDirectionsPage() {
   const [routePolylines, setRoutePolylines] = useState([])
   const [reachedButtonProgress, setReachedButtonProgress] = useState(0)
   const [isAnimatingToComplete, setIsAnimatingToComplete] = useState(false)
+  const [bottomSheetExpanded, setBottomSheetExpanded] = useState(false)
   const reachedButtonRef = useRef(null)
+  const bottomSheetRef = useRef(null)
+  const handleRef = useRef(null)
   const reachedButtonSwipeStartX = useRef(0)
   const reachedButtonSwipeStartY = useRef(0)
   const reachedButtonIsSwiping = useRef(false)
+  const swipeStartY = useRef(0)
+  const isSwiping = useRef(false)
   
   // Get accepted restaurants from location state
   const acceptedRestaurants = location.state?.restaurants || []
@@ -127,6 +132,97 @@ export default function PickupDirectionsPage() {
 
   const toggleRestaurantExpansion = (restaurantId) => {
     setExpandedRestaurant(expandedRestaurant === restaurantId ? null : restaurantId)
+  }
+
+  // Handle bottom sheet swipe
+  const handleBottomSheetTouchStart = (e) => {
+    const target = e.target
+    const isHandle = handleRef.current?.contains(target)
+    const isScrollableContent = target.closest('.scrollable-content')
+    
+    // Always allow swipe on handle
+    if (isHandle) {
+      e.stopPropagation()
+      swipeStartY.current = e.touches[0].clientY
+      isSwiping.current = true
+      return
+    }
+    
+    // Check if touch is in top area of bottom sheet
+    const rect = bottomSheetRef.current?.getBoundingClientRect()
+    if (!rect) return
+    
+    const touchY = e.touches[0].clientY
+    const handleArea = rect.top + 80 // Top 80px is draggable area
+    
+    // If touching scrollable content, check if it's scrollable and at top
+    if (isScrollableContent) {
+      const scrollable = target.closest('.scrollable-content')
+      if (scrollable && scrollable.scrollTop > 0) {
+        return // Content is scrollable and not at top, let it scroll
+      }
+    }
+    
+    // Allow swipe if touching top area (not scrollable content)
+    if (touchY <= handleArea && !isScrollableContent) {
+      e.stopPropagation()
+      swipeStartY.current = touchY
+      isSwiping.current = true
+    }
+  }
+
+  const handleBottomSheetTouchMove = (e) => {
+    if (!isSwiping.current) return
+    
+    const deltaY = swipeStartY.current - e.touches[0].clientY
+    
+    if (Math.abs(deltaY) > 10) {
+      e.stopPropagation()
+      e.preventDefault()
+      
+      // Swipe up to expand
+      if (deltaY > 0 && !bottomSheetExpanded && bottomSheetRef.current) {
+        const maxMovement = window.innerHeight * 0.3
+        const clampedDelta = Math.min(deltaY, maxMovement)
+        bottomSheetRef.current.style.transform = `translateY(${-clampedDelta}px)`
+        bottomSheetRef.current.style.transition = 'none' // Disable animation during drag
+      }
+      // Swipe down to collapse
+      else if (deltaY < 0 && bottomSheetExpanded && bottomSheetRef.current) {
+        const maxMovement = window.innerHeight * 0.3
+        const clampedDelta = Math.max(deltaY, -maxMovement)
+        bottomSheetRef.current.style.transform = `translateY(${-clampedDelta}px)`
+        bottomSheetRef.current.style.transition = 'none' // Disable animation during drag
+      }
+    }
+  }
+
+  const handleBottomSheetTouchEnd = (e) => {
+    if (!isSwiping.current) {
+      isSwiping.current = false
+      return
+    }
+    
+    e.stopPropagation()
+    
+    const deltaY = swipeStartY.current - e.changedTouches[0].clientY
+    const threshold = 50
+    
+    if (bottomSheetRef.current) {
+      // Re-enable transition
+      bottomSheetRef.current.style.transition = ''
+      
+      if (deltaY > threshold && !bottomSheetExpanded) {
+        setBottomSheetExpanded(true)
+      } else if (deltaY < -threshold && bottomSheetExpanded) {
+        setBottomSheetExpanded(false)
+      }
+      // Reset transform
+      bottomSheetRef.current.style.transform = ''
+    }
+    
+    isSwiping.current = false
+    swipeStartY.current = 0
   }
 
   // Handle reached pickup button swipe
@@ -323,22 +419,37 @@ export default function PickupDirectionsPage() {
 
       {/* Bottom Sheet */}
       <motion.div
+        ref={bottomSheetRef}
         className="absolute left-0 right-0 bg-gray-900 rounded-t-3xl z-40 overflow-hidden"
+        initial={false}
+        animate={{
+          height: bottomSheetExpanded ? '70vh' : '40vh',
+        }}
         style={{ 
-          height: '40vh',
           bottom: '88px'
         }}
-        initial={{ y: "100%" }}
-        animate={{ y: 0 }}
-        transition={{ type: "spring", damping: 30, stiffness: 300 }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+        onTouchStart={handleBottomSheetTouchStart}
+        onTouchMove={handleBottomSheetTouchMove}
+        onTouchEnd={handleBottomSheetTouchEnd}
       >
         {/* Handle */}
-        <div className="flex justify-center pt-3 pb-2">
-          <div className="w-12 h-1 bg-gray-600 rounded-full" />
+        <div 
+          ref={handleRef}
+          className="flex justify-center pt-4 pb-3 cursor-grab active:cursor-grabbing relative z-50 bg-gray-900 rounded-t-3xl"
+          onClick={() => setBottomSheetExpanded(!bottomSheetExpanded)}
+          onTouchStart={(e) => {
+            e.stopPropagation()
+            handleBottomSheetTouchStart(e)
+          }}
+        >
+          <div className="w-16 h-2 bg-white/50 rounded-full shadow-lg flex items-center justify-center border border-white/20">
+            <div className="w-12 h-1 bg-white rounded-full" />
+          </div>
         </div>
 
         {/* Scrollable content */}
-        <div className="overflow-y-auto px-4 pb-4" style={{ maxHeight: 'calc(40vh - 20px)' }}>
+        <div className="overflow-y-auto px-4 pb-8 mb-8 scrollable-content" style={{ maxHeight: bottomSheetExpanded ? 'calc(70vh - 60px)' : 'calc(40vh - 60px)' }}>
           <div className="space-y-4">
             {acceptedRestaurants.map((restaurant, index) => {
               const isExpanded = expandedRestaurant === restaurant.id
@@ -428,8 +539,8 @@ export default function PickupDirectionsPage() {
         </div>
       </motion.div>
 
-      {/* Reached Pickup Button - Sticky at bottom */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-4 bg-gray-900/95 backdrop-blur-sm">
+      {/* Reached Pickup Button - Sticky at bottom, above navigation */}
+      <div className="fixed bottom-20 left-0 right-0 z-50 px-4 pb-4 bg-gray-900/95 backdrop-blur-sm md:bottom-4">
         <motion.div
           ref={reachedButtonRef}
           className="relative w-full bg-green-600 rounded-full overflow-hidden shadow-xl"
