@@ -4421,24 +4421,29 @@ export default function RestaurantDetails() {
                   onClick={() => setShowItemDetail(false)}
                 />
 
-                {/* Item Detail Bottom Sheet */}
-                <motion.div
-                  className="fixed left-0 right-0 bottom-0 z-[10000] bg-white rounded-t-3xl shadow-2xl max-h-[90vh] flex flex-col"
-                  initial={{ y: "100%" }}
-                  animate={{ y: 0 }}
-                  exit={{ y: "100%" }}
-                  transition={{ duration: 0.15, type: "spring", damping: 30, stiffness: 400 }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {/* Close Button - Centered Overlapping */}
-                  <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
-                    <button
-                      onClick={() => setShowItemDetail(false)}
-                      className="h-10 w-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-900 transition-colors shadow-lg"
-                    >
-                      <X className="h-5 w-5 text-white" />
-                    </button>
-                  </div>
+            {/* Close Button - Top Center Above Popup */}
+            <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[10001]">
+              <motion.button
+                onClick={() => setShowItemDetail(false)}
+                className="h-10 w-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-900 transition-colors shadow-lg"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <X className="h-5 w-5 text-white" />
+              </motion.button>
+            </div>
+
+            {/* Item Detail Bottom Sheet */}
+            <motion.div
+              className="fixed left-0 right-0 bottom-0 z-[10000] bg-white rounded-t-3xl shadow-2xl max-h-[90vh] flex flex-col"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ duration: 0.15, type: "spring", damping: 30, stiffness: 400 }}
+              onClick={(e) => e.stopPropagation()}
+            >
 
                   {/* Image Section */}
                   <div className="relative w-full h-64 overflow-hidden rounded-t-3xl">
@@ -4538,7 +4543,7 @@ export default function RestaurantDetails() {
                   <div className="border-t border-gray-200 px-4 py-4 bg-white">
                     <div className="flex items-center gap-4">
                       {/* Quantity Selector */}
-                      <div className="flex items-center gap-3 border-2 border-gray-300 rounded-lg px-3 py-2">
+                      <div className="flex items-center gap-3 border-2 border-gray-300 rounded-lg px-3 h-[44px]">
                         <button
                           onClick={(e) =>
                             updateItemQuantity(selectedItem, Math.max(0, (quantities[selectedItem.id] || 0) - 1), e)
@@ -4563,16 +4568,19 @@ export default function RestaurantDetails() {
 
                       {/* Add Item Button */}
                       <Button
-                        className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-lg font-semibold flex items-center justify-center gap-2"
+                        className="flex-1 bg-red-500 hover:bg-red-600 text-white h-[44px] rounded-lg font-semibold flex items-center justify-center gap-2"
                         onClick={(e) => {
                           updateItemQuantity(selectedItem, (quantities[selectedItem.id] || 0) + 1, e)
+                          setShowItemDetail(false)
                         }}
                       >
                         <span>Add item</span>
                         <div className="flex items-center gap-1">
-                          <span className="text-sm line-through text-red-200">
-                            ₹{Math.round(selectedItem.originalPrice)}
-                          </span>
+                          {selectedItem.originalPrice && selectedItem.originalPrice > selectedItem.price && (
+                            <span className="text-sm line-through text-red-200">
+                              ₹{Math.round(selectedItem.originalPrice)}
+                            </span>
+                          )}
                           <span className="text-base font-bold">
                             ₹{Math.round(selectedItem.price)}
                           </span>

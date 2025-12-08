@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom"
-import { useState, useMemo, useCallback, useEffect } from "react"
-import { Star, Clock, MapPin, ArrowDownUp, Timer, ArrowRight, ChevronDown, Bookmark, Share2, Plus, Minus, X } from "lucide-react"
+import { useState, useMemo, useCallback, useEffect, useRef } from "react"
+import { Star, Clock, MapPin, ArrowDownUp, Timer, ArrowRight, ChevronDown, Bookmark, Share2, Plus, Minus, X, ShoppingCart } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import AnimatedPage from "../components/AnimatedPage"
 import { Card, CardContent } from "@/components/ui/card"
@@ -164,7 +164,7 @@ const under250Restaurants = [
 export default function Under250() {
   const { location } = useLocation()
   const navigate = useNavigate()
-  const { addToCart, updateQuantity, removeFromCart, getCartItem, cart } = useCart()
+  const { addToCart, updateQuantity, removeFromCart, getCartItem, cart, getCartCount } = useCart()
   const [activeCategory, setActiveCategory] = useState(null)
   const [showSortPopup, setShowSortPopup] = useState(false)
   const [selectedSort, setSelectedSort] = useState(null)
@@ -173,6 +173,9 @@ export default function Under250() {
   const [selectedItem, setSelectedItem] = useState(null)
   const [quantities, setQuantities] = useState({})
   const [bookmarkedItems, setBookmarkedItems] = useState(new Set())
+  const [viewCartButtonBottom, setViewCartButtonBottom] = useState("bottom-20")
+  const lastScrollY = useRef(0)
+  const cartCount = getCartCount()
 
   const sortOptions = [
     { id: null, label: 'Relevance' },
@@ -198,6 +201,33 @@ export default function Under250() {
     })
     setQuantities(cartQuantities)
   }, [cart])
+
+  // Scroll detection for view cart button positioning
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY
+      const scrollDifference = Math.abs(currentScrollY - lastScrollY.current)
+
+      // Only update if scroll difference is significant (avoid flickering)
+      if (scrollDifference < 5) {
+        return
+      }
+
+      // Scroll down -> bottom-0, Scroll up -> bottom-20
+      if (currentScrollY > lastScrollY.current) {
+        // Scrolling down
+        setViewCartButtonBottom("bottom-0")
+      } else if (currentScrollY < lastScrollY.current) {
+        // Scrolling up
+        setViewCartButtonBottom("bottom-20")
+      }
+
+      lastScrollY.current = currentScrollY
+    }
+
+    window.addEventListener("scroll", handleScroll, { passive: true })
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
 
   // Helper function to update item quantity in both local state and cart
   const updateItemQuantity = (item, newQuantity, event = null, restaurantName = null) => {
@@ -646,6 +676,20 @@ export default function Under250() {
               onClick={() => setShowItemDetail(false)}
             />
 
+            {/* Close Button - Top Center Above Popup */}
+            <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[10001]">
+              <motion.button
+                onClick={() => setShowItemDetail(false)}
+                className="h-10 w-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-900 transition-colors shadow-lg"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <X className="h-5 w-5 text-white" />
+              </motion.button>
+            </div>
+
             {/* Item Detail Bottom Sheet */}
             <motion.div
               className="fixed left-0 right-0 bottom-0 z-[10000] bg-white rounded-t-3xl shadow-2xl max-h-[90vh] flex flex-col"
@@ -655,15 +699,6 @@ export default function Under250() {
               transition={{ duration: 0.15, type: "spring", damping: 30, stiffness: 400 }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Close Button - Centered Overlapping */}
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
-                <button
-                  onClick={() => setShowItemDetail(false)}
-                  className="h-10 w-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-900 transition-colors shadow-lg"
-                >
-                  <X className="h-5 w-5 text-white" />
-                </button>
-              </div>
 
               {/* Image Section */}
               <div className="relative w-full h-64 overflow-hidden rounded-t-3xl">
@@ -764,35 +799,36 @@ export default function Under250() {
               {/* Bottom Action Bar */}
               <div className="border-t border-gray-200 px-4 py-4 bg-white">
                 <div className="flex items-center gap-4">
-                  {/* Quantity Selector */}
-                  <div className="flex items-center gap-3 border-2 border-gray-300 rounded-lg px-3 py-2">
-                    <button
-                      onClick={(e) =>
-                        updateItemQuantity(selectedItem, Math.max(0, (quantities[selectedItem.id] || 0) - 1), e)
-                      }
-                      disabled={(quantities[selectedItem.id] || 0) === 0}
-                      className="text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed"
-                    >
-                      <Minus className="h-5 w-5" />
-                    </button>
-                    <span className="text-lg font-semibold text-gray-900 min-w-[2rem] text-center">
-                      {quantities[selectedItem.id] || 0}
-                    </span>
-                    <button
-                      onClick={(e) =>
-                        updateItemQuantity(selectedItem, (quantities[selectedItem.id] || 0) + 1, e)
-                      }
-                      className="text-gray-600 hover:text-gray-900"
-                    >
-                      <Plus className="h-5 w-5" />
-                    </button>
-                  </div>
+                      {/* Quantity Selector */}
+                      <div className="flex items-center gap-3 border-2 border-gray-300 rounded-lg px-3 h-[44px]">
+                        <button
+                          onClick={(e) =>
+                            updateItemQuantity(selectedItem, Math.max(0, (quantities[selectedItem.id] || 0) - 1), e)
+                          }
+                          disabled={(quantities[selectedItem.id] || 0) === 0}
+                          className="text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed"
+                        >
+                          <Minus className="h-5 w-5" />
+                        </button>
+                        <span className="text-lg font-semibold text-gray-900 min-w-[2rem] text-center">
+                          {quantities[selectedItem.id] || 0}
+                        </span>
+                        <button
+                          onClick={(e) =>
+                            updateItemQuantity(selectedItem, (quantities[selectedItem.id] || 0) + 1, e)
+                          }
+                          className="text-gray-600 hover:text-gray-900"
+                        >
+                          <Plus className="h-5 w-5" />
+                        </button>
+                      </div>
 
                   {/* Add Item Button */}
                   <Button
-                    className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-lg font-semibold flex items-center justify-center gap-2"
+                    className="flex-1 bg-red-500 hover:bg-red-600 text-white h-[44px] rounded-lg font-semibold flex items-center justify-center gap-2"
                     onClick={(e) => {
                       updateItemQuantity(selectedItem, (quantities[selectedItem.id] || 0) + 1, e)
+                      setShowItemDetail(false)
                     }}
                   >
                     <span>Add item</span>
@@ -813,6 +849,20 @@ export default function Under250() {
           </>
         )}
       </AnimatePresence>
+
+      {/* Sticky View Cart Button */}
+      {cartCount > 0 && (
+        <div className={`fixed ${viewCartButtonBottom} left-0 right-0 z-40 px-4 pb-2 transition-all duration-300 ease-in-out`}>
+          <Link
+            to="/user/cart"
+            className="w-min mx-auto bg-green-600 hover:bg-green-700 text-white text-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 py-2.5 px-4"
+          >
+            <ShoppingCart className="h-4 w-4" />
+            <span className="text-sm font-semibold">View Cart</span>
+            <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full font-bold">{cartCount}</span>
+          </Link>
+        </div>
+      )}
 
       {/* Add to Cart Animation */}
       <AddToCartAnimation />
