@@ -4421,20 +4421,6 @@ export default function RestaurantDetails() {
                   onClick={() => setShowItemDetail(false)}
                 />
 
-            {/* Close Button - Top Center Above Popup */}
-            <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[10001]">
-              <motion.button
-                onClick={() => setShowItemDetail(false)}
-                className="h-10 w-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-900 transition-colors shadow-lg"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-              >
-                <X className="h-5 w-5 text-white" />
-              </motion.button>
-            </div>
-
             {/* Item Detail Bottom Sheet */}
             <motion.div
               className="fixed left-0 right-0 bottom-0 z-[10000] bg-white rounded-t-3xl shadow-2xl max-h-[90vh] flex flex-col"
@@ -4444,6 +4430,19 @@ export default function RestaurantDetails() {
               transition={{ duration: 0.15, type: "spring", damping: 30, stiffness: 400 }}
               onClick={(e) => e.stopPropagation()}
             >
+              {/* Close Button - Top Center Above Popup with 4px gap */}
+              <div className="absolute -top-[44px] left-1/2 -translate-x-1/2 z-[10001]">
+                <motion.button
+                  onClick={() => setShowItemDetail(false)}
+                  className="h-10 w-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-900 transition-colors shadow-lg"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <X className="h-5 w-5 text-white" />
+                </motion.button>
+              </div>
 
                   {/* Image Section */}
                   <div className="relative w-full h-64 overflow-hidden rounded-t-3xl">

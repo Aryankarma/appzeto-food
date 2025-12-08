@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom"
 import { useState, useMemo, useCallback, useEffect, useRef } from "react"
-import { Star, Clock, MapPin, ArrowDownUp, Timer, ArrowRight, ChevronDown, Bookmark, Share2, Plus, Minus, X, ShoppingCart } from "lucide-react"
+import { Star, Clock, MapPin, ArrowDownUp, Timer, ArrowRight, ChevronDown, Bookmark, Share2, Plus, Minus, X } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import AnimatedPage from "../components/AnimatedPage"
 import { Card, CardContent } from "@/components/ui/card"
@@ -164,7 +164,7 @@ const under250Restaurants = [
 export default function Under250() {
   const { location } = useLocation()
   const navigate = useNavigate()
-  const { addToCart, updateQuantity, removeFromCart, getCartItem, cart, getCartCount } = useCart()
+  const { addToCart, updateQuantity, removeFromCart, getCartItem, cart } = useCart()
   const [activeCategory, setActiveCategory] = useState(null)
   const [showSortPopup, setShowSortPopup] = useState(false)
   const [selectedSort, setSelectedSort] = useState(null)
@@ -175,7 +175,6 @@ export default function Under250() {
   const [bookmarkedItems, setBookmarkedItems] = useState(new Set())
   const [viewCartButtonBottom, setViewCartButtonBottom] = useState("bottom-20")
   const lastScrollY = useRef(0)
-  const cartCount = getCartCount()
 
   const sortOptions = [
     { id: null, label: 'Relevance' },
@@ -676,20 +675,6 @@ export default function Under250() {
               onClick={() => setShowItemDetail(false)}
             />
 
-            {/* Close Button - Top Center Above Popup */}
-            <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[10001]">
-              <motion.button
-                onClick={() => setShowItemDetail(false)}
-                className="h-10 w-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-900 transition-colors shadow-lg"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-              >
-                <X className="h-5 w-5 text-white" />
-              </motion.button>
-            </div>
-
             {/* Item Detail Bottom Sheet */}
             <motion.div
               className="fixed left-0 right-0 bottom-0 z-[10000] bg-white rounded-t-3xl shadow-2xl max-h-[90vh] flex flex-col"
@@ -699,6 +684,19 @@ export default function Under250() {
               transition={{ duration: 0.15, type: "spring", damping: 30, stiffness: 400 }}
               onClick={(e) => e.stopPropagation()}
             >
+              {/* Close Button - Top Center Above Popup with 4px gap */}
+              <div className="absolute -top-[44px] left-1/2 -translate-x-1/2 z-[10001]">
+                <motion.button
+                  onClick={() => setShowItemDetail(false)}
+                  className="h-10 w-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-900 transition-colors shadow-lg"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <X className="h-5 w-5 text-white" />
+                </motion.button>
+              </div>
 
               {/* Image Section */}
               <div className="relative w-full h-64 overflow-hidden rounded-t-3xl">
@@ -850,22 +848,8 @@ export default function Under250() {
         )}
       </AnimatePresence>
 
-      {/* Sticky View Cart Button */}
-      {cartCount > 0 && (
-        <div className={`fixed ${viewCartButtonBottom} left-0 right-0 z-40 px-4 pb-2 transition-all duration-300 ease-in-out`}>
-          <Link
-            to="/user/cart"
-            className="w-min mx-auto bg-green-600 hover:bg-green-700 text-white text-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 py-2.5 px-4"
-          >
-            <ShoppingCart className="h-4 w-4" />
-            <span className="text-sm font-semibold">View Cart</span>
-            <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full font-bold">{cartCount}</span>
-          </Link>
-        </div>
-      )}
-
       {/* Add to Cart Animation */}
-      <AddToCartAnimation />
+      <AddToCartAnimation dynamicBottom={viewCartButtonBottom} />
     </div>
   )
 }
