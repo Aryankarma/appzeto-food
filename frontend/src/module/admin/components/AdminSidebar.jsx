@@ -325,7 +325,7 @@ export default function AdminSidebar({ isOpen = false, onClose, onCollapseChange
             onClick={() => toggleSection(sectionKey)}
             className={cn(
               "w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg transition-all duration-300 ease-out text-sm font-medium text-left",
-              "hover:translate-x-1",
+              "",
               "text-white hover:bg-blue-900/40 hover:text-blue-100"
             )}
           >
@@ -352,7 +352,7 @@ export default function AdminSidebar({ isOpen = false, onClose, onCollapseChange
                     }}
                     className={cn(
                       "flex items-center gap-2 px-3 py-1.5 rounded-md transition-all duration-300 ease-out text-sm font-normal text-left",
-                      "hover:translate-x-1",
+                      "",
                       isActive(subItem.path, allSubPaths)
                         ? "bg-blue-600/30 text-blue-100 font-semibold"
                         : "text-blue-50/90 hover:bg-blue-900/30 hover:text-blue-100"
