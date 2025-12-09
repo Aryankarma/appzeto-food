@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Upload, Calendar, Eye, EyeOff, Settings } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 
 export default function AddDeliveryman() {
   const [formData, setFormData] = useState({
@@ -19,15 +20,49 @@ export default function AddDeliveryman() {
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false)
+  const [formErrors, setFormErrors] = useState({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+    if (formErrors[field]) {
+      setFormErrors(prev => ({ ...prev, [field]: "" }))
+    }
   }
 
-  const handleSubmit = (e) => {
+  const validateForm = () => {
+    const errors = {}
+    if (!formData.firstName.trim()) errors.firstName = "First name is required"
+    if (!formData.lastName.trim()) errors.lastName = "Last name is required"
+    if (!formData.email.trim()) {
+      errors.email = "Email is required"
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = "Invalid email format"
+    }
+    if (!formData.deliverymanType) errors.deliverymanType = "Deliveryman type is required"
+    if (!formData.zone) errors.zone = "Zone is required"
+    if (!formData.vehicle) errors.vehicle = "Vehicle is required"
+    if (!formData.identityNumber.trim()) errors.identityNumber = "Identity number is required"
+    if (!formData.age || parseInt(formData.age) < 18) errors.age = "Age must be at least 18"
+    if (!formData.birthdate) errors.birthdate = "Birthdate is required"
+    if (!formData.phone || formData.phone.length < 10) errors.phone = "Valid phone number is required"
+    if (!formData.password || formData.password.length < 8) errors.password = "Password must be at least 8 characters"
+    if (formData.password !== formData.confirmPassword) errors.confirmPassword = "Passwords do not match"
+    setFormErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    console.log("Form submitted:", formData)
-    alert("Deliveryman added successfully!")
+    if (!validateForm()) return
+    
+    setIsSubmitting(true)
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    setIsSubmitting(false)
+    setShowSuccessDialog(true)
+    handleReset()
   }
 
   const handleReset = () => {
@@ -73,8 +108,11 @@ export default function AddDeliveryman() {
                     value={formData.firstName}
                     onChange={(e) => handleInputChange("firstName", e.target.value)}
                     placeholder="Ex: Jhone"
-                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    className={`w-full px-4 py-2.5 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${
+                      formErrors.firstName ? "border-red-500" : "border-slate-300"
+                    }`}
                   />
+                  {formErrors.firstName && <p className="text-xs text-red-500 mt-1">{formErrors.firstName}</p>}
                 </div>
 
                 <div>
@@ -86,8 +124,11 @@ export default function AddDeliveryman() {
                     value={formData.lastName}
                     onChange={(e) => handleInputChange("lastName", e.target.value)}
                     placeholder="Ex: Joe"
-                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    className={`w-full px-4 py-2.5 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${
+                      formErrors.lastName ? "border-red-500" : "border-slate-300"
+                    }`}
                   />
+                  {formErrors.lastName && <p className="text-xs text-red-500 mt-1">{formErrors.lastName}</p>}
                 </div>
 
                 <div>
@@ -99,8 +140,11 @@ export default function AddDeliveryman() {
                     value={formData.email}
                     onChange={(e) => handleInputChange("email", e.target.value)}
                     placeholder="Ex: ex@example.com"
-                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    className={`w-full px-4 py-2.5 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${
+                      formErrors.email ? "border-red-500" : "border-slate-300"
+                    }`}
                   />
+                  {formErrors.email && <p className="text-xs text-red-500 mt-1">{formErrors.email}</p>}
                 </div>
 
                 <div>
@@ -332,14 +376,37 @@ export default function AddDeliveryman() {
               </button>
               <button
                 type="submit"
-                className="px-6 py-2.5 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-md"
+                disabled={isSubmitting}
+                className="px-6 py-2.5 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Submit
+                {isSubmitting ? "Submitting..." : "Submit"}
               </button>
             </div>
           </form>
         </div>
       </div>
+
+      {/* Success Dialog */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="max-w-md bg-white p-0 opacity-0 data-[state=open]:opacity-100 data-[state=closed]:opacity-0 transition-opacity duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:scale-100 data-[state=closed]:scale-100">
+          <DialogHeader className="px-6 pt-6 pb-4">
+            <DialogTitle className="text-green-600">Success!</DialogTitle>
+          </DialogHeader>
+          <div className="px-6 pb-6">
+            <p className="text-sm text-slate-700">
+              Deliveryman added successfully!
+            </p>
+          </div>
+          <DialogFooter className="px-6 pb-6">
+            <button
+              onClick={() => setShowSuccessDialog(false)}
+              className="px-4 py-2 text-sm font-medium rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-md"
+            >
+              OK
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

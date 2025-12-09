@@ -13,8 +13,15 @@ import {
   Download,
   Eye,
   Printer,
+  Settings,
+  FileText,
+  FileSpreadsheet,
+  Code,
 } from "lucide-react";
 import { campaignOrderReportDummy, campaignOrderStats } from "../../data/campaignOrderReportDummy";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { exportReportsToCSV, exportReportsToExcel, exportReportsToPDF, exportReportsToJSON } from "../../components/reports/reportsExportUtils"
 
 export default function CampaignOrderReport() {
   const [filters, setFilters] = useState({
@@ -25,6 +32,8 @@ export default function CampaignOrderReport() {
   })
   const [searchQuery, setSearchQuery] = useState("")
   const [orders] = useState(campaignOrderReportDummy)
+
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
   const filteredOrders = useMemo(() => {
     let result = [...orders]
@@ -38,8 +47,57 @@ export default function CampaignOrderReport() {
       )
     }
 
+    if (filters.campaign !== "All Campaignes") {
+      // Filter by campaign if needed
+    }
+
+    if (filters.restaurant !== "All restaurants") {
+      result = result.filter(o => o.restaurant === filters.restaurant)
+    }
+
+    if (filters.customer !== "All customers") {
+      result = result.filter(o => o.customerName === filters.customer)
+    }
+
     return result
-  }, [orders, searchQuery])
+  }, [orders, searchQuery, filters])
+
+  const handleExport = (format) => {
+    if (filteredOrders.length === 0) {
+      alert("No data to export")
+      return
+    }
+    const headers = [
+      { key: "sl", label: "SI" },
+      { key: "orderId", label: "Order ID" },
+      { key: "restaurant", label: "Restaurant" },
+      { key: "customerName", label: "Customer Name" },
+      { key: "orderAmount", label: "Order Amount" },
+      { key: "paymentMethod", label: "Payment Method" },
+      { key: "orderStatus", label: "Order Status" },
+    ]
+    switch (format) {
+      case "csv": exportReportsToCSV(filteredOrders, headers, "campaign_order_report"); break
+      case "excel": exportReportsToExcel(filteredOrders, headers, "campaign_order_report"); break
+      case "pdf": exportReportsToPDF(filteredOrders, headers, "campaign_order_report", "Campaign Order Report"); break
+      case "json": exportReportsToJSON(filteredOrders, "campaign_order_report"); break
+    }
+  }
+
+  const handleFilterApply = () => {
+    // Filters are already applied via useMemo
+  }
+
+  const handleResetFilters = () => {
+    setFilters({
+      campaign: "All Campaignes",
+      restaurant: "All restaurants",
+      customer: "All customers",
+      time: "All Time",
+    })
+  }
+
+  const activeFiltersCount = (filters.campaign !== "All Campaignes" ? 1 : 0) + (filters.restaurant !== "All restaurants" ? 1 : 0) + (filters.customer !== "All customers" ? 1 : 0) + (filters.time !== "All Time" ? 1 : 0)
 
   const getStatusBadge = (status) => {
     const statusColors = {
@@ -133,10 +191,26 @@ export default function CampaignOrderReport() {
               </div>
             </div>
 
-            <div className="flex items-end pt-1">
-              <button className="px-4 py-2 text-xs font-medium rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-all flex items-center gap-2">
+            <div className="flex items-end gap-2 pt-1">
+              <button 
+                onClick={handleResetFilters}
+                className="px-4 py-2 text-xs font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-all"
+              >
+                Reset
+              </button>
+              <button 
+                onClick={handleFilterApply}
+                className={`px-4 py-2 text-xs font-medium rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-all flex items-center gap-2 relative ${
+                  activeFiltersCount > 0 ? "ring-2 ring-blue-300" : ""
+                }`}
+              >
                 <Filter className="w-3.5 h-3.5" />
                 Filter
+                {activeFiltersCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 text-white rounded-full text-[8px] flex items-center justify-center font-bold">
+                    {activeFiltersCount}
+                  </span>
+                )}
               </button>
             </div>
           </div>
@@ -241,9 +315,40 @@ export default function CampaignOrderReport() {
                 <Search className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               </div>
 
-              <button className="px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 transition-all">
-                <Download className="w-4 h-4" />
-                <span>Export</span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 transition-all">
+                    <Download className="w-4 h-4" />
+                    <span className="text-black font-bold">Export</span>
+                    <ChevronDown className="w-3 h-3" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-white border border-slate-200 rounded-lg shadow-lg z-50 animate-in fade-in-0 zoom-in-95 duration-200 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95">
+                  <DropdownMenuLabel>Export Format</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => handleExport("csv")} className="cursor-pointer">
+                    <FileText className="w-4 h-4 mr-2" />
+                    Export as CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport("excel")} className="cursor-pointer">
+                    <FileSpreadsheet className="w-4 h-4 mr-2" />
+                    Export as Excel
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport("pdf")} className="cursor-pointer">
+                    <FileText className="w-4 h-4 mr-2" />
+                    Export as PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport("json")} className="cursor-pointer">
+                    <Code className="w-4 h-4 mr-2" />
+                    Export as JSON
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <button 
+                onClick={() => setIsSettingsOpen(true)}
+                className="p-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 transition-all"
+              >
+                <Settings className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -329,6 +434,31 @@ export default function CampaignOrderReport() {
           </div>
         </div>
       </div>
+
+      {/* Settings Dialog */}
+      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+        <DialogContent className="max-w-md bg-white p-0 opacity-0 data-[state=open]:opacity-100 data-[state=closed]:opacity-0 transition-opacity duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:scale-100 data-[state=closed]:scale-100">
+          <DialogHeader className="px-6 pt-6 pb-4">
+            <DialogTitle className="flex items-center gap-2">
+              <Settings className="w-5 h-5" />
+              Report Settings
+            </DialogTitle>
+          </DialogHeader>
+          <div className="px-6 pb-6">
+            <p className="text-sm text-slate-700">
+              Campaign order report settings and preferences will be available here.
+            </p>
+          </div>
+          <div className="px-6 pb-6 flex items-center justify-end">
+            <button
+              onClick={() => setIsSettingsOpen(false)}
+              className="px-4 py-2 text-sm font-medium rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-md"
+            >
+              Close
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

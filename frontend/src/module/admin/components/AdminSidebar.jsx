@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Link, useLocation } from "react-router-dom"
 import {
   Search,
@@ -41,6 +41,7 @@ import {
   Zap,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Input } from "@/components/ui/input"
 import { sidebarMenuData } from "../data/sidebarMenu"
 
 // Icon mapping
@@ -83,6 +84,7 @@ const iconMap = {
 
 export default function AdminSidebar({ isOpen = false, onClose }) {
   const location = useLocation()
+  const [searchQuery, setSearchQuery] = useState("")
 
   // Generate initial expanded state from menu data
   const getInitialExpandedState = () => {
@@ -108,6 +110,86 @@ export default function AdminSidebar({ isOpen = false, onClose }) {
   }
 
   const [expandedSections, setExpandedSections] = useState(getInitialExpandedState)
+
+  // Filter menu items based on search query
+  const filteredMenuData = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return sidebarMenuData
+    }
+
+    const query = searchQuery.toLowerCase().trim()
+    const filtered = []
+
+    sidebarMenuData.forEach((item) => {
+      if (item.type === "link") {
+        if (item.label.toLowerCase().includes(query)) {
+          filtered.push(item)
+        }
+      } else if (item.type === "section") {
+        const filteredItems = []
+        
+        item.items.forEach((subItem) => {
+          if (subItem.type === "link") {
+            if (subItem.label.toLowerCase().includes(query)) {
+              filteredItems.push(subItem)
+            }
+          } else if (subItem.type === "expandable") {
+            const matchesLabel = subItem.label.toLowerCase().includes(query)
+            const matchingSubItems = subItem.subItems?.filter(
+              (si) => si.label.toLowerCase().includes(query)
+            ) || []
+            
+            if (matchesLabel || matchingSubItems.length > 0) {
+              filteredItems.push({
+                ...subItem,
+                subItems: matchesLabel ? subItem.subItems : matchingSubItems,
+              })
+            }
+          }
+        })
+
+        if (filteredItems.length > 0) {
+          filtered.push({
+            ...item,
+            items: filteredItems,
+          })
+        }
+      }
+    })
+
+    return filtered
+  }, [searchQuery])
+
+  // Auto-expand sections with matches when searching
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim()
+      
+      setExpandedSections((prev) => {
+        const newExpandedState = { ...prev }
+        
+        sidebarMenuData.forEach((item) => {
+          if (item.type === "section") {
+            item.items.forEach((subItem) => {
+              if (subItem.type === "expandable") {
+                const matchesLabel = subItem.label.toLowerCase().includes(query)
+                const hasMatchingSubItems = subItem.subItems?.some(
+                  (si) => si.label.toLowerCase().includes(query)
+                )
+                
+                if (matchesLabel || hasMatchingSubItems) {
+                  const sectionKey = subItem.label.toLowerCase().replace(/\s+/g, "")
+                  newExpandedState[sectionKey] = true
+                }
+              }
+            })
+          }
+        })
+        
+        return newExpandedState
+      })
+    }
+  }, [searchQuery])
 
   const isActive = (path, allPaths = []) => {
     if (path === "/admin") {
@@ -225,14 +307,38 @@ export default function AdminSidebar({ isOpen = false, onClose }) {
   }
 
   return (
-    <div
-      className={`
-        w-80 bg-[#334257] border-r border-gray-700 h-screen fixed left-0 top-0 overflow-y-auto z-50
-        transform transition-transform duration-300 ease-in-out
-        lg:translate-x-0
-        ${isOpen ? "translate-x-0" : "-translate-x-full"}
-      `}
-    >
+    <>
+      <style>{`
+        .admin-sidebar-scroll::-webkit-scrollbar {
+          width: 2px;
+        }
+        .admin-sidebar-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .admin-sidebar-scroll::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 10px;
+        }
+        .admin-sidebar-scroll:hover::-webkit-scrollbar {
+          width: 3px;
+        }
+        .admin-sidebar-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+        }
+        .admin-sidebar-scroll:hover {
+          scrollbar-width: thin;
+        }
+      `}</style>
+      <div
+        className={`
+          admin-sidebar-scroll
+          w-80 bg-[#334257] border-r border-gray-700 h-screen fixed left-0 top-0 overflow-y-auto z-50
+          transform transition-transform duration-300 ease-in-out
+          lg:translate-x-0
+          ${isOpen ? "translate-x-0" : "-translate-x-full"}
+        `}
+      >
       {/* Header with Logo and Brand */}
       <div className="p-4 border-b border-gray-700">
         <div className="flex items-center justify-between mb-4">
@@ -252,40 +358,62 @@ export default function AdminSidebar({ isOpen = false, onClose }) {
 
         {/* Search Bar */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#879DB6] w-4 h-4" />
-          <input
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-100 w-4 h-4 z-10" />
+          <Input
             type="text"
             placeholder="Search Menu..."
-            className="w-full pl-10 pr-3 py-2 bg-[#2a3648] border border-gray-600 rounded-md text-[#E9F3FF] placeholder-[#879DB6] text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className={cn(
+              "w-full pl-10 py-2 bg-[#2a3648] border border-gray-600 rounded-md !text-gray-100 placeholder:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500",
+              searchQuery ? "pr-10" : "pr-3"
+            )}
           />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-100 hover:text-white transition-colors z-10"
+              aria-label="Clear search"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 
       {/* Navigation Menu */}
       <nav className="p-4 space-y-1">
-        {sidebarMenuData.map((item, index) => {
-          if (item.type === "link") {
-            return renderMenuItem(item, index)
-          }
+        {filteredMenuData.length === 0 && searchQuery.trim() ? (
+          <div className="px-4 py-8 text-center">
+            <p className="text-[#879DB6] text-sm">No menu items found</p>
+            <p className="text-[#879DB6] text-xs mt-1">Try a different search term</p>
+          </div>
+        ) : (
+          filteredMenuData.map((item, index) => {
+            if (item.type === "link") {
+              return renderMenuItem(item, index)
+            }
 
-          if (item.type === "section") {
-            return (
-              <div key={index} className={index > 0 ? "mt-4" : ""}>
-                <div className="px-4 py-2">
-                  <span className="text-[#879DB6] font-bold text-xs uppercase">
-                    {item.label}
-                  </span>
+            if (item.type === "section") {
+              return (
+                <div key={index} className={index > 0 ? "mt-4" : ""}>
+                  <div className="px-4 py-2">
+                    <span className="text-[#879DB6] font-bold text-xs uppercase">
+                      {item.label}
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    {item.items.map((subItem, subIndex) => renderMenuItem(subItem, `${index}-${subIndex}`, true))}
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  {item.items.map((subItem, subIndex) => renderMenuItem(subItem, `${index}-${subIndex}`, true))}
-                </div>
-              </div>
-            )
-          }
+              )
+            }
 
-          return null
-        })}
+            return null
+          })
+        )}
       </nav>
     </div>
+    </>
   )
 }

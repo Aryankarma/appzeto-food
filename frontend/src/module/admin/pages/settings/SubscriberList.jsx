@@ -1,5 +1,7 @@
-import { useState } from "react";
-import { Search, Download } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Search, Download, ChevronDown, Settings, ArrowUpDown, FileText, FileSpreadsheet, Code, Check, Columns, Eye } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 import burgerIcon from "../../assets/Dashboard-icons/image13.png";
 import leafIcon from "../../assets/Dashboard-icons/image14.png";
@@ -54,10 +56,65 @@ const restaurantRows = [
 export default function SubscriberList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [zoneFilter] = useState("All Zones");
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState({
+    si: true,
+    restaurantInfo: true,
+    packageName: true,
+    price: true,
+    expDate: true,
+    subscriptionUsed: true,
+    isTrial: true,
+    isCancel: true,
+    status: true,
+    actions: true,
+  });
 
-  const filteredRows = restaurantRows.filter((row) =>
-    row.name.toLowerCase().includes(searchQuery.toLowerCase().trim())
-  );
+  const filteredRows = useMemo(() => {
+    return restaurantRows.filter((row) =>
+      row.name.toLowerCase().includes(searchQuery.toLowerCase().trim())
+    );
+  }, [searchQuery]);
+
+  const handleExport = (format) => {
+    if (filteredRows.length === 0) {
+      alert("No data to export");
+      return;
+    }
+    console.log(`Exporting as ${format}`, filteredRows);
+  };
+
+  const toggleColumn = (columnKey) => {
+    setVisibleColumns(prev => ({ ...prev, [columnKey]: !prev[columnKey] }));
+  };
+
+  const resetColumns = () => {
+    setVisibleColumns({
+      si: true,
+      restaurantInfo: true,
+      packageName: true,
+      price: true,
+      expDate: true,
+      subscriptionUsed: true,
+      isTrial: true,
+      isCancel: true,
+      status: true,
+      actions: true,
+    });
+  };
+
+  const columnsConfig = {
+    si: "Serial Number",
+    restaurantInfo: "Restaurant Info",
+    packageName: "Current Package Name",
+    price: "Package Price",
+    expDate: "Exp Date",
+    subscriptionUsed: "Total Subscription Used",
+    isTrial: "Is Trial",
+    isCancel: "Is Cancel",
+    status: "Status",
+    actions: "Actions",
+  };
 
   return (
     <div className="p-4 lg:p-6 bg-slate-50 min-h-screen">
@@ -176,101 +233,264 @@ export default function SubscriberList() {
               <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
             </div>
 
-            <button className="inline-flex items-center gap-1 px-3 py-2 text-xs font-semibold rounded-lg border border-slate-300 text-slate-700 bg-white hover:bg-slate-100 transition-colors">
-              <Download className="w-4 h-4" />
-              <span>Export</span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="px-4 py-2.5 text-sm font-medium rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-all">
+                  <Download className="w-4 h-4" />
+                  <span className="text-black font-bold">Export</span>
+                  <ChevronDown className="w-3 h-3" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 bg-white border border-slate-200 rounded-lg shadow-lg z-50 animate-in fade-in-0 zoom-in-95 duration-200 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95">
+                <DropdownMenuLabel>Export Format</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleExport("csv")} className="cursor-pointer">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Export as CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport("excel")} className="cursor-pointer">
+                  <FileSpreadsheet className="w-4 h-4 mr-2" />
+                  Export as Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport("pdf")} className="cursor-pointer">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Export as PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport("json")} className="cursor-pointer">
+                  <Code className="w-4 h-4 mr-2" />
+                  Export as JSON
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <button 
+              onClick={() => setIsSettingsOpen(true)}
+              className="p-2.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 transition-all"
+            >
+              <Settings className="w-5 h-5" />
             </button>
           </div>
         </div>
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-100 text-xs">
-            <thead className="bg-slate-50">
+          <table className="min-w-full divide-y divide-slate-100">
+            <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="px-5 py-3 text-left font-semibold text-slate-600">
-                  Sl
-                </th>
-                <th className="px-5 py-3 text-left font-semibold text-slate-600">
-                  Restaurant Info
-                </th>
-                <th className="px-5 py-3 text-left font-semibold text-slate-600">
-                  Current Package Name
-                </th>
-                <th className="px-5 py-3 text-left font-semibold text-slate-600">
-                  Package Price
-                </th>
-                <th className="px-5 py-3 text-left font-semibold text-slate-600">
-                  Exp Date
-                </th>
-                <th className="px-5 py-3 text-left font-semibold text-slate-600">
-                  Total Subscription Used
-                </th>
-                <th className="px-5 py-3 text-left font-semibold text-slate-600">
-                  Is Trial
-                </th>
-                <th className="px-5 py-3 text-left font-semibold text-slate-600">
-                  Is Cancel
-                </th>
-                <th className="px-5 py-3 text-left font-semibold text-slate-600">
-                  Status
-                </th>
-                <th className="px-5 py-3 text-left font-semibold text-slate-600">
-                  Action
-                </th>
+                {visibleColumns.si && (
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                    <div className="flex items-center gap-2">
+                      <span>SI</span>
+                      <ArrowUpDown className="w-3 h-3 text-slate-400 cursor-pointer hover:text-slate-600" />
+                    </div>
+                  </th>
+                )}
+                {visibleColumns.restaurantInfo && (
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                    <div className="flex items-center gap-2">
+                      <span>Restaurant Info</span>
+                      <ArrowUpDown className="w-3 h-3 text-slate-400 cursor-pointer hover:text-slate-600" />
+                    </div>
+                  </th>
+                )}
+                {visibleColumns.packageName && (
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                    <div className="flex items-center gap-2">
+                      <span>Current Package Name</span>
+                      <ArrowUpDown className="w-3 h-3 text-slate-400 cursor-pointer hover:text-slate-600" />
+                    </div>
+                  </th>
+                )}
+                {visibleColumns.price && (
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                    <div className="flex items-center gap-2">
+                      <span>Package Price</span>
+                      <ArrowUpDown className="w-3 h-3 text-slate-400 cursor-pointer hover:text-slate-600" />
+                    </div>
+                  </th>
+                )}
+                {visibleColumns.expDate && (
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                    <div className="flex items-center gap-2">
+                      <span>Exp Date</span>
+                      <ArrowUpDown className="w-3 h-3 text-slate-400 cursor-pointer hover:text-slate-600" />
+                    </div>
+                  </th>
+                )}
+                {visibleColumns.subscriptionUsed && (
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                    <div className="flex items-center gap-2">
+                      <span>Total Subscription Used</span>
+                      <ArrowUpDown className="w-3 h-3 text-slate-400 cursor-pointer hover:text-slate-600" />
+                    </div>
+                  </th>
+                )}
+                {visibleColumns.isTrial && (
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                    <div className="flex items-center gap-2">
+                      <span>Is Trial</span>
+                      <ArrowUpDown className="w-3 h-3 text-slate-400 cursor-pointer hover:text-slate-600" />
+                    </div>
+                  </th>
+                )}
+                {visibleColumns.isCancel && (
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                    <div className="flex items-center gap-2">
+                      <span>Is Cancel</span>
+                      <ArrowUpDown className="w-3 h-3 text-slate-400 cursor-pointer hover:text-slate-600" />
+                    </div>
+                  </th>
+                )}
+                {visibleColumns.status && (
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                    <div className="flex items-center gap-2">
+                      <span>Status</span>
+                      <ArrowUpDown className="w-3 h-3 text-slate-400 cursor-pointer hover:text-slate-600" />
+                    </div>
+                  </th>
+                )}
+                {visibleColumns.actions && (
+                  <th className="px-6 py-4 text-center text-[10px] font-bold text-slate-700 uppercase tracking-wider">Action</th>
+                )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredRows.map((row, index) => (
-                <tr key={row.id} className="hover:bg-slate-50">
-                  <td className="px-5 py-3 text-slate-700">{index + 1}</td>
-                  <td className="px-5 py-3 text-slate-700">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-slate-50 flex items-center justify-center overflow-hidden border border-slate-200">
-                        <img
-                          src={row.icon}
-                          alt={row.name}
-                          className="w-8 h-8 object-contain"
-                        />
-                      </div>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-xs font-semibold">
-                          {row.name}
-                        </span>
-                        <span className="text-[11px] text-amber-500">
-                          ★ 0
-                        </span>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3 text-slate-700">
-                    {row.packageName}
-                  </td>
-                  <td className="px-5 py-3 text-slate-700">{row.price}</td>
-                  <td className="px-5 py-3 text-slate-700">{row.expDate}</td>
-                  <td className="px-5 py-3 text-slate-700">
-                    {row.subscriptionUsed}
-                  </td>
-                  <td className="px-5 py-3">
-                    <StatusPill label={row.isTrial} variant="neutral" />
-                  </td>
-                  <td className="px-5 py-3">
-                    <StatusPill label={row.isCancel} variant="neutral" />
-                  </td>
-                  <td className="px-5 py-3">
-                    <StatusPill label={row.status} variant="danger" />
-                  </td>
-                  <td className="px-5 py-3">
-                    <button className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-orange-400 text-orange-500 hover:bg-orange-50 transition-colors text-[11px] font-semibold">
-                      👁
-                    </button>
+            <tbody className="bg-white divide-y divide-slate-100">
+              {filteredRows.length === 0 ? (
+                <tr>
+                  <td colSpan={Object.values(visibleColumns).filter(v => v).length} className="px-6 py-8 text-center text-slate-500">
+                    No subscribers found
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredRows.map((row, index) => (
+                  <tr key={row.id} className="hover:bg-slate-50 transition-colors">
+                    {visibleColumns.si && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm font-medium text-slate-700">{index + 1}</span>
+                      </td>
+                    )}
+                    {visibleColumns.restaurantInfo && (
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-slate-50 flex items-center justify-center overflow-hidden border border-slate-200">
+                            <img
+                              src={row.icon}
+                              alt={row.name}
+                              className="w-8 h-8 object-contain"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-sm font-semibold">
+                              {row.name}
+                            </span>
+                            <span className="text-xs text-amber-500">
+                              ★ 0
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                    )}
+                    {visibleColumns.packageName && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-slate-700">{row.packageName}</span>
+                      </td>
+                    )}
+                    {visibleColumns.price && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-slate-700">{row.price}</span>
+                      </td>
+                    )}
+                    {visibleColumns.expDate && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-slate-700">{row.expDate}</span>
+                      </td>
+                    )}
+                    {visibleColumns.subscriptionUsed && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-slate-700">{row.subscriptionUsed}</span>
+                      </td>
+                    )}
+                    {visibleColumns.isTrial && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <StatusPill label={row.isTrial} variant="neutral" />
+                      </td>
+                    )}
+                    {visibleColumns.isCancel && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <StatusPill label={row.isCancel} variant="neutral" />
+                      </td>
+                    )}
+                    {visibleColumns.status && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <StatusPill label={row.status} variant="danger" />
+                      </td>
+                    )}
+                    {visibleColumns.actions && (
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <button className="p-1.5 rounded text-blue-600 hover:bg-blue-50 transition-colors" title="View">
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Settings Dialog */}
+      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+        <DialogContent className="max-w-md bg-white p-0 opacity-0 data-[state=open]:opacity-100 data-[state=closed]:opacity-0 transition-opacity duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:scale-100 data-[state=closed]:scale-100">
+          <DialogHeader className="px-6 pt-6 pb-4">
+            <DialogTitle className="flex items-center gap-2">
+              <Settings className="w-5 h-5" />
+              Table Settings
+            </DialogTitle>
+          </DialogHeader>
+          <div className="px-6 pb-6 space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                <Columns className="w-4 h-4" />
+                Visible Columns
+              </h3>
+              <div className="space-y-2">
+                {Object.entries(columnsConfig).map(([key, label]) => (
+                  <label
+                    key={key}
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={visibleColumns[key]}
+                      onChange={() => toggleColumn(key)}
+                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500"
+                    />
+                    <span className="text-sm text-slate-700">{label}</span>
+                    {visibleColumns[key] && (
+                      <Check className="w-4 h-4 text-emerald-600 ml-auto" />
+                    )}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+              <button
+                onClick={resetColumns}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-all"
+              >
+                Reset
+              </button>
+              <button
+                onClick={() => setIsSettingsOpen(false)}
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-md"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

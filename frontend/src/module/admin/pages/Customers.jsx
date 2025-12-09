@@ -1,6 +1,8 @@
 import { useState, useMemo } from "react"
-import { Search, Download, ChevronDown, Calendar, Eye } from "lucide-react"
+import { Search, Download, ChevronDown, Calendar, Eye, FileDown, FileSpreadsheet, FileText, Code } from "lucide-react"
 import { customersDummy } from "../data/customersDummy"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { exportCustomersToCSV, exportCustomersToExcel, exportCustomersToPDF, exportCustomersToJSON } from "../components/customers/customersExportUtils"
 
 export default function Customers() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -16,6 +18,7 @@ export default function Customers() {
   const filteredCustomers = useMemo(() => {
     let result = [...customers]
     
+    // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim()
       result = result.filter(customer =>
@@ -25,8 +28,48 @@ export default function Customers() {
       )
     }
 
+    // Filter by order date (if customer has order date field, otherwise skip)
+    // Note: customersDummy doesn't have orderDate, so this is a placeholder for future implementation
+
+    // Filter by joining date
+    if (filters.joiningDate) {
+      result = result.filter(customer => {
+        // Parse joining date from format "17 Oct 2021"
+        const customerDate = new Date(customer.joiningDate)
+        const filterDate = new Date(filters.joiningDate)
+        return customerDate.toDateString() === filterDate.toDateString()
+      })
+    }
+
+    // Filter by status
+    if (filters.status) {
+      if (filters.status === "active") {
+        result = result.filter(customer => customer.status === true)
+      } else if (filters.status === "inactive") {
+        result = result.filter(customer => customer.status === false)
+      }
+    }
+
+    // Sort by options
+    if (filters.sortBy) {
+      if (filters.sortBy === "name-asc") {
+        result.sort((a, b) => a.name.localeCompare(b.name))
+      } else if (filters.sortBy === "name-desc") {
+        result.sort((a, b) => b.name.localeCompare(a.name))
+      } else if (filters.sortBy === "orders-asc") {
+        result.sort((a, b) => a.totalOrder - b.totalOrder)
+      } else if (filters.sortBy === "orders-desc") {
+        result.sort((a, b) => b.totalOrder - a.totalOrder)
+      }
+    }
+
+    // Limit results if "Choose First" is set
+    if (filters.chooseFirst && parseInt(filters.chooseFirst) > 0) {
+      result = result.slice(0, parseInt(filters.chooseFirst))
+    }
+
     return result
-  }, [customers, searchQuery])
+  }, [customers, searchQuery, filters])
 
   const handleFilterChange = (field, value) => {
     setFilters(prev => ({ ...prev, [field]: value }))
@@ -36,6 +79,26 @@ export default function Customers() {
     setCustomers(customers.map(customer =>
       customer.sl === sl ? { ...customer, status: !customer.status } : customer
     ))
+  }
+
+  const handleExport = (format) => {
+    const filename = "customers"
+    switch (format) {
+      case "csv":
+        exportCustomersToCSV(filteredCustomers, filename)
+        break
+      case "excel":
+        exportCustomersToExcel(filteredCustomers, filename)
+        break
+      case "pdf":
+        exportCustomersToPDF(filteredCustomers, filename)
+        break
+      case "json":
+        exportCustomersToJSON(filteredCustomers, filename)
+        break
+      default:
+        break
+    }
   }
 
   return (
@@ -120,10 +183,34 @@ export default function Customers() {
             </div>
           </div>
 
-          <div className="mt-4">
-            <button className="px-6 py-2.5 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all">
-              Filter
-            </button>
+          <div className="mt-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => {
+                  // Filters are applied automatically via useMemo
+                }}
+                className="px-6 py-2.5 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all"
+              >
+                Apply Filters
+              </button>
+              <button
+                onClick={() => {
+                  setFilters({
+                    orderDate: "",
+                    joiningDate: "",
+                    status: "",
+                    sortBy: "",
+                    chooseFirst: "",
+                  })
+                }}
+                className="px-6 py-2.5 text-sm font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-all"
+              >
+                Reset Filters
+              </button>
+            </div>
+            <div className="text-sm text-slate-600">
+              Showing {filteredCustomers.length} of {customers.length} customers
+            </div>
           </div>
         </div>
 
@@ -149,11 +236,35 @@ export default function Customers() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               </div>
 
-              <button className="px-4 py-2.5 text-sm font-medium rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-all">
-                <Download className="w-4 h-4" />
-                <span>Export</span>
-                <ChevronDown className="w-3 h-3" />
-              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="px-4 py-2.5 text-sm font-medium rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-all">
+                    <Download className="w-4 h-4" />
+                    <span className="text-black font-bold">Export</span>
+                    <ChevronDown className="w-3 h-3" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-white border border-slate-200 rounded-lg shadow-lg z-50">
+                  <DropdownMenuLabel>Export Format</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => handleExport("csv")} className="cursor-pointer">
+                    <FileDown className="w-4 h-4 mr-2" />
+                    Export as CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport("excel")} className="cursor-pointer">
+                    <FileSpreadsheet className="w-4 h-4 mr-2" />
+                    Export as Excel
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport("pdf")} className="cursor-pointer">
+                    <FileText className="w-4 h-4 mr-2" />
+                    Export as PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport("json")} className="cursor-pointer">
+                    <Code className="w-4 h-4 mr-2" />
+                    Export as JSON
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 

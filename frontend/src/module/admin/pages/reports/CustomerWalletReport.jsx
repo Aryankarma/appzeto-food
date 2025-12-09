@@ -1,6 +1,9 @@
 import { useState, useMemo } from "react"
-import { Search, Download, ChevronDown, Filter, Wallet, RefreshCw, Calendar, Plus, ArrowUpDown } from "lucide-react"
+import { Search, Download, ChevronDown, Filter, Wallet, RefreshCw, Calendar, Plus, ArrowUpDown, Settings, FileText, FileSpreadsheet, Code } from "lucide-react"
 import { customerWalletReportDummy, walletStats } from "../../data/customerWalletReportDummy"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { exportReportsToCSV, exportReportsToExcel, exportReportsToPDF, exportReportsToJSON } from "../../components/reports/reportsExportUtils"
 
 // Import icons from Dashboard-icons
 import debitIcon from "../../assets/Dashboard-icons/image2.png"
@@ -18,6 +21,8 @@ export default function CustomerWalletReport() {
   })
   const [isFilterOpen, setIsFilterOpen] = useState(true)
 
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+
   const filteredTransactions = useMemo(() => {
     let result = [...transactions]
     
@@ -30,8 +35,33 @@ export default function CustomerWalletReport() {
       )
     }
 
+    if (filters.fromDate) {
+      result = result.filter(t => {
+        const tDate = new Date(t.createdAt)
+        const fromDate = new Date(filters.fromDate)
+        return tDate >= fromDate
+      })
+    }
+
+    if (filters.toDate) {
+      result = result.filter(t => {
+        const tDate = new Date(t.createdAt)
+        const toDate = new Date(filters.toDate)
+        toDate.setHours(23, 59, 59, 999)
+        return tDate <= toDate
+      })
+    }
+
+    if (filters.all !== "All") {
+      // Filter by credit/debit if needed
+    }
+
+    if (filters.customer !== "Select Customer") {
+      result = result.filter(t => t.customer === filters.customer)
+    }
+
     return result
-  }, [transactions, searchQuery])
+  }, [transactions, searchQuery, filters])
 
   const totalTransactions = filteredTransactions.length
 
@@ -44,6 +74,36 @@ export default function CustomerWalletReport() {
     })
     setSearchQuery("")
   }
+
+  const handleExport = (format) => {
+    if (filteredTransactions.length === 0) {
+      alert("No data to export")
+      return
+    }
+    const headers = [
+      { key: "sl", label: "SI" },
+      { key: "transactionId", label: "Transaction ID" },
+      { key: "customer", label: "Customer" },
+      { key: "credit", label: "Credit" },
+      { key: "debit", label: "Debit" },
+      { key: "balance", label: "Balance" },
+      { key: "transactionType", label: "Transaction Type" },
+      { key: "reference", label: "Reference" },
+      { key: "createdAt", label: "Created At" },
+    ]
+    switch (format) {
+      case "csv": exportReportsToCSV(filteredTransactions, headers, "customer_wallet_report"); break
+      case "excel": exportReportsToExcel(filteredTransactions, headers, "customer_wallet_report"); break
+      case "pdf": exportReportsToPDF(filteredTransactions, headers, "customer_wallet_report", "Customer Wallet Report"); break
+      case "json": exportReportsToJSON(filteredTransactions, "customer_wallet_report"); break
+    }
+  }
+
+  const handleFilterApply = () => {
+    // Filters are already applied via useMemo
+  }
+
+  const activeFiltersCount = (filters.fromDate ? 1 : 0) + (filters.toDate ? 1 : 0) + (filters.all !== "All" ? 1 : 0) + (filters.customer !== "Select Customer" ? 1 : 0)
 
   return (
     <div className="p-4 lg:p-6 bg-slate-50 min-h-screen overflow-x-hidden">
@@ -150,9 +210,19 @@ export default function CustomerWalletReport() {
                   <RefreshCw className="w-4 h-4" />
                   Reset
                 </button>
-                <button className="px-6 py-2.5 text-sm font-medium rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-all flex items-center gap-2">
+                <button 
+                  onClick={handleFilterApply}
+                  className={`px-6 py-2.5 text-sm font-medium rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-all flex items-center gap-2 relative ${
+                    activeFiltersCount > 0 ? "ring-2 ring-blue-300" : ""
+                  }`}
+                >
                   <Filter className="w-4 h-4" />
                   Filter
+                  {activeFiltersCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 text-white rounded-full text-[10px] flex items-center justify-center font-bold">
+                      {activeFiltersCount}
+                    </span>
+                  )}
                 </button>
               </div>
             </div>
@@ -332,6 +402,31 @@ export default function CustomerWalletReport() {
           </div>
         </div>
       </div>
+
+      {/* Settings Dialog */}
+      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+        <DialogContent className="max-w-md bg-white p-0 opacity-0 data-[state=open]:opacity-100 data-[state=closed]:opacity-0 transition-opacity duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:scale-100 data-[state=closed]:scale-100">
+          <DialogHeader className="px-6 pt-6 pb-4">
+            <DialogTitle className="flex items-center gap-2">
+              <Settings className="w-5 h-5" />
+              Report Settings
+            </DialogTitle>
+          </DialogHeader>
+          <div className="px-6 pb-6">
+            <p className="text-sm text-slate-700">
+              Customer wallet report settings and preferences will be available here.
+            </p>
+          </div>
+          <div className="px-6 pb-6 flex items-center justify-end">
+            <button
+              onClick={() => setIsSettingsOpen(false)}
+              className="px-4 py-2 text-sm font-medium rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-md"
+            >
+              Close
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -1,5 +1,12 @@
-import { useState } from "react"
-import { MapPin, Hand, Shapes, Search, Download, ChevronDown, Pencil, Settings } from "lucide-react"
+import { useState, useMemo } from "react"
+import { MapPin, Hand, Shapes } from "lucide-react"
+import ZonesTopbar from "../../components/zones/ZonesTopbar"
+import ZonesTable from "../../components/zones/ZonesTable"
+import ZoneFilterPanel from "../../components/zones/ZoneFilterPanel"
+import EditZoneDialog from "../../components/zones/EditZoneDialog"
+import ViewZoneDialog from "../../components/zones/ViewZoneDialog"
+import SettingsDialog from "../../components/orders/SettingsDialog"
+import { exportZonesToCSV, exportZonesToExcel, exportZonesToPDF, exportZonesToJSON } from "../../components/zones/zonesExportUtils"
 
 const languageTabs = [
   { key: "default", label: "Default" },
@@ -22,28 +29,36 @@ const zonesData = [
   }
 ]
 
-function ToggleSwitch({ enabled, onToggle }) {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      className={`inline-flex items-center w-11 h-6 rounded-full border transition-all ${
-        enabled
-          ? "bg-blue-600 border-blue-600 justify-end"
-          : "bg-slate-200 border-slate-300 justify-start"
-      }`}
-    >
-      <span className="h-5 w-5 rounded-full bg-white shadow-sm" />
-    </button>
-  )
-}
-
 export default function ZoneSetup() {
   const [activeLanguage, setActiveLanguage] = useState("default")
   const [zoneName, setZoneName] = useState("")
   const [zoneDisplayName, setZoneDisplayName] = useState("")
   const [zones, setZones] = useState(zonesData)
   const [searchQuery, setSearchQuery] = useState("")
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isEditZoneOpen, setIsEditZoneOpen] = useState(false)
+  const [isViewZoneOpen, setIsViewZoneOpen] = useState(false)
+  const [selectedZone, setSelectedZone] = useState(null)
+  const [filters, setFilters] = useState({
+    status: "",
+    isDefault: "",
+    minRestaurants: "",
+    maxRestaurants: "",
+    minDeliverymen: "",
+    maxDeliverymen: "",
+  })
+  const [visibleColumns, setVisibleColumns] = useState({
+    si: true,
+    zoneId: true,
+    name: true,
+    displayName: true,
+    restaurants: true,
+    deliverymen: true,
+    defaultStatus: true,
+    status: true,
+    actions: true,
+  })
 
   const handleStatusToggle = (id) => {
     setZones(prev => prev.map(zone => 
@@ -65,14 +80,160 @@ export default function ZoneSetup() {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    console.log("Zone submitted:", { zoneName, zoneDisplayName, activeLanguage })
-    handleReset()
+    if (zoneName && zoneDisplayName) {
+      const newZone = {
+        id: zones.length + 1,
+        zoneId: zones.length + 1,
+        name: zoneName,
+        displayName: zoneDisplayName,
+        restaurants: 0,
+        deliverymen: 0,
+        isDefault: false,
+        status: true
+      }
+      setZones(prev => [...prev, newZone])
+      handleReset()
+    }
   }
 
-  const filteredZones = zones.filter(zone =>
-    zone.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    zone.displayName.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const handleEditZone = (zone) => {
+    setSelectedZone(zone)
+    setIsEditZoneOpen(true)
+  }
+
+  const handleViewZone = (zone) => {
+    setSelectedZone(zone)
+    setIsViewZoneOpen(true)
+  }
+
+  const handleSaveZone = (updatedZone) => {
+    setZones(prev => prev.map(zone => 
+      zone.id === updatedZone.id ? updatedZone : zone
+    ))
+  }
+
+  // Apply search and filters
+  const filteredZones = useMemo(() => {
+    let result = [...zones]
+
+    // Apply search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim()
+      result = result.filter(zone =>
+        zone.name.toLowerCase().includes(query) ||
+        zone.displayName.toLowerCase().includes(query) ||
+        zone.zoneId.toString().includes(query)
+      )
+    }
+
+    // Apply filters
+    if (filters.status) {
+      result = result.filter(zone => {
+        if (filters.status === "Active") return zone.status === true
+        if (filters.status === "Inactive") return zone.status === false
+        return true
+      })
+    }
+
+    if (filters.isDefault) {
+      result = result.filter(zone => {
+        if (filters.isDefault === "yes") return zone.isDefault === true
+        if (filters.isDefault === "no") return zone.isDefault === false
+        return true
+      })
+    }
+
+    if (filters.minRestaurants) {
+      result = result.filter(zone => zone.restaurants >= parseInt(filters.minRestaurants))
+    }
+
+    if (filters.maxRestaurants) {
+      result = result.filter(zone => zone.restaurants <= parseInt(filters.maxRestaurants))
+    }
+
+    if (filters.minDeliverymen) {
+      result = result.filter(zone => zone.deliverymen >= parseInt(filters.minDeliverymen))
+    }
+
+    if (filters.maxDeliverymen) {
+      result = result.filter(zone => zone.deliverymen <= parseInt(filters.maxDeliverymen))
+    }
+
+    return result
+  }, [zones, searchQuery, filters])
+
+  // Count active filters
+  const activeFiltersCount = useMemo(() => {
+    return Object.values(filters).filter(value => value !== "" && value !== null && value !== undefined).length
+  }, [filters])
+
+  const handleApplyFilters = () => {
+    setIsFilterOpen(false)
+  }
+
+  const handleResetFilters = () => {
+    setFilters({
+      status: "",
+      isDefault: "",
+      minRestaurants: "",
+      maxRestaurants: "",
+      minDeliverymen: "",
+      maxDeliverymen: "",
+    })
+  }
+
+  const handleExport = (format) => {
+    const filename = "zones"
+    switch (format) {
+      case "csv":
+        exportZonesToCSV(filteredZones, filename)
+        break
+      case "excel":
+        exportZonesToExcel(filteredZones, filename)
+        break
+      case "pdf":
+        exportZonesToPDF(filteredZones, filename)
+        break
+      case "json":
+        exportZonesToJSON(filteredZones, filename)
+        break
+      default:
+        break
+    }
+  }
+
+  const toggleColumn = (key) => {
+    setVisibleColumns(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }))
+  }
+
+  const resetColumns = () => {
+    setVisibleColumns({
+      si: true,
+      zoneId: true,
+      name: true,
+      displayName: true,
+      restaurants: true,
+      deliverymen: true,
+      defaultStatus: true,
+      status: true,
+      actions: true,
+    })
+  }
+
+  const columnConfig = {
+    si: "Serial Number",
+    zoneId: "Zone ID",
+    name: "Zone Name",
+    displayName: "Display Name",
+    restaurants: "Restaurants",
+    deliverymen: "Deliverymen",
+    defaultStatus: "Default Status",
+    status: "Status",
+    actions: "Actions",
+  }
 
   return (
     <div className="p-2 lg:p-3 bg-slate-50 min-h-screen">
@@ -189,134 +350,62 @@ export default function ZoneSetup() {
         </div>
 
         {/* Zone List Section */}
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-            <h2 className="text-base font-bold text-slate-900">Zone List {filteredZones.length}</h2>
+        <div>
+          <ZonesTopbar
+            title="Zone List"
+            count={filteredZones.length}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            onFilterClick={() => setIsFilterOpen(true)}
+            activeFiltersCount={activeFiltersCount}
+            onExport={handleExport}
+            onSettingsClick={() => setIsSettingsOpen(true)}
+          />
 
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1 sm:flex-initial min-w-[180px]">
-                <input
-                  type="text"
-                  placeholder="Search by name"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-7 pr-2 py-1.5 w-full text-[11px] rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
-              </div>
-
-              <button className="px-2.5 py-1.5 text-[11px] font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-1 transition-all">
-                <Download className="w-3 h-3" />
-                <span>Export</span>
-                <ChevronDown className="w-2.5 h-2.5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-200">
-                <tr>
-                  <th className="px-3 py-2 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                    SI
-                  </th>
-                  <th className="px-3 py-2 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                    Zone Id
-                  </th>
-                  <th className="px-3 py-2 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-3 py-2 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                    Zone Display Name
-                  </th>
-                  <th className="px-3 py-2 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                    Restaurants
-                  </th>
-                  <th className="px-3 py-2 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                    Deliverymen
-                  </th>
-                  <th className="px-3 py-2 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                    Default Status
-                  </th>
-                  <th className="px-3 py-2 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-3 py-2 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                    Action
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-slate-100">
-                {filteredZones.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} className="px-6 py-8 text-center">
-                      <p className="text-sm text-slate-500">No zones found</p>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredZones.map((zone, index) => (
-                    <tr key={zone.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-3 py-2.5">
-                        <span className="text-xs text-slate-700">{index + 1}</span>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <span className="text-xs text-slate-700">{zone.zoneId}</span>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <span className="text-xs text-slate-700">{zone.name}</span>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <span className="text-xs text-slate-700">{zone.displayName}</span>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <span className="text-xs text-slate-700">{zone.restaurants}</span>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <span className="text-xs text-slate-700">{zone.deliverymen}</span>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        {zone.isDefault ? (
-                          <span className="text-xs text-green-600 font-medium">Default</span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleMakeDefault(zone.id)}
-                            className="px-2 py-1 text-[10px] font-medium bg-slate-200 text-slate-700 rounded hover:bg-slate-300 transition-colors"
-                          >
-                            Make default
-                          </button>
-                        )}
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <ToggleSwitch
-                          enabled={zone.status}
-                          onToggle={() => handleStatusToggle(zone.id)}
-                        />
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            className="p-1.5 text-slate-600 hover:bg-slate-50 rounded transition-colors"
-                          >
-                            <Settings className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <ZonesTable
+            zones={filteredZones}
+            visibleColumns={visibleColumns}
+            onEditZone={handleEditZone}
+            onViewZone={handleViewZone}
+            onStatusToggle={handleStatusToggle}
+            onMakeDefault={handleMakeDefault}
+          />
         </div>
+
+        {/* Filter Panel */}
+        <ZoneFilterPanel
+          isOpen={isFilterOpen}
+          onClose={() => setIsFilterOpen(false)}
+          filters={filters}
+          setFilters={setFilters}
+          onApply={handleApplyFilters}
+          onReset={handleResetFilters}
+        />
+
+        {/* Settings Dialog */}
+        <SettingsDialog
+          isOpen={isSettingsOpen}
+          onOpenChange={setIsSettingsOpen}
+          visibleColumns={visibleColumns}
+          toggleColumn={toggleColumn}
+          resetColumns={resetColumns}
+          columnsConfig={columnConfig}
+        />
+
+        {/* Edit Zone Dialog */}
+        <EditZoneDialog
+          isOpen={isEditZoneOpen}
+          onOpenChange={setIsEditZoneOpen}
+          zone={selectedZone}
+          onSave={handleSaveZone}
+        />
+
+        {/* View Zone Dialog */}
+        <ViewZoneDialog
+          isOpen={isViewZoneOpen}
+          onOpenChange={setIsViewZoneOpen}
+          zone={selectedZone}
+        />
       </div>
     </div>
   )

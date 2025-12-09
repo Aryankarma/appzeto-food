@@ -1,5 +1,6 @@
-import { useState } from "react"
-import { Info, Pencil, Facebook, Twitter, Instagram, Linkedin, Share2 } from "lucide-react"
+import { useState, useMemo } from "react"
+import { Info, Pencil, Facebook, Twitter, Instagram, Linkedin, Share2, Search, Settings, ArrowUpDown, Check, Columns } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 const socialMediaOptions = [
   "Facebook",
@@ -37,6 +38,15 @@ export default function SocialMedia() {
   const [selectedName, setSelectedName] = useState("")
   const [socialMediaLink, setSocialMediaLink] = useState("")
   const [links, setLinks] = useState(existingLinks)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [visibleColumns, setVisibleColumns] = useState({
+    si: true,
+    name: true,
+    link: true,
+    status: true,
+    actions: true,
+  })
 
   const handleStatusToggle = (id) => {
     setLinks(prev => prev.map(link => 
@@ -55,6 +65,37 @@ export default function SocialMedia() {
       console.log("Saving:", { selectedName, socialMediaLink })
       handleReset()
     }
+  }
+
+  const filteredLinks = useMemo(() => {
+    if (!searchQuery.trim()) return links
+    const query = searchQuery.toLowerCase().trim()
+    return links.filter(link =>
+      link.name.toLowerCase().includes(query) ||
+      link.link.toLowerCase().includes(query)
+    )
+  }, [links, searchQuery])
+
+  const toggleColumn = (columnKey) => {
+    setVisibleColumns(prev => ({ ...prev, [columnKey]: !prev[columnKey] }))
+  }
+
+  const resetColumns = () => {
+    setVisibleColumns({
+      si: true,
+      name: true,
+      link: true,
+      status: true,
+      actions: true,
+    })
+  }
+
+  const columnsConfig = {
+    si: "Serial Number",
+    name: "Name",
+    link: "Social Media Link",
+    status: "Status",
+    actions: "Actions",
   }
 
   const getSocialIcon = (name) => {
@@ -141,65 +182,183 @@ export default function SocialMedia() {
 
         {/* Existing Social Media Links Table */}
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-bold text-slate-900">Social Media Links</h2>
+              <span className="px-3 py-1 rounded-full text-sm font-semibold bg-slate-100 text-slate-700">
+                {filteredLinks.length}
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="relative flex-1 sm:flex-initial min-w-[250px]">
+                <input
+                  type="text"
+                  placeholder="Search by name or link"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-4 py-2.5 w-full text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              </div>
+              <button 
+                onClick={() => setIsSettingsOpen(true)}
+                className="p-2.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 transition-all"
+              >
+                <Settings className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-3 py-2 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                    SI
-                  </th>
-                  <th className="px-3 py-2 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-3 py-2 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                    Social Media Link
-                  </th>
-                  <th className="px-3 py-2 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-3 py-2 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                    Action
-                  </th>
+                  {visibleColumns.si && (
+                    <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                      <div className="flex items-center gap-2">
+                        <span>SI</span>
+                        <ArrowUpDown className="w-3 h-3 text-slate-400 cursor-pointer hover:text-slate-600" />
+                      </div>
+                    </th>
+                  )}
+                  {visibleColumns.name && (
+                    <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                      <div className="flex items-center gap-2">
+                        <span>Name</span>
+                        <ArrowUpDown className="w-3 h-3 text-slate-400 cursor-pointer hover:text-slate-600" />
+                      </div>
+                    </th>
+                  )}
+                  {visibleColumns.link && (
+                    <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                      <div className="flex items-center gap-2">
+                        <span>Social Media Link</span>
+                        <ArrowUpDown className="w-3 h-3 text-slate-400 cursor-pointer hover:text-slate-600" />
+                      </div>
+                    </th>
+                  )}
+                  {visibleColumns.status && (
+                    <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                      <div className="flex items-center gap-2">
+                        <span>Status</span>
+                        <ArrowUpDown className="w-3 h-3 text-slate-400 cursor-pointer hover:text-slate-600" />
+                      </div>
+                    </th>
+                  )}
+                  {visibleColumns.actions && (
+                    <th className="px-6 py-4 text-center text-[10px] font-bold text-slate-700 uppercase tracking-wider">Action</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-slate-100">
-                {links.map((link, index) => (
-                  <tr key={link.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-3 py-2.5">
-                      <span className="text-xs text-slate-700">{index + 1}</span>
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <div className="flex items-center gap-2">
-                        <div className="text-slate-600">
-                          {getSocialIcon(link.name)}
-                        </div>
-                        <span className="text-xs text-slate-700">{link.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <span className="text-xs text-slate-700">{link.link}</span>
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <ToggleSwitch
-                        enabled={link.status}
-                        onToggle={() => handleStatusToggle(link.id)}
-                      />
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <button
-                        type="button"
-                        className="p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors"
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </button>
+                {filteredLinks.length === 0 ? (
+                  <tr>
+                    <td colSpan={Object.values(visibleColumns).filter(v => v).length} className="px-6 py-8 text-center text-slate-500">
+                      No links found
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredLinks.map((link, index) => (
+                    <tr key={link.id} className="hover:bg-slate-50 transition-colors">
+                      {visibleColumns.si && (
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm font-medium text-slate-700">{index + 1}</span>
+                        </td>
+                      )}
+                      {visibleColumns.name && (
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <div className="text-slate-600">
+                              {getSocialIcon(link.name)}
+                            </div>
+                            <span className="text-sm text-slate-700">{link.name}</span>
+                          </div>
+                        </td>
+                      )}
+                      {visibleColumns.link && (
+                        <td className="px-6 py-4">
+                          <span className="text-sm text-slate-700 break-all">{link.link}</span>
+                        </td>
+                      )}
+                      {visibleColumns.status && (
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <ToggleSwitch
+                            enabled={link.status}
+                            onToggle={() => handleStatusToggle(link.id)}
+                          />
+                        </td>
+                      )}
+                      {visibleColumns.actions && (
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <button
+                            type="button"
+                            className="p-1.5 rounded text-blue-600 hover:bg-blue-50 transition-colors"
+                            title="Edit"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         </div>
       </div>
+
+      {/* Settings Dialog */}
+      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+        <DialogContent className="max-w-md bg-white p-0 opacity-0 data-[state=open]:opacity-100 data-[state=closed]:opacity-0 transition-opacity duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:scale-100 data-[state=closed]:scale-100">
+          <DialogHeader className="px-6 pt-6 pb-4">
+            <DialogTitle className="flex items-center gap-2">
+              <Settings className="w-5 h-5" />
+              Table Settings
+            </DialogTitle>
+          </DialogHeader>
+          <div className="px-6 pb-6 space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                <Columns className="w-4 h-4" />
+                Visible Columns
+              </h3>
+              <div className="space-y-2">
+                {Object.entries(columnsConfig).map(([key, label]) => (
+                  <label
+                    key={key}
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={visibleColumns[key]}
+                      onChange={() => toggleColumn(key)}
+                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500"
+                    />
+                    <span className="text-sm text-slate-700">{label}</span>
+                    {visibleColumns[key] && (
+                      <Check className="w-4 h-4 text-emerald-600 ml-auto" />
+                    )}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+              <button
+                onClick={resetColumns}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-all"
+              >
+                Reset
+              </button>
+              <button
+                onClick={() => setIsSettingsOpen(false)}
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-md"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

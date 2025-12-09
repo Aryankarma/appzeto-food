@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Search, Download, ChevronDown, Eye, Edit, Settings, ArrowUpDown } from "lucide-react"
-import { restaurantsDummy } from "../../data/restaurantsDummy"
+import { getRestaurants } from "../../utils/restaurantStorage"
 
 // Import icons from Dashboard-icons
 import locationIcon from "../../assets/Dashboard-icons/image1.png"
@@ -15,7 +15,34 @@ import withdrawIcon from "../../assets/Dashboard-icons/image9.png"
 
 export default function RestaurantsList() {
   const [searchQuery, setSearchQuery] = useState("")
-  const [restaurants, setRestaurants] = useState(restaurantsDummy)
+  const [restaurants, setRestaurants] = useState([])
+
+  // Load restaurants from storage on mount and when storage changes
+  useEffect(() => {
+    const loadRestaurants = () => {
+      const storedRestaurants = getRestaurants()
+      setRestaurants(storedRestaurants)
+    }
+    
+    loadRestaurants()
+    
+    // Listen for storage changes (when restaurant is added from another tab/page)
+    const handleStorageChange = (e) => {
+      if (e.key === "appzeto_restaurants") {
+        loadRestaurants()
+      }
+    }
+    
+    window.addEventListener("storage", handleStorageChange)
+    
+    // Also check periodically for changes (for same-tab updates)
+    const interval = setInterval(loadRestaurants, 1000)
+    
+    return () => {
+      window.removeEventListener("storage", handleStorageChange)
+      clearInterval(interval)
+    }
+  }, [])
   const [filters, setFilters] = useState({
     all: "All",
     businessModel: "",

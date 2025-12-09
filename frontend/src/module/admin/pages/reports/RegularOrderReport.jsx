@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react"
-import { BarChart3, ChevronDown } from "lucide-react"
+import { BarChart3, ChevronDown, Settings, FileText, FileSpreadsheet, Code } from "lucide-react"
 import { ordersDummy } from "../../data/ordersDummy"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { exportReportsToCSV, exportReportsToExcel, exportReportsToPDF, exportReportsToJSON } from "../../components/reports/reportsExportUtils"
 import searchIcon from "../../assets/Dashboard-icons/image8.png"
 import exportIcon from "../../assets/Dashboard-icons/image9.png"
 import scheduledIcon from "../../assets/Dashboard-icons/image24.png"
@@ -38,6 +41,8 @@ export default function RegularOrderReport() {
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
 
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+
   const filteredOrders = useMemo(() => {
     let result = [...ordersDummy]
 
@@ -52,9 +57,61 @@ export default function RegularOrderReport() {
       })
     }
 
-    // Filters are mostly visual for now; hook into real data later
+    if (filters.zone !== "All Zones") {
+      // Filter by zone if needed
+    }
+
+    if (filters.restaurant !== "All restaurants") {
+      result = result.filter(o => o.restaurant === filters.restaurant)
+    }
+
+    if (filters.customer !== "All customers") {
+      result = result.filter(o => o.customerName === filters.customer)
+    }
+
     return result
-  }, [searchQuery])
+  }, [searchQuery, filters])
+
+  const handleExport = (format) => {
+    if (filteredOrders.length === 0) {
+      alert("No data to export")
+      return
+    }
+    const headers = [
+      { key: "orderId", label: "Order ID" },
+      { key: "restaurant", label: "Restaurant" },
+      { key: "customerName", label: "Customer Name" },
+      { key: "totalAmount", label: "Total Item Amount" },
+      { key: "itemDiscount", label: "Item Discount" },
+      { key: "discountedAmount", label: "Discounted Amount" },
+      { key: "couponDiscount", label: "Coupon Discount" },
+      { key: "referralDiscount", label: "Referral Discount" },
+      { key: "vatTax", label: "VAT/Tax" },
+      { key: "deliveryCharge", label: "Delivery Charge" },
+      { key: "orderStatus", label: "Status" },
+    ]
+    switch (format) {
+      case "csv": exportReportsToCSV(filteredOrders, headers, "regular_order_report"); break
+      case "excel": exportReportsToExcel(filteredOrders, headers, "regular_order_report"); break
+      case "pdf": exportReportsToPDF(filteredOrders, headers, "regular_order_report", "Regular Order Report"); break
+      case "json": exportReportsToJSON(filteredOrders, "regular_order_report"); break
+    }
+  }
+
+  const handleFilterApply = () => {
+    // Filters are already applied via useMemo
+  }
+
+  const handleResetFilters = () => {
+    setFilters({
+      zone: "All Zones",
+      restaurant: "All restaurants",
+      customer: "All customers",
+      time: "All Time",
+    })
+  }
+
+  const activeFiltersCount = (filters.zone !== "All Zones" ? 1 : 0) + (filters.restaurant !== "All restaurants" ? 1 : 0) + (filters.customer !== "All customers" ? 1 : 0) + (filters.time !== "All Time" ? 1 : 0)
 
   const totalPages = Math.max(1, Math.ceil(filteredOrders.length / PAGE_SIZE))
 
@@ -191,8 +248,24 @@ export default function RegularOrderReport() {
               <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500 pointer-events-none" />
             </div>
 
-            <button className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all whitespace-nowrap">
+            <button 
+              onClick={handleResetFilters}
+              className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-all whitespace-nowrap"
+            >
+              Reset
+            </button>
+            <button 
+              onClick={handleFilterApply}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all whitespace-nowrap relative ${
+                activeFiltersCount > 0 ? "ring-2 ring-blue-300" : ""
+              }`}
+            >
               Filter
+              {activeFiltersCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 text-white rounded-full text-[8px] flex items-center justify-center font-bold">
+                  {activeFiltersCount}
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -232,10 +305,40 @@ export default function RegularOrderReport() {
                 <img src={searchIcon} alt="Search" className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3" />
               </div>
 
-              <button className="px-2.5 py-1.5 text-[11px] font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-1 transition-all">
-                <img src={exportIcon} alt="Export" className="w-3 h-3" />
-                <span>Export</span>
-                <ChevronDown className="w-2.5 h-2.5" />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="px-2.5 py-1.5 text-[11px] font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-1 transition-all">
+                    <img src={exportIcon} alt="Export" className="w-3 h-3" />
+                    <span>Export</span>
+                    <ChevronDown className="w-2.5 h-2.5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-white border border-slate-200 rounded-lg shadow-lg z-50 animate-in fade-in-0 zoom-in-95 duration-200 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95">
+                  <DropdownMenuLabel>Export Format</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => handleExport("csv")} className="cursor-pointer">
+                    <FileText className="w-4 h-4 mr-2" />
+                    Export as CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport("excel")} className="cursor-pointer">
+                    <FileSpreadsheet className="w-4 h-4 mr-2" />
+                    Export as Excel
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport("pdf")} className="cursor-pointer">
+                    <FileText className="w-4 h-4 mr-2" />
+                    Export as PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport("json")} className="cursor-pointer">
+                    <Code className="w-4 h-4 mr-2" />
+                    Export as JSON
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <button 
+                onClick={() => setIsSettingsOpen(true)}
+                className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 transition-all"
+              >
+                <Settings className="w-3 h-3" />
               </button>
             </div>
           </div>
@@ -392,6 +495,31 @@ export default function RegularOrderReport() {
           </div>
         </div>
       </div>
+
+      {/* Settings Dialog */}
+      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+        <DialogContent className="max-w-md bg-white p-0 opacity-0 data-[state=open]:opacity-100 data-[state=closed]:opacity-0 transition-opacity duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:scale-100 data-[state=closed]:scale-100">
+          <DialogHeader className="px-6 pt-6 pb-4">
+            <DialogTitle className="flex items-center gap-2">
+              <Settings className="w-5 h-5" />
+              Report Settings
+            </DialogTitle>
+          </DialogHeader>
+          <div className="px-6 pb-6">
+            <p className="text-sm text-slate-700">
+              Regular order report settings and preferences will be available here.
+            </p>
+          </div>
+          <div className="px-6 pb-6 flex items-center justify-end">
+            <button
+              onClick={() => setIsSettingsOpen(false)}
+              className="px-4 py-2 text-sm font-medium rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-md"
+            >
+              Close
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

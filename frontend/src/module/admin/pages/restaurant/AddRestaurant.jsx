@@ -1,10 +1,15 @@
 import { useState } from "react"
-import { Building2, Info, Tag, Upload, Calendar, Eye, EyeOff, FileText, MapPin } from "lucide-react"
+import { Building2, Info, Tag, Upload, Calendar, Eye, EyeOff, FileText, MapPin, CheckCircle2, X } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { addRestaurant } from "../../utils/restaurantStorage"
 
 export default function AddRestaurant() {
   const [activeLanguage, setActiveLanguage] = useState("default")
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false)
+  const [formErrors, setFormErrors] = useState({})
   const [formData, setFormData] = useState({
     restaurantName: "",
     restaurantAddress: "",
@@ -44,14 +49,132 @@ export default function AddRestaurant() {
 
   const handleFileUpload = (field, file) => {
     if (file) {
+      // Validate file size (2MB max)
+      const maxSize = 2 * 1024 * 1024 // 2MB in bytes
+      if (file.size > maxSize) {
+        setFormErrors(prev => ({
+          ...prev,
+          [field]: "File size must be less than 2MB"
+        }))
+        return
+      }
+      
+      // Validate image dimensions for logo (should be square)
+      if ((field === "logo" || field === "cover") && file.type.startsWith("image/")) {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          const img = new Image()
+          img.onload = () => {
+            if (field === "logo") {
+              // Logo should be square (1:1)
+              const aspectRatio = img.width / img.height
+              if (Math.abs(aspectRatio - 1) > 0.1) {
+                setFormErrors(prev => ({
+                  ...prev,
+                  [field]: "Logo image should be square (1:1 aspect ratio)"
+                }))
+                return
+              }
+            } else if (field === "cover") {
+              // Cover should be 3:1
+              const aspectRatio = img.width / img.height
+              if (Math.abs(aspectRatio - 3) > 0.3) {
+                setFormErrors(prev => ({
+                  ...prev,
+                  [field]: "Cover image should have 3:1 aspect ratio"
+                }))
+                return
+              }
+            }
+            setFormData(prev => ({ ...prev, [field]: file }))
+            setFormErrors(prev => {
+              const newErrors = { ...prev }
+              delete newErrors[field]
+              return newErrors
+            })
+          }
+          img.src = e.target.result
+        }
+        reader.readAsDataURL(file)
+      } else {
       setFormData(prev => ({ ...prev, [field]: file }))
+        setFormErrors(prev => {
+          const newErrors = { ...prev }
+          delete newErrors[field]
+          return newErrors
+        })
+      }
     }
   }
 
-  const handleSubmit = (e) => {
+  const validateForm = () => {
+    const errors = {}
+    
+    // Password validation
+    if (formData.password.length < 8) {
+      errors.password = "Password must be at least 8 characters"
+    }
+    
+    // Password match validation
+    if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = "Passwords do not match"
+    }
+    
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.email)) {
+      errors.email = "Please enter a valid email address"
+    }
+    
+    // Phone validation
+    if (formData.phone && formData.phone.length < 10) {
+      errors.phone = "Please enter a valid phone number"
+    }
+    
+    // Delivery time validation
+    if (parseInt(formData.estimatedDeliveryTimeMin) >= parseInt(formData.estimatedDeliveryTimeMax)) {
+      errors.estimatedDeliveryTime = "Minimum time must be less than maximum time"
+    }
+    
+    setFormErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    console.log("Form submitted:", formData)
-    alert("Restaurant added successfully!")
+    
+    // Clear previous errors
+    setFormErrors({})
+    
+    // Validate form
+    if (!validateForm()) {
+      return
+    }
+    
+    setIsSubmitting(true)
+    
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      
+      // Save restaurant to storage
+      const newRestaurant = addRestaurant(formData)
+      console.log("Restaurant added:", newRestaurant)
+      
+      // Show success dialog
+      setShowSuccessDialog(true)
+      
+      // Reset form after showing success
+      setTimeout(() => {
+        handleReset()
+        setShowSuccessDialog(false)
+      }, 3000)
+    } catch (error) {
+      console.error("Error submitting form:", error)
+      setFormErrors({ submit: "Failed to add restaurant. Please try again." })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleReset = () => {
@@ -79,6 +202,22 @@ export default function AddRestaurant() {
       password: "",
       confirmPassword: "",
     })
+    setFormErrors({})
+    setActiveLanguage("default")
+    
+    // Reset file inputs
+    const fileInputs = document.querySelectorAll('input[type="file"]')
+    fileInputs.forEach(input => {
+      input.value = ""
+    })
+  }
+
+  const getFilePreview = (file) => {
+    if (!file) return null
+    if (file.type.startsWith("image/")) {
+      return URL.createObjectURL(file)
+    }
+    return null
   }
 
   return (
@@ -202,6 +341,23 @@ export default function AddRestaurant() {
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
                     Logo <span className="text-red-500">*</span>
                   </label>
+                  {formData.logo && getFilePreview(formData.logo) ? (
+                    <div className="relative border-2 border-slate-300 rounded-lg overflow-hidden">
+                      <img
+                        src={getFilePreview(formData.logo)}
+                        alt="Logo preview"
+                        className="w-full h-48 object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleFileUpload("logo", null)}
+                        className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                      <p className="p-2 text-xs text-slate-600 text-center">{formData.logo.name}</p>
+                    </div>
+                  ) : (
                   <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors cursor-pointer">
                     <input
                       type="file"
@@ -220,6 +376,10 @@ export default function AddRestaurant() {
                       </div>
                     </label>
                   </div>
+                  )}
+                  {formErrors.logo && (
+                    <p className="text-xs text-red-500 mt-1">{formErrors.logo}</p>
+                  )}
                 </div>
 
                 {/* Restaurant Cover */}
@@ -227,6 +387,23 @@ export default function AddRestaurant() {
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
                     Restaurant Cover <span className="text-red-500">*</span>
                   </label>
+                  {formData.cover && getFilePreview(formData.cover) ? (
+                    <div className="relative border-2 border-slate-300 rounded-lg overflow-hidden">
+                      <img
+                        src={getFilePreview(formData.cover)}
+                        alt="Cover preview"
+                        className="w-full h-48 object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleFileUpload("cover", null)}
+                        className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                      <p className="p-2 text-xs text-slate-600 text-center">{formData.cover.name}</p>
+                    </div>
+                  ) : (
                   <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors cursor-pointer">
                     <input
                       type="file"
@@ -245,6 +422,10 @@ export default function AddRestaurant() {
                       </div>
                     </label>
                   </div>
+                  )}
+                  {formErrors.cover && (
+                    <p className="text-xs text-red-500 mt-1">{formErrors.cover}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -271,21 +452,30 @@ export default function AddRestaurant() {
                         value={formData.estimatedDeliveryTimeMin}
                         onChange={(e) => handleInputChange("estimatedDeliveryTimeMin", e.target.value)}
                         placeholder="Ex: 30"
-                        className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        className={`w-full px-4 py-2.5 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${
+                          formErrors.estimatedDeliveryTime ? "border-red-500" : "border-slate-300"
+                        }`}
                         required
+                        min="1"
                       />
                       <input
                         type="number"
                         value={formData.estimatedDeliveryTimeMax}
                         onChange={(e) => handleInputChange("estimatedDeliveryTimeMax", e.target.value)}
                         placeholder="Ex: 60"
-                        className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        className={`w-full px-4 py-2.5 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${
+                          formErrors.estimatedDeliveryTime ? "border-red-500" : "border-slate-300"
+                        }`}
                         required
+                        min="1"
                       />
                       <select className="px-4 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
                         <option>Minutes</option>
                       </select>
                     </div>
+                    {formErrors.estimatedDeliveryTime && (
+                      <p className="text-xs text-red-500 mt-1">{formErrors.estimatedDeliveryTime}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -341,10 +531,15 @@ export default function AddRestaurant() {
                         value={formData.phone}
                         onChange={(e) => handleInputChange("phone", e.target.value)}
                         placeholder="Phone number"
-                        className="flex-1 px-4 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        className={`flex-1 px-4 py-2.5 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${
+                          formErrors.phone ? "border-red-500" : "border-slate-300"
+                        }`}
                         required
                       />
                     </div>
+                    {formErrors.phone && (
+                      <p className="text-xs text-red-500 mt-1">{formErrors.phone}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -507,9 +702,14 @@ export default function AddRestaurant() {
                   value={formData.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
                   placeholder="Ex: Jhone@company.com"
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className={`w-full px-4 py-2.5 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${
+                    formErrors.email ? "border-red-500" : "border-slate-300"
+                  }`}
                   required
                 />
+                {formErrors.email && (
+                  <p className="text-xs text-red-500 mt-1">{formErrors.email}</p>
+                )}
               </div>
 
               <div>
@@ -522,7 +722,9 @@ export default function AddRestaurant() {
                     value={formData.password}
                     onChange={(e) => handleInputChange("password", e.target.value)}
                     placeholder="Ex: 8+ Character"
-                    className="w-full px-4 py-2.5 pr-10 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    className={`w-full px-4 py-2.5 pr-10 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${
+                      formErrors.password ? "border-red-500" : "border-slate-300"
+                    }`}
                     required
                   />
                   <button
@@ -533,6 +735,9 @@ export default function AddRestaurant() {
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+                {formErrors.password && (
+                  <p className="text-xs text-red-500 mt-1">{formErrors.password}</p>
+                )}
               </div>
 
               <div>
@@ -545,7 +750,9 @@ export default function AddRestaurant() {
                     value={formData.confirmPassword}
                     onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
                     placeholder="Ex: 8+ Character"
-                    className="w-full px-4 py-2.5 pr-10 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    className={`w-full px-4 py-2.5 pr-10 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${
+                      formErrors.confirmPassword ? "border-red-500" : "border-slate-300"
+                    }`}
                     required
                   />
                   <button
@@ -556,27 +763,79 @@ export default function AddRestaurant() {
                     {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+                {formErrors.confirmPassword && (
+                  <p className="text-xs text-red-500 mt-1">{formErrors.confirmPassword}</p>
+                )}
               </div>
             </div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex items-center justify-end gap-4 mb-6">
+            {formErrors.submit && (
+              <p className="text-sm text-red-500 mr-auto">{formErrors.submit}</p>
+            )}
             <button
               type="button"
               onClick={handleReset}
-              className="px-6 py-2.5 text-sm font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-all"
+              disabled={isSubmitting}
+              className="px-6 py-2.5 text-sm font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Reset
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-md"
+              disabled={isSubmitting}
+              className="px-6 py-2.5 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              Save Information
+              {isSubmitting ? (
+                <>
+                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Submitting...
+                </>
+              ) : (
+                "Save Information"
+              )}
             </button>
           </div>
         </form>
+
+        {/* Success Dialog */}
+        <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+          <DialogContent className="max-w-md bg-white p-0 opacity-0 data-[state=open]:opacity-100 data-[state=closed]:opacity-0 transition-opacity duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:scale-100 data-[state=closed]:scale-100">
+            <div className="p-8 text-center">
+              {/* Success Icon with Animation */}
+              <div className="flex justify-center mb-4">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-emerald-100 rounded-full animate-ping opacity-75"></div>
+                  <div className="relative bg-emerald-500 rounded-full p-4">
+                    <CheckCircle2 className="w-12 h-12 text-white" />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Success Message */}
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bold text-slate-900 mb-2">
+                  Restaurant Added Successfully!
+                </DialogTitle>
+                <DialogDescription className="text-sm text-slate-600">
+                  The restaurant has been successfully added to the system. You can now manage it from the restaurant list.
+                </DialogDescription>
+              </DialogHeader>
+
+              {/* Auto-close message */}
+              <div className="mt-6 pt-4 border-t border-slate-200">
+                <p className="text-xs text-slate-500">
+                  This dialog will close automatically in a few seconds...
+                </p>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )

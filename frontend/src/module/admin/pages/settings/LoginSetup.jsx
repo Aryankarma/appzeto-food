@@ -1,5 +1,6 @@
-import { useState } from "react"
-import { Monitor, Info, Check, Copy, Edit, ExternalLink } from "lucide-react"
+import { useState, useMemo } from "react"
+import { Monitor, Info, Check, Copy, Edit, ExternalLink, Settings, ArrowUpDown, Columns } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 const panelLoginUrls = [
   {
@@ -47,6 +48,14 @@ export default function LoginSetup() {
   const [panelUrls, setPanelUrls] = useState(panelLoginUrls)
   const [editingId, setEditingId] = useState(null)
   const [editUrl, setEditUrl] = useState("")
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [visibleColumns, setVisibleColumns] = useState({
+    si: true,
+    panelName: true,
+    loginUrl: true,
+    status: true,
+    actions: true,
+  })
 
   const handleLoginOptionChange = (option) => {
     setLoginOptions(prev => ({
@@ -123,6 +132,28 @@ export default function LoginSetup() {
   const handleCancelEdit = () => {
     setEditingId(null)
     setEditUrl("")
+  }
+
+  const toggleColumn = (columnKey) => {
+    setVisibleColumns(prev => ({ ...prev, [columnKey]: !prev[columnKey] }))
+  }
+
+  const resetColumns = () => {
+    setVisibleColumns({
+      si: true,
+      panelName: true,
+      loginUrl: true,
+      status: true,
+      actions: true,
+    })
+  }
+
+  const columnsConfig = {
+    si: "Serial Number",
+    panelName: "Panel Name",
+    loginUrl: "Login Page URL",
+    status: "Status",
+    actions: "Actions",
   }
 
   return (
@@ -295,10 +326,16 @@ export default function LoginSetup() {
         {/* Panel Login Content */}
         {activeTab === "panel-login" && (
           <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-            <div className="mb-4">
-              <p className="text-sm text-slate-600 mb-4">
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-sm text-slate-600">
                 Manage login page URLs for different panels. You can edit and copy the URLs as needed.
               </p>
+              <button 
+                onClick={() => setIsSettingsOpen(true)}
+                className="p-2.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 transition-all"
+              >
+                <Settings className="w-5 h-5" />
+              </button>
             </div>
 
             {/* Table */}
@@ -306,99 +343,137 @@ export default function LoginSetup() {
               <table className="w-full">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      SI
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Panel Name
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Login Page URL
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Action
-                    </th>
+                    {visibleColumns.si && (
+                      <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                        <div className="flex items-center gap-2">
+                          <span>SI</span>
+                          <ArrowUpDown className="w-3 h-3 text-slate-400 cursor-pointer hover:text-slate-600" />
+                        </div>
+                      </th>
+                    )}
+                    {visibleColumns.panelName && (
+                      <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                        <div className="flex items-center gap-2">
+                          <span>Panel Name</span>
+                          <ArrowUpDown className="w-3 h-3 text-slate-400 cursor-pointer hover:text-slate-600" />
+                        </div>
+                      </th>
+                    )}
+                    {visibleColumns.loginUrl && (
+                      <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                        <div className="flex items-center gap-2">
+                          <span>Login Page URL</span>
+                          <ArrowUpDown className="w-3 h-3 text-slate-400 cursor-pointer hover:text-slate-600" />
+                        </div>
+                      </th>
+                    )}
+                    {visibleColumns.status && (
+                      <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                        <div className="flex items-center gap-2">
+                          <span>Status</span>
+                          <ArrowUpDown className="w-3 h-3 text-slate-400 cursor-pointer hover:text-slate-600" />
+                        </div>
+                      </th>
+                    )}
+                    {visibleColumns.actions && (
+                      <th className="px-6 py-4 text-center text-[10px] font-bold text-slate-700 uppercase tracking-wider">Action</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-slate-100">
-                  {panelUrls.map((panel, index) => (
-                    <tr key={panel.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-4 py-3">
-                        <span className="text-xs text-slate-700">{index + 1}</span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-xs font-medium text-slate-900">{panel.panelName}</span>
-                      </td>
-                      <td className="px-4 py-3">
-                        {editingId === panel.id ? (
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="text"
-                              value={editUrl}
-                              onChange={(e) => setEditUrl(e.target.value)}
-                              className="flex-1 px-2 py-1 text-xs border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              placeholder="Enter login URL"
-                            />
-                            <button
-                              onClick={() => handleSaveUrl(panel.id)}
-                              className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                            >
-                              Save
-                            </button>
-                            <button
-                              onClick={handleCancelEdit}
-                              className="px-2 py-1 text-xs bg-slate-200 text-slate-700 rounded hover:bg-slate-300 transition-colors"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-slate-600 break-all">{panel.loginUrl}</span>
-                            <a
-                              href={panel.loginUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-700"
-                              title="Open in new tab"
-                            >
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="px-2 py-1 text-[10px] font-medium bg-green-100 text-green-700 rounded">
-                          {panel.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          {editingId !== panel.id && (
-                            <>
-                              <button
-                                onClick={() => handleEditUrl(panel.id, panel.loginUrl)}
-                                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                title="Edit URL"
-                              >
-                                <Edit className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                onClick={() => handleCopyUrl(panel.loginUrl)}
-                                className="p-1.5 text-slate-600 hover:bg-slate-100 rounded transition-colors"
-                                title="Copy URL"
-                              >
-                                <Copy className="w-3.5 h-3.5" />
-                              </button>
-                            </>
-                          )}
-                        </div>
+                  {panelUrls.length === 0 ? (
+                    <tr>
+                      <td colSpan={Object.values(visibleColumns).filter(v => v).length} className="px-6 py-8 text-center text-slate-500">
+                        No panels found
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    panelUrls.map((panel, index) => (
+                      <tr key={panel.id} className="hover:bg-slate-50 transition-colors">
+                        {visibleColumns.si && (
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-sm font-medium text-slate-700">{index + 1}</span>
+                          </td>
+                        )}
+                        {visibleColumns.panelName && (
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-sm font-medium text-slate-900">{panel.panelName}</span>
+                          </td>
+                        )}
+                        {visibleColumns.loginUrl && (
+                          <td className="px-6 py-4">
+                            {editingId === panel.id ? (
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="text"
+                                  value={editUrl}
+                                  onChange={(e) => setEditUrl(e.target.value)}
+                                  className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  placeholder="Enter login URL"
+                                />
+                                <button
+                                  onClick={() => handleSaveUrl(panel.id)}
+                                  className="px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={handleCancelEdit}
+                                  className="px-3 py-2 text-sm bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-slate-600 break-all">{panel.loginUrl}</span>
+                                <a
+                                  href={panel.loginUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:text-blue-700"
+                                  title="Open in new tab"
+                                >
+                                  <ExternalLink className="w-4 h-4" />
+                                </a>
+                              </div>
+                            )}
+                          </td>
+                        )}
+                        {visibleColumns.status && (
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="px-3 py-1 text-xs font-medium bg-green-100 text-green-700 rounded-full">
+                              {panel.status}
+                            </span>
+                          </td>
+                        )}
+                        {visibleColumns.actions && (
+                          <td className="px-6 py-4 whitespace-nowrap text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              {editingId !== panel.id && (
+                                <>
+                                  <button
+                                    onClick={() => handleEditUrl(panel.id, panel.loginUrl)}
+                                    className="p-1.5 rounded text-blue-600 hover:bg-blue-50 transition-colors"
+                                    title="Edit URL"
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleCopyUrl(panel.loginUrl)}
+                                    className="p-1.5 rounded text-slate-600 hover:bg-slate-100 transition-colors"
+                                    title="Copy URL"
+                                  >
+                                    <Copy className="w-4 h-4" />
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -423,6 +498,61 @@ export default function LoginSetup() {
           </button>
         </div>
       </div>
+
+      {/* Settings Dialog */}
+      {activeTab === "panel-login" && (
+        <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+          <DialogContent className="max-w-md bg-white p-0 opacity-0 data-[state=open]:opacity-100 data-[state=closed]:opacity-0 transition-opacity duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:scale-100 data-[state=closed]:scale-100">
+            <DialogHeader className="px-6 pt-6 pb-4">
+              <DialogTitle className="flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Table Settings
+              </DialogTitle>
+            </DialogHeader>
+            <div className="px-6 pb-6 space-y-4">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                  <Columns className="w-4 h-4" />
+                  Visible Columns
+                </h3>
+                <div className="space-y-2">
+                  {Object.entries(columnsConfig).map(([key, label]) => (
+                    <label
+                      key={key}
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={visibleColumns[key]}
+                        onChange={() => toggleColumn(key)}
+                        className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500"
+                      />
+                      <span className="text-sm text-slate-700">{label}</span>
+                      {visibleColumns[key] && (
+                        <Check className="w-4 h-4 text-emerald-600 ml-auto" />
+                      )}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+                <button
+                  onClick={resetColumns}
+                  className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-all"
+                >
+                  Reset
+                </button>
+                <button
+                  onClick={() => setIsSettingsOpen(false)}
+                  className="px-4 py-2 text-sm font-medium rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-md"
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }

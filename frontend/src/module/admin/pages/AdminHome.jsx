@@ -1,4 +1,12 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ChevronDown } from "lucide-react";
 
 // Order statistics icons (admin assets)
@@ -42,56 +50,84 @@ import food5 from "@/assets/eiliv-aceron-mAQZ3X_8_l0-unsplash.jpg";
 import food6 from "@/assets/pixzolo-photography-BiWb1Y8wpZk-unsplash.jpg";
 
 export default function AdminHome() {
-  const orderStats = [
-    {
-      value: 51,
-      label: "Delivered orders",
-      icon: deliveredIcon,
-      bg: "bg-green-50 border-green-200",
-    },
-    {
-      value: 11,
-      label: "Canceled orders",
-      icon: cancelledIcon,
-      bg: "bg-pink-50 border-pink-200",
-    },
-    {
-      value: 0,
-      label: "Refunded orders",
-      icon: refundedIcon,
-      bg: "bg-yellow-50 border-yellow-200",
-    },
-    {
-      value: 1,
-      label: "Payment failed orders",
-      icon: paymentFailedIcon,
-      bg: "bg-red-50 border-red-200",
-    },
-    {
-      value: 79,
-      label: "Unassigned Orders",
-      icon: unassignedIcon,
-      bg: "bg-blue-50 border-blue-200",
-    },
-    {
-      value: 3,
-      label: "Accepted By Delivery Man",
-      icon: acceptedIcon,
-      bg: "bg-purple-50 border-purple-200",
-    },
-    {
-      value: 5,
-      label: "Cooking In Restaurant",
-      icon: cookingIcon,
-      bg: "bg-green-50 border-green-200",
-    },
-    {
-      value: 1,
-      label: "Picked Up By Delivery Man",
-      icon: pickedUpIcon,
-      bg: "bg-yellow-50 border-yellow-200",
-    },
-  ];
+  const [selectedZone, setSelectedZone] = useState("all");
+  const [selectedPeriod, setSelectedPeriod] = useState("overall");
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Simulate data loading when filters change
+  useEffect(() => {
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [selectedZone, selectedPeriod]);
+
+  // Mock data generation based on filters
+  const getOrderStats = () => {
+    // Simulate different data based on zone and period
+    const baseStats = [
+      {
+        value: 51,
+        label: "Delivered orders",
+        icon: deliveredIcon,
+        bg: "bg-green-50 border-green-200",
+      },
+      {
+        value: 11,
+        label: "Canceled orders",
+        icon: cancelledIcon,
+        bg: "bg-pink-50 border-pink-200",
+      },
+      {
+        value: 0,
+        label: "Refunded orders",
+        icon: refundedIcon,
+        bg: "bg-yellow-50 border-yellow-200",
+      },
+      {
+        value: 1,
+        label: "Payment failed orders",
+        icon: paymentFailedIcon,
+        bg: "bg-red-50 border-red-200",
+      },
+      {
+        value: 79,
+        label: "Unassigned Orders",
+        icon: unassignedIcon,
+        bg: "bg-blue-50 border-blue-200",
+      },
+      {
+        value: 3,
+        label: "Accepted By Delivery Man",
+        icon: acceptedIcon,
+        bg: "bg-purple-50 border-purple-200",
+      },
+      {
+        value: 5,
+        label: "Cooking In Restaurant",
+        icon: cookingIcon,
+        bg: "bg-green-50 border-green-200",
+      },
+      {
+        value: 1,
+        label: "Picked Up By Delivery Man",
+        icon: pickedUpIcon,
+        bg: "bg-yellow-50 border-yellow-200",
+      },
+    ];
+
+    // Modify values based on selected filters (mock data)
+    if (selectedZone !== "all" || selectedPeriod !== "overall") {
+      return baseStats.map((stat) => ({
+        ...stat,
+        value: Math.floor(stat.value * (0.7 + Math.random() * 0.6)), // Random variation
+      }));
+    }
+    return baseStats;
+  };
+
+  const orderStats = getOrderStats();
 
   const mostPopularRestaurants = [
     "Café Monarch",
@@ -144,28 +180,52 @@ export default function AdminHome() {
     { name: "Cheesy Restaurant", orders: 1 },
   ];
 
-  const monthlyData = [
-    { month: "Jan", adminCommission: 0, totalSell: 0, subscription: 0 },
-    { month: "Feb", adminCommission: 0, totalSell: 0, subscription: 0 },
-    { month: "Mar", adminCommission: 0, totalSell: 0, subscription: 0 },
-    { month: "Apr", adminCommission: 0, totalSell: 0, subscription: 0 },
-    { month: "May", adminCommission: 0, totalSell: 0, subscription: 0 },
-    { month: "Jun", adminCommission: 0, totalSell: 0, subscription: 0 },
-    {
-      month: "Jul",
-      adminCommission: 246.5,
-      totalSell: 7993.23,
-      subscription: 0,
-    },
-    { month: "Aug", adminCommission: 0, totalSell: 0, subscription: 0 },
-    { month: "Sep", adminCommission: 0, totalSell: 0, subscription: 0 },
-    { month: "Oct", adminCommission: 0, totalSell: 0, subscription: 0 },
-    { month: "Nov", adminCommission: 0, totalSell: 0, subscription: 0 },
-    { month: "Dec", adminCommission: 0, totalSell: 0, subscription: 0 },
-  ];
+  // Generate monthly data based on filters
+  const getMonthlyData = () => {
+    const baseData = [
+      { month: "Jan", adminCommission: 0, totalSell: 0, subscription: 0 },
+      { month: "Feb", adminCommission: 0, totalSell: 0, subscription: 0 },
+      { month: "Mar", adminCommission: 0, totalSell: 0, subscription: 0 },
+      { month: "Apr", adminCommission: 0, totalSell: 0, subscription: 0 },
+      { month: "May", adminCommission: 0, totalSell: 0, subscription: 0 },
+      { month: "Jun", adminCommission: 0, totalSell: 0, subscription: 0 },
+      {
+        month: "Jul",
+        adminCommission: 246.5,
+        totalSell: 7993.23,
+        subscription: 0,
+      },
+      { month: "Aug", adminCommission: 0, totalSell: 0, subscription: 0 },
+      { month: "Sep", adminCommission: 0, totalSell: 0, subscription: 0 },
+      { month: "Oct", adminCommission: 0, totalSell: 0, subscription: 0 },
+      { month: "Nov", adminCommission: 0, totalSell: 0, subscription: 0 },
+      { month: "Dec", adminCommission: 0, totalSell: 0, subscription: 0 },
+    ];
+
+    // Modify data based on filters (mock variation)
+    if (selectedZone !== "all" || selectedPeriod !== "overall") {
+      return baseData.map((m) => ({
+        ...m,
+        adminCommission: Math.floor(m.adminCommission * (0.6 + Math.random() * 0.8) * 100) / 100,
+        totalSell: Math.floor(m.totalSell * (0.6 + Math.random() * 0.8) * 100) / 100,
+        subscription: Math.floor(m.subscription * (0.6 + Math.random() * 0.8) * 100) / 100,
+      }));
+    }
+    return baseData;
+  };
+
+  const monthlyData = getMonthlyData();
 
   return (
-    <div className="pt-2 pb-6 px-6 space-y-6">
+    <div className="pt-2 pb-6 px-6 space-y-6 relative">
+      {isLoading && (
+        <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-8 h-8 border-4 border-[#8adde7] border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-sm text-[#6B7280]">Loading...</span>
+          </div>
+        </div>
+      )}
       {/* Welcome Section */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -175,10 +235,18 @@ export default function AdminHome() {
           </p>
         </div>
         <div className="relative">
-          <select className="px-4 py-2 pr-8 min-w-[180px] border border-[#E5E7EB] rounded-md text-sm text-[#111827] bg-white appearance-none cursor-pointer">
-            <option>All zones</option>
-          </select>
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B7280] pointer-events-none" />
+          <Select value={selectedZone} onValueChange={setSelectedZone}>
+            <SelectTrigger className="px-4 py-2 min-w-[180px] border border-[#E5E7EB] rounded-md text-sm text-[#111827] bg-white">
+              <SelectValue placeholder="All zones" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All zones</SelectItem>
+              <SelectItem value="zone1">Zone 1</SelectItem>
+              <SelectItem value="zone2">Zone 2</SelectItem>
+              <SelectItem value="zone3">Zone 3</SelectItem>
+              <SelectItem value="zone4">Zone 4</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -190,12 +258,21 @@ export default function AdminHome() {
               Order statistics
             </CardTitle>
             <span className="inline-block px-3 py-1 rounded-md text-xs font-medium" style={{ color: '#8adde7', backgroundColor: '#d6ffff' }}>
-              Zone : All
+              Zone : {selectedZone === "all" ? "All" : selectedZone.charAt(0).toUpperCase() + selectedZone.slice(1)}
             </span>
           </div>
-          <select className="px-3 py-1.5 border border-[#E5E7EB] rounded-md text-xs bg-white text-[#111827]">
-            <option>Overall</option>
-          </select>
+          <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+            <SelectTrigger className="px-3 py-1.5 border border-[#E5E7EB] rounded-md text-xs bg-white text-[#111827] h-auto">
+              <SelectValue placeholder="Overall" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="overall">Overall</SelectItem>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="week">This Week</SelectItem>
+              <SelectItem value="month">This Month</SelectItem>
+              <SelectItem value="year">This Year</SelectItem>
+            </SelectContent>
+          </Select>
         </CardHeader>
         <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {orderStats.map((item, idx) => (
@@ -231,22 +308,22 @@ export default function AdminHome() {
               <img src={icon9} alt="admin commission" className="w-4 h-4 object-contain" />
                 <span className="w-3 h-3 rounded-full bg-[#3B82F6]" />
               <span className="text-sm font-medium text-[#111827]">
-                Admin commission: $ 246.50
+                Admin commission: $ {monthlyData.reduce((sum, m) => sum + m.adminCommission, 0).toFixed(2)}
                 </span>
               </div>
               <div className="flex items-center gap-2">
               <img src={deliveredIcon} alt="total sell" className="w-4 h-4 object-contain" />
                 <span className="w-3 h-3 rounded-full bg-[#10B981]" />
-              <span className="text-sm font-medium text-[#111827]">Total sell: $ 7,993.23</span>
+              <span className="text-sm font-medium text-[#111827]">Total sell: $ {monthlyData.reduce((sum, m) => sum + m.totalSell, 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
               <div className="flex items-center gap-2">
               <img src={acceptedIcon} alt="subscription" className="w-4 h-4 object-contain" />
                 <span className="w-3 h-3 rounded-full bg-[#F59E0B]" />
-              <span className="text-sm font-medium text-[#111827]">Subscription: $ 0.00</span>
+              <span className="text-sm font-medium text-[#111827]">Subscription: $ {monthlyData.reduce((sum, m) => sum + m.subscription, 0).toFixed(2)}</span>
               </div>
             </div>
           <span className="px-3 py-1 rounded-md text-[11px] font-medium" style={{ color: '#8adde7', backgroundColor: '#d6ffff' }}>
-            Zone : All
+            Zone : {selectedZone === "all" ? "All" : selectedZone.charAt(0).toUpperCase() + selectedZone.slice(1)}
           </span>
         </CardHeader>
         <CardContent className="pt-2">
@@ -331,13 +408,21 @@ export default function AdminHome() {
               </div>
               <div className="flex flex-col items-end gap-2">
                 <span className="px-3 py-1 rounded-md text-[11px] font-medium" style={{ color: '#8adde7', backgroundColor: '#d6ffff' }}>
-                  Zone : All
+                  Zone : {selectedZone === "all" ? "All" : selectedZone.charAt(0).toUpperCase() + selectedZone.slice(1)}
                 </span>
                 <div className="relative">
-                  <select className="px-3 py-1.5 pr-6 border border-[#E5E7EB] rounded-md text-xs bg-white text-[#111827] appearance-none cursor-pointer">
-                    <option>Overall</option>
-                  </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-[#6B7280] pointer-events-none" />
+                  <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                    <SelectTrigger className="px-3 py-1.5 pr-6 border border-[#E5E7EB] rounded-md text-xs bg-white text-[#111827] h-auto">
+                      <SelectValue placeholder="Overall" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="overall">Overall</SelectItem>
+                      <SelectItem value="today">Today</SelectItem>
+                      <SelectItem value="week">This Week</SelectItem>
+                      <SelectItem value="month">This Month</SelectItem>
+                      <SelectItem value="year">This Year</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
@@ -420,7 +505,7 @@ export default function AdminHome() {
               </CardTitle>
               </div>
               <span className="px-3 py-1 rounded-md text-[11px] font-medium" style={{ color: '#8adde7', backgroundColor: '#d6ffff' }}>
-                Zone : All
+                Zone : {selectedZone === "all" ? "All" : selectedZone.charAt(0).toUpperCase() + selectedZone.slice(1)}
               </span>
             </div>
           </CardHeader>
@@ -473,7 +558,7 @@ export default function AdminHome() {
             </CardTitle>
             </div>
             <span className="px-3 py-1 rounded-full bg-[#E5F6FF] text-[11px] text-[#0284C7]">
-              Zone : All
+              Zone : {selectedZone === "all" ? "All" : selectedZone.charAt(0).toUpperCase() + selectedZone.slice(1)}
             </span>
           </CardHeader>
           <CardContent>
@@ -520,7 +605,7 @@ export default function AdminHome() {
             </CardTitle>
             </div>
             <span className="px-3 py-1 rounded-full bg-[#E5F6FF] text-[11px] text-[#0284C7]">
-              Zone : All
+              Zone : {selectedZone === "all" ? "All" : selectedZone.charAt(0).toUpperCase() + selectedZone.slice(1)}
             </span>
           </CardHeader>
           <CardContent>
@@ -569,7 +654,7 @@ export default function AdminHome() {
                 Top Rated Foods
               </CardTitle>
               </div>
-              <span className="text-[11px] text-[#9BA6B7]">Zone : All</span>
+              <span className="text-[11px] text-[#9BA6B7]">Zone : {selectedZone === "all" ? "All" : selectedZone.charAt(0).toUpperCase() + selectedZone.slice(1)}</span>
             </div>
           </CardHeader>
           <CardContent>
@@ -608,7 +693,7 @@ export default function AdminHome() {
                 Top Selling Foods
               </CardTitle>
               </div>
-              <span className="text-[11px] text-[#9BA6B7]">Zone : All</span>
+              <span className="text-[11px] text-[#9BA6B7]">Zone : {selectedZone === "all" ? "All" : selectedZone.charAt(0).toUpperCase() + selectedZone.slice(1)}</span>
             </div>
           </CardHeader>
           <CardContent>
