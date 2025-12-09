@@ -24,6 +24,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import {
   FileText,
   Search,
   Download,
@@ -105,10 +112,49 @@ const mockExpenses = [
 export default function ExpenseReport() {
   const [searchQuery, setSearchQuery] = useState("")
   const [timeFilter, setTimeFilter] = useState("all-time")
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [filterDateFrom, setFilterDateFrom] = useState("")
+  const [filterDateTo, setFilterDateTo] = useState("")
+  const [filterExpenseType, setFilterExpenseType] = useState("all")
 
-  const filteredExpenses = mockExpenses.filter((expense) =>
-    expense.orderId.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredExpenses = mockExpenses.filter((expense) => {
+    const matchesSearch = expense.orderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      expense.customerName.toLowerCase().includes(searchQuery.toLowerCase())
+    
+    const matchesExpenseType = filterExpenseType === "all" || 
+      expense.expenseType.toLowerCase().includes(filterExpenseType.toLowerCase())
+    
+    return matchesSearch && matchesExpenseType
+  })
+
+  const handleExport = (format) => {
+    const headers = ["SI", "Order ID", "Date & Time", "Expense Type", "Customer Name", "Expense Amount"]
+    let csvContent = headers.join(",") + "\n"
+    
+    filteredExpenses.forEach((expense, index) => {
+      const row = [
+        index + 1,
+        expense.orderId,
+        expense.dateTime,
+        expense.expenseType,
+        expense.customerName,
+        expense.expenseAmount.toFixed(2)
+      ]
+      csvContent += row.join(",") + "\n"
+    })
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const link = document.createElement("a")
+    const url = URL.createObjectURL(blob)
+    link.setAttribute("href", url)
+    link.setAttribute("download", `expense-report-${new Date().toISOString().split("T")[0]}.${format === "csv" ? "csv" : "pdf"}`)
+    link.style.visibility = "hidden"
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    
+    alert(`Exporting as ${format.toUpperCase()}...`)
+  }
 
   return (
     <div className="space-y-6 flex flex-col min-h-full">
@@ -143,6 +189,8 @@ export default function ExpenseReport() {
                 </SelectContent>
               </Select>
               <Button
+                type="button"
+                onClick={() => setFilterOpen(true)}
                 className="bg-blue-600 hover:bg-blue-700 text-white h-10 px-4 font-semibold"
               >
                 <Filter className="h-4 w-4 mr-2" />
@@ -196,12 +244,18 @@ export default function ExpenseReport() {
                     <ChevronDown className="h-4 w-4 ml-2" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem>
+                <DropdownMenuContent align="end" className="w-48 bg-white border border-gray-200 rounded-lg shadow-lg p-1">
+                  <DropdownMenuItem
+                    onClick={() => handleExport("csv")}
+                    className="cursor-pointer px-3 py-2 hover:bg-gray-100 rounded-md"
+                  >
                     <Download className="h-4 w-4 mr-2" />
                     Export as CSV
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleExport("pdf")}
+                    className="cursor-pointer px-3 py-2 hover:bg-gray-100 rounded-md"
+                  >
                     <FileText className="h-4 w-4 mr-2" />
                     Export as PDF
                   </DropdownMenuItem>
@@ -268,6 +322,74 @@ export default function ExpenseReport() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Filter Dialog */}
+      <Dialog open={filterOpen} onOpenChange={setFilterOpen}>
+        <DialogContent className="max-w-md bg-white p-6">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-gray-900">
+              Filter Expenses
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-gray-700">Expense Type</Label>
+              <Select value={filterExpenseType} onValueChange={setFilterExpenseType}>
+                <SelectTrigger className="h-10 border-gray-300">
+                  <SelectValue placeholder="All Types" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="discount">Discount On Product</SelectItem>
+                  <SelectItem value="coupon">Coupon Discount</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold text-gray-700">From Date</Label>
+                <Input
+                  type="date"
+                  value={filterDateFrom}
+                  onChange={(e) => setFilterDateFrom(e.target.value)}
+                  className="h-10 border-gray-300"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold text-gray-700">To Date</Label>
+                <Input
+                  type="date"
+                  value={filterDateTo}
+                  onChange={(e) => setFilterDateTo(e.target.value)}
+                  className="h-10 border-gray-300"
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setFilterExpenseType("all")
+                  setFilterDateFrom("")
+                  setFilterDateTo("")
+                  setFilterOpen(false)
+                }}
+                className="border-gray-300"
+              >
+                Reset
+              </Button>
+              <Button
+                type="button"
+                onClick={() => setFilterOpen(false)}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Apply
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Footer Section */}
       <Footer />

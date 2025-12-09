@@ -160,9 +160,11 @@ export default function LoginSetup() {
     <div className="p-4 lg:p-6 bg-slate-50 min-h-screen">
       <div className="max-w-4xl mx-auto">
         {/* Page Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2">
-            <Monitor className="w-6 h-6 text-slate-600" />
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center">
+              <Monitor className="w-5 h-5 text-white" />
+            </div>
             <h1 className="text-2xl font-bold text-slate-900">Login Setup</h1>
           </div>
         </div>
@@ -174,7 +176,7 @@ export default function LoginSetup() {
               onClick={() => setActiveTab("customer-login")}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 activeTab === "customer-login"
-                  ? "bg-blue-600 text-white"
+                  ? "bg-orange-500 text-white"
                   : "text-slate-600 hover:bg-slate-100"
               }`}
             >
@@ -184,7 +186,7 @@ export default function LoginSetup() {
               onClick={() => setActiveTab("panel-login")}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 activeTab === "panel-login"
-                  ? "bg-blue-600 text-white"
+                  ? "bg-orange-500 text-white"
                   : "text-slate-600 hover:bg-slate-100"
               }`}
             >
@@ -199,7 +201,7 @@ export default function LoginSetup() {
             {/* Setup Login Option */}
             <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
               <p className="text-sm text-slate-600 mb-4">
-                The option you select customer will have the to option to login
+                The option you select customer will have the option to login
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[
@@ -212,7 +214,7 @@ export default function LoginSetup() {
                     onClick={() => handleLoginOptionChange(option.key)}
                     className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
                       loginOptions[option.key]
-                        ? "border-blue-600 bg-blue-50"
+                        ? "border-orange-500 bg-orange-50"
                         : "border-slate-200 bg-white hover:border-slate-300"
                     }`}
                   >
@@ -221,14 +223,24 @@ export default function LoginSetup() {
                         <span className="text-2xl">{option.icon}</span>
                         <span className="text-sm font-semibold text-slate-700">{option.label}</span>
                       </div>
-                      <div className="relative">
-                        <input
-                          type="checkbox"
-                          checked={loginOptions[option.key]}
-                          onChange={() => handleLoginOptionChange(option.key)}
-                          className="w-5 h-5 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer"
-                        />
-                        <Info className="absolute -right-6 top-0 w-4 h-4 text-slate-400" />
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleLoginOptionChange(option.key)
+                          }}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 ${
+                            loginOptions[option.key] ? "bg-orange-500" : "bg-slate-300"
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              loginOptions[option.key] ? "translate-x-6" : "translate-x-1"
+                            }`}
+                          />
+                        </button>
+                        <Info className="w-4 h-4 text-slate-400 cursor-help" title="Toggle this option" />
                       </div>
                     </div>
                   </div>
@@ -239,7 +251,7 @@ export default function LoginSetup() {
             {/* Social Media Login Setup */}
             <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
               <p className="text-sm text-slate-600 mb-4">
-                <a href="#" className="text-blue-600 hover:underline">
+                <a href="#" className="text-orange-500 hover:text-orange-600 hover:underline">
                   Connect 3rd party login system from here
                 </a>
               </p>
@@ -257,7 +269,7 @@ export default function LoginSetup() {
                       onClick={() => handleSocialMediaChange(platform.key)}
                       className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
                         socialMedia[platform.key]
-                          ? "border-blue-600 bg-blue-50"
+                          ? "border-orange-500 bg-orange-50"
                           : "border-slate-200 bg-white hover:border-slate-300"
                       }`}
                     >
@@ -266,14 +278,24 @@ export default function LoginSetup() {
                           <span className="text-2xl">{platform.icon}</span>
                           <span className="text-sm font-semibold text-slate-700">{platform.label}</span>
                         </div>
-                        <div className="relative">
-                          <input
-                            type="checkbox"
-                            checked={socialMedia[platform.key]}
-                            onChange={() => handleSocialMediaChange(platform.key)}
-                            className="w-5 h-5 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer"
-                          />
-                          <Info className="absolute -right-6 top-0 w-4 h-4 text-slate-400" />
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleSocialMediaChange(platform.key)
+                            }}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 ${
+                              socialMedia[platform.key] ? "bg-orange-500" : "bg-slate-300"
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                socialMedia[platform.key] ? "translate-x-6" : "translate-x-1"
+                              }`}
+                            />
+                          </button>
+                          <Info className="w-4 h-4 text-slate-400 cursor-help" title="Toggle this option" />
                         </div>
                       </div>
                     </div>
@@ -297,7 +319,7 @@ export default function LoginSetup() {
                     onClick={() => handleVerificationChange(verify.key)}
                     className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
                       verification[verify.key]
-                        ? "border-blue-600 bg-blue-50"
+                        ? "border-orange-500 bg-orange-50"
                         : "border-slate-200 bg-white hover:border-slate-300"
                     }`}
                   >
@@ -306,14 +328,24 @@ export default function LoginSetup() {
                         <span className="text-2xl">{verify.icon}</span>
                         <span className="text-sm font-semibold text-slate-700">{verify.label}</span>
                       </div>
-                      <div className="relative">
-                        <input
-                          type="checkbox"
-                          checked={verification[verify.key]}
-                          onChange={() => handleVerificationChange(verify.key)}
-                          className="w-5 h-5 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer"
-                        />
-                        <Info className="absolute -right-6 top-0 w-4 h-4 text-slate-400" />
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleVerificationChange(verify.key)
+                          }}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 ${
+                            verification[verify.key] ? "bg-orange-500" : "bg-slate-300"
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              verification[verify.key] ? "translate-x-6" : "translate-x-1"
+                            }`}
+                          />
+                        </button>
+                        <Info className="w-4 h-4 text-slate-400 cursor-help" title="Toggle this option" />
                       </div>
                     </div>
                   </div>
@@ -408,12 +440,12 @@ export default function LoginSetup() {
                                   type="text"
                                   value={editUrl}
                                   onChange={(e) => setEditUrl(e.target.value)}
-                                  className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                                   placeholder="Enter login URL"
                                 />
                                 <button
                                   onClick={() => handleSaveUrl(panel.id)}
-                                  className="px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                  className="px-3 py-2 text-sm bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
                                 >
                                   Save
                                 </button>
@@ -431,7 +463,7 @@ export default function LoginSetup() {
                                   href={panel.loginUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-blue-600 hover:text-blue-700"
+                                  className="text-orange-500 hover:text-orange-600"
                                   title="Open in new tab"
                                 >
                                   <ExternalLink className="w-4 h-4" />
@@ -454,7 +486,7 @@ export default function LoginSetup() {
                                 <>
                                   <button
                                     onClick={() => handleEditUrl(panel.id, panel.loginUrl)}
-                                    className="p-1.5 rounded text-blue-600 hover:bg-blue-50 transition-colors"
+                                    className="p-1.5 rounded text-orange-500 hover:bg-orange-50 transition-colors"
                                     title="Edit URL"
                                   >
                                     <Edit className="w-4 h-4" />
@@ -492,7 +524,7 @@ export default function LoginSetup() {
           <button
             type="button"
             onClick={handleSubmit}
-            className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            className="px-6 py-2.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium"
           >
             Submit
           </button>
@@ -525,11 +557,11 @@ export default function LoginSetup() {
                         type="checkbox"
                         checked={visibleColumns[key]}
                         onChange={() => toggleColumn(key)}
-                        className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500"
+                        className="w-4 h-4 text-orange-500 border-slate-300 rounded focus:ring-orange-500"
                       />
                       <span className="text-sm text-slate-700">{label}</span>
                       {visibleColumns[key] && (
-                        <Check className="w-4 h-4 text-emerald-600 ml-auto" />
+                        <Check className="w-4 h-4 text-orange-500 ml-auto" />
                       )}
                     </label>
                   ))}
@@ -544,7 +576,7 @@ export default function LoginSetup() {
                 </button>
                 <button
                   onClick={() => setIsSettingsOpen(false)}
-                  className="px-4 py-2 text-sm font-medium rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-md"
+                  className="px-4 py-2 text-sm font-medium rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-all shadow-md"
                 >
                   Apply
                 </button>

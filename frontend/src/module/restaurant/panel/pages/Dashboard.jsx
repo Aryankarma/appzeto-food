@@ -466,102 +466,76 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* Top Selling Foods and Top Rated Foods */}
+      {/* Top rated foods + Top selling foods */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Selling Foods */}
-        <Card className="overflow-hidden shadow-lg border-gray-100 animate-fade-in">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-white pb-4 border-b border-gray-100 py-4 !items-center">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-blue-100 flex items-center justify-center">
-                <BarChart3 className="h-5 w-5 text-orange-600" />
+        {/* Top rated foods */}
+        <Card className="border-[#E5E7EB] shadow-sm">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <img src={cookingIcon} alt="top rated foods" className="w-4 h-4 object-contain" />
+              <CardTitle className="text-sm font-semibold text-[#111827]">
+                Top Rated Foods
+              </CardTitle>
               </div>
-              <CardTitle className="text-lg font-bold text-gray-800 flex items-center">Top Selling Foods</CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="p-4">
-            <div className="grid grid-cols-3 gap-3">
-              {topSellingFoods.map((food, index) => (
-                <Link
-                  key={food.id}
-                  to={`/restaurant-panel/foods/${food.id}`}
-                  className="block"
-                >
-                  <Card
-                    className="group overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 bg-white rounded-xl border border-gray-100 hover:-translate-y-1 hover:scale-[1.02] animate-fade-in-up p-0 flex flex-col h-full cursor-pointer"
-                    style={{
-                      animationDelay: `${index * 50}ms`,
-                      animationFillMode: "both",
-                    }}
-                  >
-                  <div className="relative overflow-hidden rounded-t-xl">
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10" />
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4">
+              {topRatedFoods.map((food, idx) => (
+                <div key={food.id || idx} className="text-center">
+                  <div className="w-full h-24 rounded-lg overflow-hidden mb-2 bg-[#E5E7EB]">
                     <img
                       src={food.image}
                       alt={food.name}
-                      className="w-full h-36 object-cover rounded-t-xl group-hover:scale-110 transition-transform duration-500"
+                      className="w-full h-full object-cover"
                     />
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-blue-700 to-blue-600 text-white px-2.5 py-2 text-[11px] font-bold shadow-lg text-center">
-                      Sold : {food.sold}
-                    </div>
                   </div>
-                  <div className="p-2.5 bg-white min-h-[60px] flex flex-col justify-center">
-                    <p className="text-xs font-semibold text-gray-900 truncate leading-tight group-hover:text-blue-600 transition-colors duration-200">
-                      {food.name}
-                    </p>
-                  </div>
-                  </Card>
-                </Link>
+                  <p className="text-[11px] font-medium text-[#111827] mb-1 line-clamp-2">
+                    {food.name}
+                  </p>
+                  <p className="text-[10px] text-[#F59E0B] mb-0.5">
+                    ★ {food.rating || "0.0"}
+                  </p>
+                  <p className="text-[10px] text-[#9BA6B7]">
+                    {food.reviews || 0} Reviews
+                  </p>
+                </div>
               ))}
             </div>
           </CardContent>
         </Card>
 
-        {/* Top Rated Foods */}
-        <Card className="overflow-hidden shadow-lg border-gray-100 animate-fade-in">
-          <CardHeader className="bg-gradient-to-r from-yellow-50 to-white pb-4 border-b border-gray-100 py-4 !items-center">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-yellow-100 flex items-center justify-center">
-                <Star className="h-5 w-5 text-yellow-600 fill-yellow-600" />
+        {/* Top selling foods */}
+        <Card className="border-[#E5E7EB] shadow-sm">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <img src={deliveredIcon} alt="top selling foods" className="w-4 h-4 object-contain" />
+              <CardTitle className="text-sm font-semibold text-[#111827]">
+                Top Selling Foods
+              </CardTitle>
               </div>
-              <CardTitle className="text-lg font-bold text-gray-800 flex items-center">Top Rated Foods</CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="p-4">
-            <div className="grid grid-cols-3 gap-3">
-              {topRatedFoods.map((food, index) => (
-                <Link
-                  key={food.id}
-                  to={`/restaurant-panel/foods/${food.id}`}
-                  className="block"
-                >
-                  <Card
-                    className="group overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 bg-white rounded-xl border border-gray-100 hover:-translate-y-1 hover:scale-[1.02] animate-fade-in-up p-0 flex flex-col h-full cursor-pointer"
-                    style={{
-                      animationDelay: `${(index + 6) * 50}ms`,
-                      animationFillMode: "both",
-                    }}
-                  >
-                  <div className="relative overflow-hidden rounded-t-xl">
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10" />
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4">
+              {topSellingFoods.map((food, idx) => (
+                <div key={food.id || idx} className="text-center">
+                  <div className="w-full h-24 rounded-lg overflow-hidden mb-2 bg-[#E5E7EB]">
                     <img
                       src={food.image}
                       alt={food.name}
-                      className="w-full h-36 object-cover rounded-t-xl group-hover:scale-110 transition-transform duration-500"
+                      className="w-full h-full object-cover"
                     />
                   </div>
-                  <div className="p-2.5 bg-white min-h-[60px] flex flex-col justify-center">
-                    <p className="text-xs font-semibold text-gray-900 truncate mb-1.5 leading-tight group-hover:text-yellow-600 transition-colors duration-200">
-                      {food.name}
-                    </p>
-                    <div className="flex items-center gap-1">
-                      <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
-                      <span className="text-[11px] text-gray-700 font-medium">
-                        {food.rating} ({food.reviews} Reviews)
-                      </span>
-                    </div>
-                  </div>
-                  </Card>
-                </Link>
+                  <p className="text-[11px] font-medium text-[#111827] mb-1 line-clamp-2">
+                    {food.name}
+                  </p>
+                  <p className="text-[10px] text-[#9BA6B7]">
+                    Sold: {food.sold}
+                  </p>
+                </div>
               ))}
             </div>
           </CardContent>

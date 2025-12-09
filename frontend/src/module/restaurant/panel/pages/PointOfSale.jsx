@@ -192,29 +192,27 @@ export default function PointOfSale() {
             </div>
 
             {/* Food Items Grid */}
-            <div className="grid grid-cols-3 gap-3">
-              {foodItems.map((item) => (
-                <Card
+            <div className="grid grid-cols-3 gap-4">
+              {foodItems.map((item, index) => (
+                <div
                   key={item.id}
-                  className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow duration-300 bg-white border-gray-200 p-0"
+                  className="text-center cursor-pointer hover:opacity-80 transition-opacity"
                   onClick={() => handleAddToCart(item)}
                 >
-                  <div className="relative rounded-t-lg overflow-hidden">
+                  <div className="w-full h-24 rounded-lg overflow-hidden mb-2 bg-[#E5E7EB]">
                     <img
                       src={item.image}
                       alt={item.name}
-                      className="w-full h-24 object-cover rounded-t-lg"
+                      className="w-full h-full object-cover"
                     />
                   </div>
-                  <CardContent className="p-2">
-                    <h3 className="text-xs font-medium text-gray-900 mb-0.5 truncate">
-                      {item.name}
-                    </h3>
-                    <p className="text-xs font-bold text-primary-orange">
-                      ${item.price.toFixed(2)}
-                    </p>
-                  </CardContent>
-                </Card>
+                  <p className="text-[11px] font-medium text-[#111827] mb-1 line-clamp-2">
+                    {item.name}
+                  </p>
+                  <p className="text-[10px] text-[#9BA6B7]">
+                    ${item.price.toFixed(2)}
+                  </p>
+                </div>
               ))}
             </div>
           </CardContent>

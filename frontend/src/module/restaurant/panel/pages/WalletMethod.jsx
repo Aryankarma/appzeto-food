@@ -90,6 +90,8 @@ export default function WalletMethod() {
 
               {/* Add New Method Button */}
               <Button
+                type="button"
+                onClick={() => alert("Add new wallet method functionality will open a form here")}
                 className="bg-blue-600 hover:bg-blue-700 text-white h-10 px-4 font-semibold"
               >
                 <Plus className="h-4 w-4 mr-2" />

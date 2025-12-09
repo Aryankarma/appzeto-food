@@ -44,6 +44,42 @@ export default function AddFood() {
     }
   }
 
+  const handleGenerate = (type) => {
+    // Placeholder for AI generation functionality
+    console.log(`Generate ${type} for language: ${selectedLanguage}`)
+    // TODO: Implement AI generation logic
+  }
+
+  const handleReset = () => {
+    setName("")
+    setDescription("")
+    setSelectedImage(null)
+    setSelectedLanguage("default")
+    // Reset any other form fields if needed
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    // Validate required fields
+    if (!name.trim()) {
+      alert("Please enter a food name")
+      return
+    }
+    if (!description.trim()) {
+      alert("Please enter a description")
+      return
+    }
+    // TODO: Implement form submission logic
+    console.log("Form submitted:", { name, description, selectedLanguage, selectedImage })
+    alert("Food item submitted successfully!")
+  }
+
+  const handleAddVariation = () => {
+    // TODO: Implement add variation logic
+    console.log("Add new variation clicked")
+    // This could open a modal or navigate to a variation form
+  }
+
   return (
     <div className="space-y-6 flex flex-col min-h-full">
       {/* Header */}
@@ -62,7 +98,7 @@ export default function AddFood() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Add New Food */}
         <Card className="border-gray-200 shadow-sm">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-white border-b border-gray-100 flex items-center">
+          <CardHeader className="bg-white border-b border-gray-100 flex items-center">
             <CardTitle className="text-lg font-semibold text-gray-800">Add New Food</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5 pt-6">
@@ -75,7 +111,7 @@ export default function AddFood() {
                     <TabsTrigger
                       key={lang.value}
                       value={lang.value}
-                      className="flex-1 text-xs font-medium text-gray-900 data-[state=active]:bg-amber-50 data-[state=active]:text-gray-900 rounded-md transition-all"
+                      className="flex-1 text-xs font-medium text-gray-900 py-2 data-[state=active]:bg-amber-50 data-[state=active]:text-gray-900 rounded-md transition-all"
                     >
                       {lang.label}
                     </TabsTrigger>
@@ -98,8 +134,10 @@ export default function AddFood() {
                   className="w-full h-10 pr-24 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                 />
                 <Button
+                  type="button"
                   variant="outline"
                   size="sm"
+                  onClick={() => handleGenerate("name")}
                   className="absolute top-0 right-0 h-10 bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200 text-blue-600 hover:from-blue-100 hover:to-blue-200 px-4 shadow-sm"
                 >
                   <Sparkles className="h-4 w-4 mr-1.5" />
@@ -126,8 +164,10 @@ export default function AddFood() {
                   {description.length}/600
                 </div>
                 <Button
+                  type="button"
                   variant="outline"
                   size="sm"
+                  onClick={() => handleGenerate("description")}
                   className="absolute top-3 right-3 bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200 text-blue-600 hover:from-blue-100 hover:to-blue-200 shadow-sm"
                 >
                   <Sparkles className="h-4 w-4 mr-1.5" />
@@ -140,7 +180,7 @@ export default function AddFood() {
 
         {/* Right Column - Food Image */}
         <Card className="border-gray-200 shadow-sm">
-          <CardHeader className="bg-gradient-to-r from-purple-50 to-white border-b border-gray-100 flex items-center">
+          <CardHeader className="bg-white border-b border-gray-100 flex items-center">
             <CardTitle className="text-lg font-semibold text-gray-800">Food Image</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 pt-6">
@@ -216,14 +256,16 @@ export default function AddFood() {
 
       {/* Restaurants & Category Info */}
       <Card className="border-gray-200 shadow-sm">
-        <CardHeader className="bg-gradient-to-r from-green-50 to-white border-b border-gray-100 flex items-center">
+        <CardHeader className="bg-white border-b border-gray-100 flex items-center">
           <div className="flex items-center justify-between w-full">
             <CardTitle className="text-lg font-semibold text-gray-800">
               Restaurants & Category Info
             </CardTitle>
             <Button
+              type="button"
               variant="outline"
               size="sm"
+              onClick={() => handleGenerate("restaurant-category")}
               className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200 text-blue-600 hover:from-blue-100 hover:to-blue-200 shadow-sm"
             >
               <Sparkles className="h-4 w-4 mr-1.5" />
@@ -329,7 +371,7 @@ export default function AddFood() {
 
       {/* Addon Section */}
       <Card className="border-gray-200 shadow-sm">
-        <CardHeader className="bg-gradient-to-r from-yellow-50 to-white border-b border-gray-100 flex items-center">
+        <CardHeader className="bg-white border-b border-gray-100 flex items-center">
           <CardTitle className="text-lg font-semibold text-gray-800">Addon</CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
@@ -348,7 +390,7 @@ export default function AddFood() {
 
       {/* Availability Section */}
       <Card className="border-gray-200 shadow-sm">
-        <CardHeader className="bg-gradient-to-r from-pink-50 to-white border-b border-gray-100 flex items-center">
+        <CardHeader className="bg-white border-b border-gray-100 flex items-center">
           <CardTitle className="text-lg font-semibold text-gray-800">Availability</CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
@@ -386,7 +428,7 @@ export default function AddFood() {
 
       {/* Search Tags Section */}
       <Card className="border-gray-200 shadow-sm">
-        <CardHeader className="bg-gradient-to-r from-indigo-50 to-white border-b border-gray-100 flex items-center">
+        <CardHeader className="bg-white border-b border-gray-100 flex items-center">
           <CardTitle className="text-lg font-semibold text-gray-800">Search Tags</CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
@@ -399,12 +441,14 @@ export default function AddFood() {
 
       {/* Price Information Section */}
       <Card className="border-gray-200 shadow-sm">
-        <CardHeader className="bg-gradient-to-r from-emerald-50 to-white border-b border-gray-100 flex items-center">
+        <CardHeader className="bg-white border-b border-gray-100 flex items-center">
           <div className="flex items-center justify-between w-full">
             <CardTitle className="text-lg font-semibold text-gray-800">Price Information</CardTitle>
             <Button
+              type="button"
               variant="outline"
               size="sm"
+              onClick={() => handleGenerate("price")}
               className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200 text-blue-600 hover:from-blue-100 hover:to-blue-200 shadow-sm"
             >
               <Sparkles className="h-4 w-4 mr-1.5" />
@@ -491,21 +535,25 @@ export default function AddFood() {
 
       {/* Food Variations Section */}
       <Card className="border-gray-200 shadow-sm">
-        <CardHeader className="bg-gradient-to-r from-cyan-50 to-white border-b border-gray-100 flex items-center">
+        <CardHeader className="bg-white border-b border-gray-100 flex items-center">
           <div className="flex items-center justify-between w-full">
             <CardTitle className="text-lg font-semibold text-gray-800">Food Variations</CardTitle>
             <div className="flex items-center gap-2">
               <Button
+                type="button"
                 variant="ghost"
                 size="sm"
+                onClick={handleAddVariation}
                 className="text-primary-orange hover:text-primary-orange/80 hover:bg-orange-50 font-semibold"
               >
                 <Plus className="h-4 w-4 mr-1.5" />
                 Add new variation +
               </Button>
               <Button
+                type="button"
                 variant="outline"
                 size="sm"
+                onClick={() => handleGenerate("variations")}
                 className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200 text-blue-600 hover:from-blue-100 hover:to-blue-200 shadow-sm"
               >
                 <Sparkles className="h-4 w-4 mr-1.5" />
@@ -528,12 +576,18 @@ export default function AddFood() {
       {/* Action Buttons */}
       <div className="flex items-center justify-end gap-3 pb-6 pt-4 border-t border-gray-200">
         <Button
+          type="button"
           variant="outline"
+          onClick={handleReset}
           className="bg-white hover:bg-gray-50 text-gray-700 border-gray-300 h-11 px-6 font-semibold shadow-sm"
         >
           Reset
         </Button>
-        <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white h-11 px-8 font-semibold shadow-lg">
+        <Button 
+          type="button"
+          onClick={handleSubmit}
+          className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white h-11 px-8 font-semibold shadow-lg"
+        >
           Submit
         </Button>
       </div>

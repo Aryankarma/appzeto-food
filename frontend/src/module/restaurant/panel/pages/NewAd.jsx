@@ -73,7 +73,7 @@ export default function NewAd() {
                   <TabsTrigger
                     key={lang.value}
                     value={lang.value}
-                    className="flex-1 text-xs font-medium text-gray-900 data-[state=active]:bg-amber-50 data-[state=active]:text-gray-900 rounded-md transition-all"
+                    className="flex-1 text-xs font-medium text-gray-900 py-2 data-[state=active]:bg-amber-50 data-[state=active]:text-gray-900 rounded-md transition-all"
                   >
                     {lang.label}
                   </TabsTrigger>

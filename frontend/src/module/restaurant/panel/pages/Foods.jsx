@@ -275,22 +275,22 @@ export default function Foods() {
               <ChevronDown className="h-4 w-4 ml-2" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-            <DropdownMenuLabel>Export Format</DropdownMenuLabel>
+          <DropdownMenuContent align="end" className="w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-1">
+            <DropdownMenuLabel className="px-3 py-2">Export Format</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => handleExport("csv")} className="cursor-pointer">
+            <DropdownMenuItem onClick={() => handleExport("csv")} className="cursor-pointer px-3 py-2 hover:bg-gray-100 rounded-md">
               <FileText className="w-4 h-4 mr-2" />
               Export as CSV
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleExport("excel")} className="cursor-pointer">
+            <DropdownMenuItem onClick={() => handleExport("excel")} className="cursor-pointer px-3 py-2 hover:bg-gray-100 rounded-md">
               <FileSpreadsheet className="w-4 h-4 mr-2" />
               Export as Excel
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleExport("pdf")} className="cursor-pointer">
+            <DropdownMenuItem onClick={() => handleExport("pdf")} className="cursor-pointer px-3 py-2 hover:bg-gray-100 rounded-md">
               <FileText className="w-4 h-4 mr-2" />
               Export as PDF
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleExport("json")} className="cursor-pointer">
+            <DropdownMenuItem onClick={() => handleExport("json")} className="cursor-pointer px-3 py-2 hover:bg-gray-100 rounded-md">
               <Code className="w-4 h-4 mr-2" />
               Export as JSON
             </DropdownMenuItem>

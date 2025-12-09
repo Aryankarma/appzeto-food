@@ -2,6 +2,8 @@ import { useState, useMemo } from "react"
 import { Pencil, Settings, Search, Download, ChevronDown, FileText, FileSpreadsheet, Code, Check, Columns, ArrowUpDown } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { exportSEOPagesToCSV, exportSEOPagesToExcel, exportSEOPagesToPDF, exportSEOPagesToJSON } from "../../components/seo/seoExportUtils"
 
 const seoPages = [
@@ -24,6 +26,18 @@ const seoPages = [
 export default function PageMetaData() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [editingPage, setEditingPage] = useState(null)
+  const [seoData, setSeoData] = useState({
+    title: "",
+    description: "",
+    keywords: "",
+    metaTitle: "",
+    metaDescription: "",
+    ogTitle: "",
+    ogDescription: "",
+    ogImage: ""
+  })
   const [visibleColumns, setVisibleColumns] = useState({
     si: true,
     pages: true,
@@ -42,8 +56,42 @@ export default function PageMetaData() {
   }, [searchQuery])
 
   const handleEdit = (pageId) => {
-    console.log("Edit page:", pageId)
-    // Navigate to edit page or open modal
+    const page = seoPages.find(p => p.id === pageId)
+    if (page) {
+      setEditingPage(page)
+      // Load existing SEO data (in real app, this would come from API)
+      setSeoData({
+        title: page.name,
+        description: "",
+        keywords: "",
+        metaTitle: `${page.name} - Appzeto Food`,
+        metaDescription: `SEO description for ${page.name}`,
+        ogTitle: `${page.name} - Appzeto Food`,
+        ogDescription: `Open Graph description for ${page.name}`,
+        ogImage: ""
+      })
+      setIsEditDialogOpen(true)
+    }
+  }
+
+  const handleSaveSEO = () => {
+    if (!editingPage) return
+    
+    // In real app, this would save to API
+    console.log("Saving SEO data for:", editingPage.name, seoData)
+    alert(`SEO data saved successfully for ${editingPage.name}!`)
+    setIsEditDialogOpen(false)
+    setEditingPage(null)
+    setSeoData({
+      title: "",
+      description: "",
+      keywords: "",
+      metaTitle: "",
+      metaDescription: "",
+      ogTitle: "",
+      ogDescription: "",
+      ogImage: ""
+    })
   }
 
   const handleExport = (format) => {
@@ -266,6 +314,138 @@ export default function PageMetaData() {
                 className="px-4 py-2 text-xs font-medium rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-md"
               >
                 Apply
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit SEO Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-3xl bg-white max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="w-4 h-4" />
+              Edit SEO Content - {editingPage?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Page Title</Label>
+              <Input
+                id="title"
+                value={seoData.title}
+                onChange={(e) => setSeoData({ ...seoData, title: e.target.value })}
+                placeholder="Enter page title"
+                className="w-full"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={seoData.description}
+                onChange={(e) => setSeoData({ ...seoData, description: e.target.value })}
+                placeholder="Enter page description"
+                rows={3}
+                className="w-full"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="keywords">Keywords</Label>
+              <Input
+                id="keywords"
+                value={seoData.keywords}
+                onChange={(e) => setSeoData({ ...seoData, keywords: e.target.value })}
+                placeholder="Enter keywords (comma separated)"
+                className="w-full"
+              />
+            </div>
+
+            <div className="border-t border-slate-200 pt-4">
+              <h3 className="text-sm font-semibold text-slate-700 mb-3">Meta Tags</h3>
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="metaTitle">Meta Title</Label>
+                  <Input
+                    id="metaTitle"
+                    value={seoData.metaTitle}
+                    onChange={(e) => setSeoData({ ...seoData, metaTitle: e.target.value })}
+                    placeholder="Enter meta title"
+                    className="w-full"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="metaDescription">Meta Description</Label>
+                  <Textarea
+                    id="metaDescription"
+                    value={seoData.metaDescription}
+                    onChange={(e) => setSeoData({ ...seoData, metaDescription: e.target.value })}
+                    placeholder="Enter meta description"
+                    rows={2}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-slate-200 pt-4">
+              <h3 className="text-sm font-semibold text-slate-700 mb-3">Open Graph Tags</h3>
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="ogTitle">OG Title</Label>
+                  <Input
+                    id="ogTitle"
+                    value={seoData.ogTitle}
+                    onChange={(e) => setSeoData({ ...seoData, ogTitle: e.target.value })}
+                    placeholder="Enter OG title"
+                    className="w-full"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="ogDescription">OG Description</Label>
+                  <Textarea
+                    id="ogDescription"
+                    value={seoData.ogDescription}
+                    onChange={(e) => setSeoData({ ...seoData, ogDescription: e.target.value })}
+                    placeholder="Enter OG description"
+                    rows={2}
+                    className="w-full"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="ogImage">OG Image URL</Label>
+                  <Input
+                    id="ogImage"
+                    value={seoData.ogImage}
+                    onChange={(e) => setSeoData({ ...seoData, ogImage: e.target.value })}
+                    placeholder="Enter OG image URL"
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+              <button
+                onClick={() => {
+                  setIsEditDialogOpen(false)
+                  setEditingPage(null)
+                }}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveSEO}
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all"
+              >
+                Save Changes
               </button>
             </div>
           </div>

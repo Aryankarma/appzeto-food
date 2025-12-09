@@ -425,7 +425,7 @@ export default function AdminSidebar({ isOpen = false, onClose, onCollapseChange
         }
         
         .admin-sidebar-scroll::-webkit-scrollbar {
-          width: 4px;
+          width: 2px;
         }
         .admin-sidebar-scroll::-webkit-scrollbar-track {
           background: rgba(15, 23, 42, 0.3);

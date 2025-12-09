@@ -131,12 +131,12 @@ export default function FoodReport() {
                     <ChevronDown className="h-4 w-4 ml-2" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-white border-gray-200">
-                  <DropdownMenuItem className="hover:bg-gray-50">
+                <DropdownMenuContent align="end" className="w-48 bg-white border border-gray-200 rounded-lg shadow-lg p-1">
+                  <DropdownMenuItem className="cursor-pointer px-3 py-2 hover:bg-gray-100 rounded-md">
                     <FileText className="h-4 w-4 mr-2" />
                     Export as Excel
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="hover:bg-gray-50">
+                  <DropdownMenuItem className="cursor-pointer px-3 py-2 hover:bg-gray-100 rounded-md">
                     <FileText className="h-4 w-4 mr-2" />
                     Export as PDF
                   </DropdownMenuItem>

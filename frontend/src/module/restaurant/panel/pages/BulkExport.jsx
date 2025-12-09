@@ -24,6 +24,7 @@ export default function BulkExport() {
   const [toDate, setToDate] = useState("")
   const [startId, setStartId] = useState("")
   const [endId, setEndId] = useState("")
+  const [isExporting, setIsExporting] = useState(false)
 
   const handleReset = () => {
     setExportType("all")
@@ -33,9 +34,82 @@ export default function BulkExport() {
     setEndId("")
   }
 
-  const handleSubmit = () => {
-    // Handle export logic
-    console.log("Exporting with:", { exportType, fromDate, toDate, startId, endId })
+  const handleSettings = () => {
+    // TODO: Open settings modal or navigate to settings page
+    console.log("Settings clicked")
+    alert("Settings functionality will be implemented here")
+  }
+
+  const handleSubmit = async () => {
+    // Validate based on export type
+    if (exportType === "date") {
+      if (!fromDate || !toDate) {
+        alert("Please select both From Date and To Date")
+        return
+      }
+      if (new Date(fromDate) > new Date(toDate)) {
+        alert("From Date cannot be greater than To Date")
+        return
+      }
+    }
+
+    if (exportType === "id") {
+      if (!startId || !endId) {
+        alert("Please enter both Start ID and End ID")
+        return
+      }
+      const start = parseInt(startId)
+      const end = parseInt(endId)
+      if (isNaN(start) || isNaN(end)) {
+        alert("Please enter valid numeric IDs")
+        return
+      }
+      if (start > end) {
+        alert("Start ID cannot be greater than End ID")
+        return
+      }
+    }
+
+    setIsExporting(true)
+    try {
+      // TODO: Implement actual export logic with API call
+      console.log("Exporting with:", { exportType, fromDate, toDate, startId, endId })
+      
+      // Simulate export processing
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      // Create sample CSV export
+      const headers = ["ID", "Name", "Category", "Price", "Status", "Created Date"]
+      const sampleData = [
+        ["1", "Chicken Biryani", "Main Course", "450", "Active", "2024-01-15"],
+        ["2", "Vegetable Curry", "Main Course", "250", "Active", "2024-01-16"],
+        ["3", "Mango Lassi", "Beverage", "100", "Active", "2024-01-17"],
+      ]
+      
+      let csvContent = headers.join(",") + "\n"
+      csvContent += sampleData.map(row => row.join(",")).join("\n")
+      
+      // Create blob and download
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+      const link = document.createElement("a")
+      const url = URL.createObjectURL(blob)
+      link.setAttribute("href", url)
+      
+      const fileName = `foods-export-${exportType}-${new Date().toISOString().split("T")[0]}.csv`
+      link.setAttribute("download", fileName)
+      link.style.visibility = "hidden"
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      alert("Export completed successfully!")
+      handleReset()
+    } catch (error) {
+      console.error("Export error:", error)
+      alert("Failed to export data. Please try again.")
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   return (
@@ -52,8 +126,10 @@ export default function BulkExport() {
           </div>
         </div>
         <Button
+          type="button"
           variant="ghost"
           size="icon"
+          onClick={handleSettings}
           className="h-10 w-10 text-gray-600 hover:bg-gray-100"
         >
           <Settings className="h-5 w-5" />
@@ -65,10 +141,10 @@ export default function BulkExport() {
         <Card className="border-2 border-gray-200 bg-gray-50">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
+              <div className="h-8 w-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
                 1
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm font-semibold text-gray-900">STEP 1</p>
                 <p className="text-xs text-gray-600">Select data type</p>
               </div>
@@ -79,10 +155,10 @@ export default function BulkExport() {
         <Card className="border-2 border-gray-200 bg-gray-50">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
+              <div className="h-8 w-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
                 2
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm font-semibold text-gray-900">STEP 2</p>
                 <p className="text-xs text-gray-600">Select data range or id then export</p>
               </div>
@@ -93,10 +169,10 @@ export default function BulkExport() {
 
       {/* Export Foods Section */}
       <Card className="border-gray-200 shadow-sm">
-        <CardHeader className="bg-gradient-to-r from-blue-50 to-white border-b border-gray-100">
+        <CardHeader className="bg-white border-b border-gray-100 px-6 py-4">
           <CardTitle className="text-lg font-semibold text-gray-800">Export Foods</CardTitle>
         </CardHeader>
-        <CardContent className="pt-6">
+        <CardContent className="px-6 py-6">
           <div className="space-y-6">
             {/* Select Type Dropdown */}
             <div className="space-y-2">
@@ -176,17 +252,21 @@ export default function BulkExport() {
             {/* Action Buttons */}
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
               <Button
+                type="button"
                 variant="outline"
                 onClick={handleReset}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300 h-10 px-6 font-semibold"
+                disabled={isExporting}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300 h-10 px-6 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Reset
               </Button>
               <Button
+                type="button"
                 onClick={handleSubmit}
-                className="bg-blue-600 hover:bg-blue-700 text-white h-10 px-6 font-semibold"
+                disabled={isExporting}
+                className="bg-blue-600 hover:bg-blue-700 text-white h-10 px-6 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Submit
+                {isExporting ? "Exporting..." : "Submit"}
               </Button>
             </div>
           </div>

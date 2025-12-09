@@ -85,7 +85,7 @@ export default function Addons() {
     <div className="space-y-6 flex flex-col min-h-full">
       {/* Add New Addon Section */}
       <Card className="border-gray-200 shadow-sm">
-        <CardHeader className="bg-gradient-to-r from-blue-50 to-white border-b border-gray-100">
+        <CardHeader className="bg-white border-b border-gray-100">
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center">
               <ChefHat className="h-4 w-4 text-white" />
@@ -102,7 +102,7 @@ export default function Addons() {
                   <TabsTrigger
                     key={lang.value}
                     value={lang.value}
-                    className="flex-1 text-xs font-medium text-gray-900 data-[state=active]:bg-amber-50 data-[state=active]:text-gray-900 rounded-md transition-all"
+                    className="flex-1 text-xs py-2 font-medium text-gray-900 data-[state=active]:bg-amber-50 data-[state=active]:text-gray-900 rounded-md transition-all"
                   >
                     {lang.label}
                   </TabsTrigger>

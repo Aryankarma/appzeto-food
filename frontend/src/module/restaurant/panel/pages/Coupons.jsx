@@ -108,19 +108,55 @@ export default function Coupons() {
   }
 
   const handleSubmit = () => {
-    // Mock submit - do nothing for now
-    console.log("Coupon submit", {
-      title,
-      couponType,
-      code,
-      limitPerUser,
-      startDate,
-      endDate,
-      discountType,
-      discount,
-      maxDiscount,
-      minPurchase,
-    })
+    // Validation
+    if (!title.trim()) {
+      alert("Please enter a coupon title")
+      return
+    }
+    if (!code.trim()) {
+      alert("Please enter or generate a coupon code")
+      return
+    }
+    if (!startDate) {
+      alert("Please select a start date")
+      return
+    }
+    if (!endDate) {
+      alert("Please select an expire date")
+      return
+    }
+    if (new Date(startDate) > new Date(endDate)) {
+      alert("Start date cannot be after expire date")
+      return
+    }
+    if (!discount.trim()) {
+      alert("Please enter a discount amount")
+      return
+    }
+
+    // Create new coupon
+    const newCoupon = {
+      id: coupons.length + 1,
+      title: title.trim(),
+      code: code.trim().toUpperCase(),
+      type: couponType === "default" ? "Default" : "First Order",
+      totalUses: 0,
+      minPurchase: parseFloat(minPurchase) || 0,
+      maxDiscount: parseFloat(maxDiscount) || 0,
+      discount: parseFloat(discount) || 0,
+      discountType: discountType === "amount" ? "Amount" : "Percent",
+      startDate: startDate,
+      expireDate: endDate,
+      status: true,
+    }
+
+    // Add to list
+    setCoupons((prev) => [newCoupon, ...prev])
+
+    // Reset form
+    handleReset()
+
+    alert("Coupon added successfully!")
   }
 
   return (
@@ -150,7 +186,7 @@ export default function Coupons() {
                 <TabsTrigger
                   key={lang.value}
                   value={lang.value}
-                  className="flex-1 text-xs font-medium text-gray-900 data-[state=active]:bg-amber-50 data-[state=active]:text-gray-900 rounded-md transition-all"
+                  className="flex-1 text-xs font-medium text-gray-900 py-2 data-[state=active]:bg-amber-50 data-[state=active]:text-gray-900 rounded-md transition-all"
                 >
                   {lang.label}
                 </TabsTrigger>

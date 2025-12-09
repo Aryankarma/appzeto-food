@@ -65,11 +65,62 @@ export default function AddEmployee() {
     })
   }
 
-  const handleSubmit = () => {
-    // Handle submit logic here
-    console.log("Submitting employee:", formData)
-    // Navigate back to list after successful submission
-    // navigate("/restaurant-panel/all-employee")
+  const handleSubmit = async () => {
+    // Validation
+    if (!formData.firstName.trim()) {
+      alert("Please enter first name")
+      return
+    }
+    if (!formData.lastName.trim()) {
+      alert("Please enter last name")
+      return
+    }
+    if (!formData.phone || formData.phone === "+1") {
+      alert("Please enter a valid phone number")
+      return
+    }
+    if (!formData.role) {
+      alert("Please select a role")
+      return
+    }
+    if (!formData.email.trim()) {
+      alert("Please enter an email address")
+      return
+    }
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.email)) {
+      alert("Please enter a valid email address")
+      return
+    }
+    if (!formData.password.trim()) {
+      alert("Please enter a password")
+      return
+    }
+    if (formData.password.length < 8) {
+      alert("Password must be at least 8 characters long")
+      return
+    }
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match")
+      return
+    }
+
+    try {
+      // TODO: Implement actual API call to create employee
+      console.log("Submitting employee:", formData)
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      alert("Employee added successfully!")
+      
+      // Navigate back to list after successful submission
+      navigate("/restaurant-panel/all-employee")
+    } catch (error) {
+      console.error("Error submitting employee:", error)
+      alert("Failed to add employee. Please try again.")
+    }
   }
 
   return (
@@ -83,9 +134,9 @@ export default function AddEmployee() {
       </div>
 
       {/* Main Content - Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
         {/* Left Column - Form Fields */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-6 flex flex-col">
           {/* General Information Section */}
           <Card className="border-gray-200 shadow-sm">
             <CardContent className="p-6">
@@ -276,9 +327,9 @@ export default function AddEmployee() {
         </div>
 
         {/* Right Column - Employee Image Upload */}
-        <div className="lg:col-span-1">
-          <Card className="border-gray-200 shadow-sm">
-            <CardContent className="p-6">
+        <div className="lg:col-span-1 flex">
+          <Card className="border-gray-200 shadow-sm flex flex-col w-full h-full">
+            <CardContent className="p-6 flex flex-col flex-1">
               <div className="mb-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Label className="text-sm font-medium text-gray-700">Employee image</Label>
@@ -287,7 +338,7 @@ export default function AddEmployee() {
               </div>
 
               {/* Image Preview */}
-              <div className="w-full aspect-square rounded-lg overflow-hidden bg-gray-100 border-2 border-gray-200 mb-4 flex items-center justify-center">
+              <div className="w-full flex-1 min-h-0 rounded-lg overflow-hidden bg-gray-100 border-2 border-gray-200 mb-4 flex items-center justify-center">
                 {formData.image ? (
                   <img
                     src={formData.image}
@@ -295,8 +346,8 @@ export default function AddEmployee() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="text-center p-4">
-                    <ImageIcon className="h-16 w-16 text-gray-300 mx-auto mb-2" />
+                  <div className="text-center p-4 w-full h-full flex flex-col items-center justify-center">
+                    <ImageIcon className="h-16 w-16 text-gray-300 mb-2" />
                     <div className="text-sm text-gray-400">No image selected</div>
                   </div>
                 )}
@@ -308,7 +359,7 @@ export default function AddEmployee() {
               </p>
 
               {/* File Upload */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mt-auto">
                 <Input
                   type="file"
                   accept="image/*"
@@ -341,10 +392,19 @@ export default function AddEmployee() {
 
       {/* Action Buttons */}
       <div className="flex justify-end gap-3">
-        <Button variant="outline" onClick={handleReset} className="border-gray-200">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleReset}
+          className="border-gray-200"
+        >
           Reset
         </Button>
-        <Button onClick={handleSubmit} className="bg-blue-600 hover:bg-blue-700 text-white">
+        <Button
+          type="button"
+          onClick={handleSubmit}
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+        >
           Submit
         </Button>
       </div>

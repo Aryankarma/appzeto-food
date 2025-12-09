@@ -2,6 +2,13 @@ import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   Table,
   TableBody,
@@ -70,10 +77,53 @@ const mockNextPayouts = [
 export default function MyWallet() {
   const [activeTab, setActiveTab] = useState("withdraw-request")
   const [searchQuery, setSearchQuery] = useState("")
+  const [adjustDialogOpen, setAdjustDialogOpen] = useState(false)
+  const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false)
+  const [adjustAmount, setAdjustAmount] = useState("")
+  const [withdrawAmount, setWithdrawAmount] = useState("")
+  const [withdrawNote, setWithdrawNote] = useState("")
 
   const filteredPayouts = mockNextPayouts.filter((payout) =>
     payout.payoutId.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  const handleAdjustWallet = () => {
+    setAdjustDialogOpen(true)
+  }
+
+  const handleSubmitAdjust = () => {
+    if (!adjustAmount || parseFloat(adjustAmount) <= 0) {
+      alert("Please enter a valid amount")
+      return
+    }
+    // TODO: Implement adjust wallet API call
+    console.log("Adjusting wallet with amount:", adjustAmount)
+    alert(`Wallet adjusted by $${adjustAmount}`)
+    setAdjustAmount("")
+    setAdjustDialogOpen(false)
+  }
+
+  const handleRequestWithdraw = () => {
+    setWithdrawDialogOpen(true)
+  }
+
+  const handleSubmitWithdraw = () => {
+    if (!withdrawAmount || parseFloat(withdrawAmount) <= 0) {
+      alert("Please enter a valid withdrawal amount")
+      return
+    }
+    const amount = parseFloat(withdrawAmount)
+    if (amount > 3044.00) {
+      alert("Withdrawal amount cannot exceed withdrawable balance ($3,044.00)")
+      return
+    }
+    // TODO: Implement withdraw request API call
+    console.log("Requesting withdraw:", { amount: withdrawAmount, note: withdrawNote })
+    alert(`Withdrawal request submitted for $${withdrawAmount}`)
+    setWithdrawAmount("")
+    setWithdrawNote("")
+    setWithdrawDialogOpen(false)
+  }
 
   return (
     <div className="space-y-6 flex flex-col min-h-full">
@@ -140,11 +190,19 @@ export default function MyWallet() {
 
         {/* Action Buttons */}
         <div className="flex items-center gap-3">
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white h-10 px-4 font-semibold">
+          <Button
+            type="button"
+            onClick={handleAdjustWallet}
+            className="bg-blue-600 hover:bg-blue-700 text-white h-10 px-4 font-semibold"
+          >
             <Info className="h-4 w-4 mr-2" />
             Adjust With Wallet
           </Button>
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white h-10 px-4 font-semibold">
+          <Button
+            type="button"
+            onClick={handleRequestWithdraw}
+            className="bg-blue-600 hover:bg-blue-700 text-white h-10 px-4 font-semibold"
+          >
             <Info className="h-4 w-4 mr-2" />
             Request Withdraw
           </Button>
@@ -347,11 +405,11 @@ export default function MyWallet() {
                         <ChevronDown className="h-4 w-4 ml-2" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-40 bg-white border-gray-200">
-                      <DropdownMenuItem className="bg-white hover:bg-gray-50 text-sm">
+                    <DropdownMenuContent align="end" className="w-40 bg-white border border-gray-200 rounded-lg shadow-lg p-1">
+                      <DropdownMenuItem className="cursor-pointer px-3 py-2 hover:bg-gray-100 rounded-md text-sm">
                         Export CSV
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="bg-white hover:bg-gray-50 text-sm">
+                      <DropdownMenuItem className="cursor-pointer px-3 py-2 hover:bg-gray-100 rounded-md text-sm">
                         Export Excel
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -420,6 +478,115 @@ export default function MyWallet() {
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Adjust Wallet Dialog */}
+      <Dialog open={adjustDialogOpen} onOpenChange={setAdjustDialogOpen}>
+        <DialogContent className="max-w-md bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-gray-900">
+              Adjust With Wallet
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-gray-700">
+                Adjustment Amount ($)
+              </Label>
+              <Input
+                type="number"
+                placeholder="Enter amount"
+                value={adjustAmount}
+                onChange={(e) => setAdjustAmount(e.target.value)}
+                className="h-10 border-gray-300"
+              />
+            </div>
+            <div className="flex items-center justify-end gap-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setAdjustDialogOpen(false)
+                  setAdjustAmount("")
+                }}
+                className="border-gray-300"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSubmitAdjust}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Submit
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Request Withdraw Dialog */}
+      <Dialog open={withdrawDialogOpen} onOpenChange={setWithdrawDialogOpen}>
+        <DialogContent className="max-w-md bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-gray-900">
+              Request Withdraw
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <p className="text-sm text-gray-700">
+                <span className="font-semibold">Withdrawable Balance:</span> $3,044.00
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-gray-700">
+                Withdrawal Amount ($)
+              </Label>
+              <Input
+                type="number"
+                placeholder="Enter amount"
+                value={withdrawAmount}
+                onChange={(e) => setWithdrawAmount(e.target.value)}
+                className="h-10 border-gray-300"
+                max="3044"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-gray-700">
+                Note (Optional)
+              </Label>
+              <Input
+                type="text"
+                placeholder="Add a note"
+                value={withdrawNote}
+                onChange={(e) => setWithdrawNote(e.target.value)}
+                className="h-10 border-gray-300"
+              />
+            </div>
+            <div className="flex items-center justify-end gap-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setWithdrawDialogOpen(false)
+                  setWithdrawAmount("")
+                  setWithdrawNote("")
+                }}
+                className="border-gray-300"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSubmitWithdraw}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Submit Request
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Footer Section */}
       <Footer />
