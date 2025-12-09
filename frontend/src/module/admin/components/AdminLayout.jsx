@@ -1,10 +1,27 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Outlet } from "react-router-dom"
 import AdminSidebar from "./AdminSidebar"
 import AdminNavbar from "./AdminNavbar"
 
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  // Get initial collapsed state from localStorage to set initial margin
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('adminSidebarCollapsed')
+      if (saved !== null) {
+        setIsSidebarCollapsed(JSON.parse(saved))
+      }
+    } catch (e) {
+      console.error('Error loading sidebar collapsed state:', e)
+    }
+  }, [])
+
+  const handleCollapseChange = (collapsed) => {
+    setIsSidebarCollapsed(collapsed)
+  }
 
   return (
     <div className="min-h-screen bg-[#F7F8FA] flex">
@@ -20,10 +37,14 @@ export default function AdminLayout() {
       <AdminSidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        onCollapseChange={handleCollapseChange}
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 lg:ml-80 w-full">
+      <div className={`
+        flex-1 w-full transition-all duration-300 ease-in-out
+        ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-80'}
+      `}>
         {/* Top Navbar */}
         <AdminNavbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
 

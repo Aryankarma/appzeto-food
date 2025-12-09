@@ -16,6 +16,7 @@ import {
   Megaphone,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
   X,
   LayoutDashboard,
   Gift,
@@ -82,9 +83,47 @@ const iconMap = {
   Zap,
 }
 
-export default function AdminSidebar({ isOpen = false, onClose }) {
+export default function AdminSidebar({ isOpen = false, onClose, onCollapseChange }) {
   const location = useLocation()
   const [searchQuery, setSearchQuery] = useState("")
+  
+  // Get initial collapsed state from localStorage
+  const getInitialCollapsedState = () => {
+    try {
+      const saved = localStorage.getItem('adminSidebarCollapsed')
+      if (saved !== null) {
+        return JSON.parse(saved)
+      }
+    } catch (e) {
+      console.error('Error loading sidebar collapsed state:', e)
+    }
+    return false
+  }
+  
+  const [isCollapsed, setIsCollapsed] = useState(getInitialCollapsedState)
+  
+  // Save collapsed state to localStorage and notify parent
+  useEffect(() => {
+    try {
+      localStorage.setItem('adminSidebarCollapsed', JSON.stringify(isCollapsed))
+      if (onCollapseChange) {
+        onCollapseChange(isCollapsed)
+      }
+    } catch (e) {
+      console.error('Error saving sidebar collapsed state:', e)
+    }
+  }, [isCollapsed, onCollapseChange])
+  
+  // Notify parent on initial load
+  useEffect(() => {
+    if (onCollapseChange) {
+      onCollapseChange(isCollapsed)
+    }
+  }, [])
+  
+  const toggleCollapse = () => {
+    setIsCollapsed(prev => !prev)
+  }
 
   // Generate initial expanded state from menu data
   const getInitialExpandedState = () => {
@@ -235,15 +274,25 @@ export default function AdminSidebar({ isOpen = false, onClose }) {
             }
           }}
           className={cn(
-            "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-            isInSection ? "text-xs font-bold" : "",
+            "flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-300 ease-out menu-item-animate text-left",
+            "hover:translate-x-1",
+            isInSection ? "text-sm font-semibold" : "text-sm",
             isActive(item.path)
-              ? "bg-green-500/20 text-green-400"
-              : "text-[#E9F3FF] hover:bg-gray-700/50"
+              ? "bg-blue-600/30 text-blue-100 border-blue-400 font-semibold"
+              : "text-blue-50/90 hover:bg-blue-900/40 hover:text-blue-100",
+            isCollapsed && "justify-center px-2"
           )}
+          style={{ animationDelay: `${index * 0.05}s` }}
+          title={isCollapsed ? item.label : undefined}
         >
-          <Icon className={cn("flex-shrink-0", isInSection ? "w-4 h-4" : "w-5 h-5")} />
-          <span className={isInSection ? "font-bold" : ""}>{item.label}</span>
+          <Icon className={cn(
+            "shrink-0 transition-all duration-300 text-left",
+            isInSection ? "w-4 h-4" : "w-4 h-4",
+            isActive(item.path) ? "text-blue-300 scale-110" : "text-blue-200/80"
+          )} />
+          {!isCollapsed && (
+            <span className={cn("text-left whitespace-nowrap", isInSection ? "font-semibold" : "font-medium")}>{item.label}</span>
+          )}
         </Link>
       )
     }
@@ -253,27 +302,43 @@ export default function AdminSidebar({ isOpen = false, onClose }) {
       const sectionKey = item.label.toLowerCase().replace(/\s+/g, "")
       const isExpanded = expandedSections[sectionKey] || false
 
+      if (isCollapsed) {
+        return (
+          <div key={index} className="menu-item-animate" style={{ animationDelay: `${index * 0.05}s` }}>
+            <button
+              onClick={() => toggleSection(sectionKey)}
+              className={cn(
+                "w-full flex items-center justify-center px-2 py-2 rounded-lg transition-all duration-300 ease-out text-sm font-medium",
+                "text-white hover:bg-blue-900/40 hover:text-blue-100"
+              )}
+              title={item.label}
+            >
+              <Icon className="w-4 h-4 shrink-0 text-blue-200/80 transition-transform duration-300" />
+            </button>
+          </div>
+        )
+      }
+
       return (
-        <div key={index}>
+        <div key={index} className="menu-item-animate" style={{ animationDelay: `${index * 0.05}s` }}>
           <button
             onClick={() => toggleSection(sectionKey)}
             className={cn(
-              "w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-colors text-sm font-medium",
-              "text-[#E9F3FF] hover:bg-gray-700/50"
+              "w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg transition-all duration-300 ease-out text-sm font-medium text-left",
+              "hover:translate-x-1",
+              "text-white hover:bg-blue-900/40 hover:text-blue-100"
             )}
           >
-            <div className="flex items-center gap-3">
-              <Icon className="w-4 h-4 flex-shrink-0" />
-              <span className="font-medium">{item.label}</span>
+            <div className="flex items-center gap-2.5 text-left">
+              <Icon className="w-4 h-4 shrink-0 text-blue-200/80 transition-transform duration-300" />
+              <span className="font-medium text-left">{item.label}</span>
             </div>
-            {isExpanded ? (
-              <ChevronDown className="w-4 h-4 flex-shrink-0 text-[#879DB6]" />
-            ) : (
-              <ChevronRight className="w-4 h-4 flex-shrink-0 text-[#879DB6]" />
-            )}
+            <div className="transition-transform duration-300" style={{ transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
+              <ChevronDown className="w-4 h-4 shrink-0 text-blue-200/70" />
+            </div>
           </button>
           {isExpanded && item.subItems && (
-            <div className="ml-4 mt-1 space-y-1">
+            <div className="ml-5 mt-1 space-y-1 border-blue-700/40 pl-3 submenu-animate overflow-hidden">
               {item.subItems.map((subItem, subIndex) => {
                 const allSubPaths = item.subItems.map(si => si.path)
                 return (
@@ -286,14 +351,19 @@ export default function AdminSidebar({ isOpen = false, onClose }) {
                       }
                     }}
                     className={cn(
-                      "flex items-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm font-normal",
+                      "flex items-center gap-2 px-3 py-1.5 rounded-md transition-all duration-300 ease-out text-sm font-normal text-left",
+                      "hover:translate-x-1",
                       isActive(subItem.path, allSubPaths)
-                        ? "bg-green-500/20 text-green-400"
-                        : "text-[#E9F3FF] hover:bg-gray-700/50"
+                        ? "bg-blue-600/30 text-blue-100 font-semibold"
+                        : "text-blue-50/90 hover:bg-blue-900/30 hover:text-blue-100"
                     )}
+                    style={{ animationDelay: `${subIndex * 0.03}s` }}
                   >
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#879DB6] flex-shrink-0"></span>
-                    <span>{subItem.label}</span>
+                    <span className={cn(
+                      "w-1.5 h-1.5 rounded-full shrink-0 transition-all duration-300",
+                      isActive(subItem.path, allSubPaths) ? "bg-blue-300 scale-125" : "bg-blue-300/60"
+                    )}></span>
+                    <span className="text-left">{subItem.label}</span>
                   </Link>
                 )
               })}
@@ -309,84 +379,163 @@ export default function AdminSidebar({ isOpen = false, onClose }) {
   return (
     <>
       <style>{`
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateX(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        
+        @keyframes expandDown {
+          from {
+            opacity: 0;
+            max-height: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            max-height: 500px;
+            transform: translateY(0);
+          }
+        }
+        
+        .menu-item-animate {
+          animation: slideIn 0.3s ease-out forwards;
+        }
+        
+        .submenu-animate {
+          animation: expandDown 0.3s ease-out forwards;
+        }
+        
+        .admin-sidebar-scroll {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+        }
+        
         .admin-sidebar-scroll::-webkit-scrollbar {
-          width: 2px;
+          width: 4px;
         }
         .admin-sidebar-scroll::-webkit-scrollbar-track {
-          background: transparent;
+          background: rgba(15, 23, 42, 0.3);
         }
         .admin-sidebar-scroll::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.2);
+          background: rgba(59, 130, 246, 0.3);
           border-radius: 10px;
+          transition: background 0.2s ease;
+        }
+        .admin-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+          background: rgba(59, 130, 246, 0.5);
         }
         .admin-sidebar-scroll:hover::-webkit-scrollbar {
-          width: 3px;
+          width: 6px;
         }
         .admin-sidebar-scroll {
           scrollbar-width: thin;
-          scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-        }
-        .admin-sidebar-scroll:hover {
-          scrollbar-width: thin;
+          scrollbar-color: rgba(59, 130, 246, 0.3) rgba(15, 23, 42, 0.3);
         }
       `}</style>
       <div
-        className={`
-          admin-sidebar-scroll
-          w-80 bg-[#334257] border-r border-gray-700 h-screen fixed left-0 top-0 overflow-y-auto z-50
-          transform transition-transform duration-300 ease-in-out
-          lg:translate-x-0
-          ${isOpen ? "translate-x-0" : "-translate-x-full"}
-        `}
+        className={cn(
+          "admin-sidebar-scroll bg-[#0f172a] border-r border-blue-800/40 h-screen fixed left-0 top-0 overflow-y-auto z-50",
+          "transform transition-all duration-300 ease-in-out",
+          "lg:translate-x-0",
+          isOpen ? "translate-x-0" : "-translate-x-full",
+          isCollapsed ? "w-20" : "w-80"
+        )}
       >
       {/* Header with Logo and Brand */}
-      <div className="p-4 border-b border-gray-700">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-orange-500 rounded flex items-center justify-center">
-              <Utensils className="w-5 h-5 text-white" />
+      <div className="px-3 py-3 border-b border-blue-800/40 bg-[#1e293b] animate-[fadeIn_0.4s_ease-out]">
+        <div className="flex items-center justify-between mb-3">
+          {!isCollapsed && (
+            <div className="flex items-center gap-2 animate-[slideIn_0.3s_ease-out]">
+              <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center shadow-lg shadow-orange-500/30 transition-transform duration-300 hover:scale-110">
+                <Utensils className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-lg font-bold text-orange-500 text-left">Appzeto Food</span>
             </div>
-            <span className="text-xl font-bold text-orange-500">Appzeto Food</span>
+          )}
+          {isCollapsed && (
+            <div className="w-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center shadow-lg shadow-orange-500/30 transition-transform duration-300 hover:scale-110">
+                <Utensils className="w-4 h-4 text-white" />
+              </div>
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleCollapse}
+              className="text-blue-200/80 hover:text-blue-100 transition-all duration-200 hover:scale-110 p-1.5 rounded-lg hover:bg-blue-900/30"
+              title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {isCollapsed ? (
+                <ChevronRight className="w-4 h-4" />
+              ) : (
+                <ChevronLeft className="w-4 h-4" />
+              )}
+            </button>
+            <button
+              onClick={onClose}
+              className="lg:hidden text-blue-200/80 hover:text-blue-100 transition-all duration-200 hover:scale-110"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="lg:hidden text-[#879DB6] hover:text-white"
-          >
-            <X className="w-5 h-5" />
-          </button>
         </div>
 
+        {/* Admin Panel Label */}
+        {!isCollapsed && (
+          <div className="mb-3 animate-[slideIn_0.4s_ease-out_0.1s_both]">
+            <h2 className="text-sm font-semibold text-blue-200 uppercase tracking-wider text-left">
+              Admin Panel
+            </h2>
+          </div>
+        )}
+
         {/* Search Bar */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-100 w-4 h-4 z-10" />
-          <Input
-            type="text"
-            placeholder="Search Menu..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className={cn(
-              "w-full pl-10 py-2 bg-[#2a3648] border border-gray-600 rounded-md !text-gray-100 placeholder:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500",
-              searchQuery ? "pr-10" : "pr-3"
+        {!isCollapsed && (
+          <div className="relative animate-[slideIn_0.4s_ease-out_0.2s_both]">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-200/70 w-4 h-4 z-10 transition-colors duration-200" />
+            <Input
+              type="text"
+              placeholder="Search Menu..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={cn(
+                "w-full pl-9 py-2 bg-[#0f172a] border border-blue-700/40 rounded-lg text-sm text-blue-50 placeholder:text-blue-200/50 focus:outline-none focus:ring-2 focus:ring-blue-400/60 focus:border-blue-400/60 transition-all duration-200 text-left",
+                searchQuery ? "pr-9" : "pr-3"
+              )}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-200/70 hover:text-blue-100 transition-all duration-200 hover:scale-110 z-10"
+                aria-label="Clear search"
+              >
+                <X className="w-4 h-4" />
+              </button>
             )}
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-100 hover:text-white transition-colors z-10"
-              aria-label="Clear search"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Navigation Menu */}
-      <nav className="p-4 space-y-1">
+      <nav className="px-3 py-3 space-y-2">
         {filteredMenuData.length === 0 && searchQuery.trim() ? (
-          <div className="px-4 py-8 text-center">
-            <p className="text-[#879DB6] text-sm">No menu items found</p>
-            <p className="text-[#879DB6] text-xs mt-1">Try a different search term</p>
+          <div className="px-3 py-12 text-left animate-[fadeIn_0.4s_ease-out]">
+            <p className="text-blue-200/70 text-sm font-medium text-left">No menu items found</p>
+            <p className="text-blue-200/50 text-sm mt-2 text-left">Try a different search term</p>
           </div>
         ) : (
           filteredMenuData.map((item, index) => {
@@ -396,12 +545,21 @@ export default function AdminSidebar({ isOpen = false, onClose }) {
 
             if (item.type === "section") {
               return (
-                <div key={index} className={index > 0 ? "mt-4" : ""}>
-                  <div className="px-4 py-2">
-                    <span className="text-[#879DB6] font-bold text-xs uppercase">
-                      {item.label}
-                    </span>
-                  </div>
+                <div 
+                  key={index} 
+                  className={cn(
+                    index > 0 ? "mt-4 pt-4 border-t border-blue-800/30" : "",
+                    "animate-[fadeIn_0.4s_ease-out]"
+                  )}
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  {!isCollapsed && (
+                    <div className="px-3 py-2 mb-2">
+                      <span className="text-blue-200/60 font-bold text-sm uppercase tracking-wider text-left">
+                        {item.label}
+                      </span>
+                    </div>
+                  )}
                   <div className="space-y-1">
                     {item.items.map((subItem, subIndex) => renderMenuItem(subItem, `${index}-${subIndex}`, true))}
                   </div>
