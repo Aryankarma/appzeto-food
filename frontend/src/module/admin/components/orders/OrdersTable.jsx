@@ -62,9 +62,9 @@ export default function OrdersTable({ orders, visibleColumns, onViewOrder, onPri
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-      <div className="overflow-x-hidden">
-        <table className="w-full">
+    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden w-full max-w-full">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-full">
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
               {visibleColumns.si && (

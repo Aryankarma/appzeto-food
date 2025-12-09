@@ -42,14 +42,14 @@ export default function AdminLayout() {
 
       {/* Main Content Area */}
       <div className={`
-        flex-1 w-full transition-all duration-300 ease-in-out
+        flex-1 transition-all duration-300 ease-in-out overflow-x-hidden
         ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-80'}
       `}>
         {/* Top Navbar */}
         <AdminNavbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
 
         {/* Page Content */}
-        <main className="pt-4">
+        <main className="pt-4 w-full max-w-full overflow-x-hidden">
           <Outlet />
         </main>
       </div>

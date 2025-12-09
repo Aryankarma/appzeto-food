@@ -34,7 +34,7 @@ export default function OrdersAll() {
   } = useOrdersManagement(ordersDummy, "all", "All Orders")
 
   return (
-    <div className="p-4 lg:p-6 bg-slate-50 min-h-screen">
+    <div className="p-4 lg:p-6 bg-slate-50 min-h-screen w-full max-w-full overflow-x-hidden">
       <OrdersTopbar 
         title="All Orders" 
         count={count} 

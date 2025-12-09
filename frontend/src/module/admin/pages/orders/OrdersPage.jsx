@@ -79,7 +79,7 @@ export default function OrdersPage({ statusKey = "all" }) {
   } = useOrdersManagement(baseFilteredOrders, statusKey, config.title)
 
   return (
-    <div className="p-4 lg:p-6 bg-slate-50 min-h-screen">
+    <div className="p-4 lg:p-6 bg-slate-50 min-h-screen w-full max-w-full overflow-x-hidden">
       <OrdersTopbar 
         title={config.title} 
         count={count} 
