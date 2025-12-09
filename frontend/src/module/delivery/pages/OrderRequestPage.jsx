@@ -24,13 +24,20 @@ import {
   calculatePeriodEarnings
 } from "../utils/deliveryWalletState"
 import { formatCurrency } from "../../restaurant/utils/currency"
+import { useGigStore } from "../store/gigStore"
 
 export default function OrderRequestPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const [animationKey, setAnimationKey] = useState(0)
-  const [isOnline, setIsOnline] = useState(true)
   const [walletState, setWalletState] = useState(() => getDeliveryWalletState())
+  
+  const {
+    isOnline,
+    bookedGigs,
+    goOnline,
+    goOffline
+  } = useGigStore()
   
   // Calculate balances
   const balances = calculateDeliveryBalances(walletState)
@@ -103,6 +110,19 @@ export default function OrderRequestPage() {
     }
   }, [])
   
+  // Handle online toggle
+  const handleToggleOnline = () => {
+    if (isOnline) {
+      goOffline()
+    } else {
+      if (bookedGigs.length === 0) {
+        navigate("/delivery/gig")
+      } else {
+        goOnline()
+      }
+    }
+  }
+  
   // Get current week date range (17 Nov - 23 Nov format)
   const getCurrentWeekRange = () => {
     const now = new Date()
@@ -127,7 +147,7 @@ export default function OrderRequestPage() {
       <div className="bg-white px-4 py-4 flex items-center justify-between sticky top-0 z-10 border-b border-gray-200 rounded-b-3xl md:rounded-b-none">
         {/* Online Toggle */}
         <button
-          onClick={() => setIsOnline(!isOnline)}
+          onClick={handleToggleOnline}
           className={`relative flex items-center h-8 rounded-full transition-all duration-300 ${
             isOnline ? 'bg-green-500' : 'bg-gray-300'
           }`}

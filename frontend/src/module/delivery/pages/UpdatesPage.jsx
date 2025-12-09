@@ -13,6 +13,7 @@ import {
   Info
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useGigStore } from "../store/gigStore"
 
 // Mock stories data
 const stories = [
@@ -126,9 +127,15 @@ const notifications = [
 
 export default function UpdatesPage() {
   const navigate = useNavigate()
-  const [isOnline, setIsOnline] = useState(true)
   const [selectedStory, setSelectedStory] = useState(null)
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0)
+  
+  const {
+    isOnline,
+    bookedGigs,
+    goOnline,
+    goOffline
+  } = useGigStore()
 
   const handleStoryClick = (story) => {
     if (story.isAdd) {
@@ -160,6 +167,19 @@ export default function UpdatesPage() {
     const month = today.toLocaleString('en-US', { month: 'long' })
     return `${day} ${month}`
   }
+  
+  // Handle online toggle
+  const handleToggleOnline = () => {
+    if (isOnline) {
+      goOffline()
+    } else {
+      if (bookedGigs.length === 0) {
+        navigate("/delivery/gig")
+      } else {
+        goOnline()
+      }
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#f6e9dc]  text-gray-900 overflow-x-hidden pb-24">
@@ -167,7 +187,7 @@ export default function UpdatesPage() {
       <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between rounded-b-3xl md:rounded-b-none sticky top-0 z-50">
         {/* Online Toggle */}
         <button
-          onClick={() => setIsOnline(!isOnline)}
+          onClick={handleToggleOnline}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
             isOnline 
               ? "bg-green-100 border border-green-500 text-green-700" 
