@@ -275,7 +275,7 @@ export default function AdminSidebar({ isOpen = false, onClose, onCollapseChange
           }}
           className={cn(
             "flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-300 ease-out menu-item-animate text-left",
-            "hover:translate-x-1",
+            "",
             isInSection ? "text-sm font-semibold" : "text-sm",
             isActive(item.path)
               ? "bg-blue-600/30 text-blue-100 border-blue-400 font-semibold"
