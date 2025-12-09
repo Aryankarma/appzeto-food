@@ -151,12 +151,12 @@ export default function OrderRequestPage() {
           className={`relative flex items-center h-8 rounded-full transition-all duration-300 ${
             isOnline ? 'bg-green-500' : 'bg-gray-300'
           }`}
-          style={{ width: isOnline ? '80px' : '40px', paddingLeft: isOnline ? '8px' : '4px', paddingRight: isOnline ? '4px' : '4px' }}
+          style={{ width: isOnline ? '80px' : '80px', paddingLeft: isOnline ? '8px' : '8px', paddingRight: isOnline ? '4px' : '4px' }}
         >
           <span className={`text-white text-xs font-medium whitespace-nowrap transition-all duration-300 ${
-            isOnline ? 'opacity-100 mr-2' : 'opacity-0 w-0 mr-0'
+            isOnline ? 'opacity-100 mr-2' : 'opacity-100 mr-2'
           }`}>
-            Online
+            {isOnline ? 'Online' : 'Offline'}
           </span>
           <div className="w-6 h-6 rounded-full bg-white shadow-sm shrink-0" />
         </button>
