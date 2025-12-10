@@ -202,7 +202,7 @@ export default function OTP() {
           <ArrowLeft className="h-5 w-5 text-black" />
         </button>
         <h1 className="text-lg font-bold text-black">OTP Verification</h1>
-      </div>
+      </div> 
 
 
       {/* Main Content */}
