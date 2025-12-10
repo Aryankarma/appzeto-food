@@ -148,17 +148,14 @@ export default function OrderRequestPage() {
         {/* Online Toggle */}
         <button
           onClick={handleToggleOnline}
-          className={`relative flex items-center h-8 rounded-full transition-all duration-300 ${
-            isOnline ? 'bg-green-500' : 'bg-gray-300'
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
+            isOnline 
+              ? "bg-green-100 border border-green-500 text-green-700" 
+              : "bg-gray-100 border border-gray-300 text-gray-600"
           }`}
-          style={{ width: isOnline ? '80px' : '80px', paddingLeft: isOnline ? '8px' : '8px', paddingRight: isOnline ? '4px' : '4px' }}
         >
-          <span className={`text-white text-xs font-medium whitespace-nowrap transition-all duration-300 ${
-            isOnline ? 'opacity-100 mr-2' : 'opacity-100 mr-2'
-          }`}>
-            {isOnline ? 'Online' : 'Offline'}
-          </span>
-          <div className="w-6 h-6 rounded-full bg-white shadow-sm shrink-0" />
+          <div className={`w-2 h-2 rounded-full ${isOnline ? "bg-green-500" : "bg-gray-500"}`} />
+          <span className="text-sm font-medium">{isOnline ? "Online" : "Offline"}</span>
         </button>
 
         {/* Right Icons */}

@@ -2,10 +2,9 @@ import { useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { Mail, Phone, AlertCircle, Loader2 } from "lucide-react"
 import AnimatedPage from "../../components/AnimatedPage"
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Select,
   SelectContent,
@@ -13,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import loginBanner from "@/assets/loginbanner.png"
 
 // Common country codes
 const countryCodes = [
@@ -46,9 +46,10 @@ export default function SignIn() {
   const [authMethod, setAuthMethod] = useState("phone") // "phone" or "email"
   const [formData, setFormData] = useState({
     phone: "",
-    countryCode: "+1",
+    countryCode: "+91",
     email: "",
     name: "",
+    rememberMe: false,
   })
   const [errors, setErrors] = useState({
     phone: "",
@@ -56,6 +57,9 @@ export default function SignIn() {
     name: "",
   })
   const [isLoading, setIsLoading] = useState(false)
+
+  // Get selected country details dynamically
+  const selectedCountry = countryCodes.find(c => c.code === formData.countryCode) || countryCodes[2] // Default to India (+91)
 
   const validateEmail = (email) => {
     if (!email.trim()) {
@@ -181,43 +185,56 @@ export default function SignIn() {
     const newMode = isSignUp ? "signin" : "signup"
     navigate(`/user/auth/sign-in?mode=${newMode}`, { replace: true })
     // Reset form
-    setFormData({ phone: "", countryCode: "+1", email: "", name: "" })
+    setFormData({ phone: "", countryCode: "+91", email: "", name: "", rememberMe: false })
     setErrors({ phone: "", email: "", name: "" })
   }
 
+  const handleEmailLogin = () => {
+    setAuthMethod("email")
+  }
+
   return (
-    <AnimatedPage className="min-h-screen flex items-center justify-center bg-gradient-to-b from-yellow-50/30 via-white to-orange-50/20 p-3 sm:p-4">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="text-center space-y-2 p-4 sm:p-6">
-          <CardTitle className="text-2xl sm:text-3xl font-bold">
-            {isSignUp ? "Create Account" : "Welcome Back"}
-          </CardTitle>
-          <CardDescription className="text-sm sm:text-base">
-            {isSignUp
-              ? "Sign up to start ordering delicious food"
-              : "Sign in to continue to your account"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4 p-4 sm:p-6">
+    <AnimatedPage className="max-h-screen overflow-y-hidden flex flex-col bg-white overflow-hidden !pb-0">
+      
+      {/* Top Section - Red Background with Banner */}
+      <div className="relative w-full shrink-0" style={{ height: "45vh", minHeight: "300px" }}>
+        <img 
+          src={loginBanner} 
+          alt="Food Banner" 
+          className="w-full h-full object-cover object-center"
+        />
+
+      </div>
+
+      {/* Bottom Section - White Login Form */}
+      <div className="bg-white p-3 overflow-y-hidden">
+        <div className="max-w-md mx-auto space-y-6">
+          {/* Heading */}
+          <div className="text-center space-y-1">
+            <h2 className="text-3xl sm:text-2xl font-bold text-black">
+              India's #1 Food Delivery and Dining App
+            </h2>
+            <p className="text-sm sm:text-base text-gray-600">
+              Log in or sign up
+            </p>
+          </div>
+
+          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Name field for sign up */}
+            {/* Name field for sign up - hidden by default, shown only when needed */}
             {isSignUp && (
               <div className="space-y-2">
-                <Label htmlFor="name" className="flex items-center gap-2 text-sm sm:text-base">
-                  <Mail className="h-4 w-4" />
-                  Full Name
-                </Label>
                 <Input
                   id="name"
                   name="name"
                   placeholder="Enter your full name"
                   value={formData.name}
                   onChange={handleChange}
-                  className={`text-sm sm:text-base ${errors.name ? "border-red-500" : ""}`}
+                  className={`text-base h-12 ${errors.name ? "border-red-500" : "border-gray-300"}`}
                   aria-invalid={errors.name ? "true" : "false"}
                 />
                 {errors.name && (
-                  <div className="flex items-center gap-1 text-xs sm:text-sm text-red-600">
+                  <div className="flex items-center gap-1 text-xs text-red-600">
                     <AlertCircle className="h-3 w-3" />
                     <span>{errors.name}</span>
                   </div>
@@ -225,47 +242,26 @@ export default function SignIn() {
               </div>
             )}
 
-            {/* Auth method toggle */}
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant={authMethod === "phone" ? "default" : "outline"}
-                onClick={() => setAuthMethod("phone")}
-                className="flex-1 text-xs sm:text-sm h-9 sm:h-10"
-              >
-                <Phone className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                Phone
-              </Button>
-              <Button
-                type="button"
-                variant={authMethod === "email" ? "default" : "outline"}
-                onClick={() => setAuthMethod("email")}
-                className="flex-1 text-xs sm:text-sm h-9 sm:h-10"
-              >
-                <Mail className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                Email
-              </Button>
-            </div>
-
-            {/* Phone input */}
+            {/* Phone Number Input */}
             {authMethod === "phone" && (
               <div className="space-y-2">
-                <Label htmlFor="phone" className="flex items-center gap-2 text-sm sm:text-base">
-                  <Phone className="h-4 w-4" />
-                  Phone Number
-                </Label>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-stretch">
                   <Select
                     value={formData.countryCode}
                     onValueChange={handleCountryCodeChange}
                   >
-                    <SelectTrigger className="w-20 sm:w-24 md:w-[100px] text-xs sm:text-sm">
-                      <SelectValue placeholder="Code" />
+                    <SelectTrigger className="w-[100px] !h-12 border-gray-300 rounded-lg flex items-center" size="default">
+                      <SelectValue>
+                        <span className="flex items-center gap-2">
+                          <span>{selectedCountry.flag}</span>
+                          <span>{selectedCountry.code}</span>
+                        </span>
+                      </SelectValue>
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-[300px] overflow-y-auto">
                       {countryCodes.map((country) => (
                         <SelectItem key={country.code} value={country.code}>
-                          <span className="flex items-center gap-2 text-xs sm:text-sm">
+                          <span className="flex items-center gap-2">
                             <span>{country.flag}</span>
                             <span>{country.code}</span>
                           </span>
@@ -273,21 +269,19 @@ export default function SignIn() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <div className="flex-1 min-w-0">
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      placeholder="Enter phone number"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      className={`flex-1 text-sm sm:text-base bg-green-600 text-white placeholder:text-green-200 ${errors.phone ? "border-red-500" : ""}`}
-                      aria-invalid={errors.phone ? "true" : "false"}
-                    />
-                  </div>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    placeholder="Enter Phone Number"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className={`flex-1 h-12 text-base border-gray-300 rounded-lg ${errors.phone ? "border-red-500" : ""}`}
+                    aria-invalid={errors.phone ? "true" : "false"}
+                  />
                 </div>
                 {errors.phone && (
-                  <div className="flex items-center gap-1 text-xs sm:text-sm text-red-600">
+                  <div className="flex items-center gap-1 text-xs text-red-600">
                     <AlertCircle className="h-3 w-3" />
                     <span>{errors.phone}</span>
                   </div>
@@ -295,13 +289,9 @@ export default function SignIn() {
               </div>
             )}
 
-            {/* Email input */}
+            {/* Email Input */}
             {authMethod === "email" && (
               <div className="space-y-2">
-                <Label htmlFor="email" className="flex items-center gap-2 text-sm sm:text-base">
-                  <Mail className="h-4 w-4" />
-                  Email Address
-                </Label>
                 <Input
                   id="email"
                   name="email"
@@ -309,100 +299,127 @@ export default function SignIn() {
                   placeholder="Enter your email address"
                   value={formData.email}
                   onChange={handleChange}
-                  className={`text-sm sm:text-base bg-green-600 text-white placeholder:text-green-200 ${errors.email ? "border-red-500" : ""}`}
+                  className={`w-full h-12 text-base border-gray-300 rounded-lg ${errors.email ? "border-red-500" : ""}`}
                   aria-invalid={errors.email ? "true" : "false"}
                 />
                 {errors.email && (
-                  <div className="flex items-center gap-1 text-xs sm:text-sm text-red-600">
+                  <div className="flex items-center gap-1 text-xs text-red-600">
                     <AlertCircle className="h-3 w-3" />
                     <span>{errors.email}</span>
                   </div>
                 )}
+                <button
+                  type="button"
+                  onClick={() => setAuthMethod("phone")}
+                  className="text-xs text-[#E23744] hover:underline text-left"
+                >
+                  Use phone instead
+                </button>
               </div>
             )}
 
+            {/* Remember Me Checkbox */}
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="rememberMe"
+                checked={formData.rememberMe}
+                onCheckedChange={(checked) => 
+                  setFormData({ ...formData, rememberMe: checked })
+                }
+                className="w-4 h-4 border-2 border-gray-300 rounded data-[state=checked]:bg-[#E23744] data-[state=checked]:border-[#E23744] flex items-center justify-center"
+              />
+              <label 
+                htmlFor="rememberMe" 
+                className="text-sm text-gray-700 cursor-pointer select-none"
+              >
+                Remember my login for faster sign-in
+              </label>
+            </div>
+
+            {/* Continue Button */}
             <Button
               type="submit"
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold text-sm sm:text-base h-10 sm:h-11 transition-colors"
+              className="w-full h-12 bg-[#E23744] hover:bg-[#d32f3d] text-white font-bold text-base rounded-lg transition-colors"
               disabled={isLoading}
             >
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  <span className="hidden sm:inline">{isSignUp ? "Creating Account..." : "Signing In..."}</span>
-                  <span className="sm:hidden">{isSignUp ? "Creating..." : "Signing In..."}</span>
+                  {isSignUp ? "Creating Account..." : "Signing In..."}
                 </>
               ) : (
-                isSignUp ? "Create Account" : "Continue"
+                "Continue"
               )}
             </Button>
           </form>
 
+          {/* Or Separator */}
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
+              <span className="w-full border-t border-gray-300" />
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">
-                Or continue with
+            <div className="relative flex justify-center">
+              <span className="bg-white px-2 text-sm text-gray-500">
+                or
               </span>
             </div>
           </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full text-sm sm:text-base h-10 sm:h-11"
-            onClick={handleGoogleSignIn}
-          >
-            <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24">
-              <path
-                fill="currentColor"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              />
-              <path
-                fill="currentColor"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="currentColor"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-              />
-              <path
-                fill="currentColor"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-              />
-            </svg>
-            Sign {isSignUp ? "up" : "in"} with Google
-          </Button>
+          {/* Social Login Icons */}
+          <div className="flex justify-center gap-4">
+            {/* Google Login */}
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              className="w-12 h-12 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
+              aria-label="Sign in with Google"
+            >
+              <svg className="h-6 w-6" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                />
+              </svg>
+            </button>
 
-          <div className="text-center text-xs sm:text-sm">
-            {isSignUp ? (
-              <>
-                Already have an account?{" "}
-                <button
-                  type="button"
-                  onClick={toggleMode}
-                  className="text-primary hover:underline font-medium"
-                >
-                  Sign in
-                </button>
-              </>
-            ) : (
-              <>
-                Don't have an account?{" "}
-                <button
-                  type="button"
-                  onClick={toggleMode}
-                  className="text-primary hover:underline font-medium"
-                >
-                  Sign up
-                </button>
-              </>
-            )}
+            {/* Email Login */}
+            <button
+              type="button"
+              onClick={handleEmailLogin}
+              className="w-12 h-12 rounded-full border border-[#E23744] flex items-center justify-center hover:bg-[#d32f3d] transition-colors bg-[#E23744]"
+              aria-label="Sign in with Email"
+            >
+              <Mail className="h-6 w-6 text-white" />
+            </button>
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Legal Disclaimer */}
+          <div className="text-center text-xs text-gray-500 pt-4">
+            <p className="mb-1">
+              By continuing, you agree to our
+            </p>
+            <div className="flex justify-center gap-2 flex-wrap">
+              <a href="#" className="underline hover:text-gray-700">Terms of Service</a>
+              <span>•</span>
+              <a href="#" className="underline hover:text-gray-700">Privacy Policy</a>
+              <span>•</span>
+              <a href="#" className="underline hover:text-gray-700">Content Policy</a>
+            </div>
+          </div>
+        </div>
+      </div>
     </AnimatedPage>
   )
 }

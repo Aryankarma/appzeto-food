@@ -1,9 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
-import { ArrowLeft, Loader2, CheckCircle2, AlertCircle } from "lucide-react"
+import { ArrowLeft, Loader2 } from "lucide-react"
 import AnimatedPage from "../../components/AnimatedPage"
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
 export default function OTP() {
@@ -129,62 +127,33 @@ export default function OTP() {
     const code = otpValue || otp.join("")
     
     if (code.length !== 6) {
-      setError("Please enter the complete 6-digit code")
       return
     }
 
     setIsLoading(true)
     setError("")
-    setSuccess(false)
 
-    // Simulate API call
-    try {
-      await new Promise((resolve, reject) => {
-        setTimeout(() => {
-          // Simulate success (in real app, verify with backend)
-          if (code === "123456" || code === "000000") {
-            // Demo codes for testing
-            resolve()
-          } else {
-            // Randomly fail for demo purposes (80% success rate)
-            if (Math.random() > 0.2) {
-              resolve()
-            } else {
-              reject(new Error("Invalid OTP. Please try again."))
-            }
-          }
-        }, 1500)
-      })
+    // Dummy verification - accept any OTP
+    await new Promise((resolve) => setTimeout(resolve, 1500))
 
-      setSuccess(true)
-      
-      // Clear auth data from sessionStorage
-      sessionStorage.removeItem("authData")
+    // Clear auth data from sessionStorage
+    sessionStorage.removeItem("authData")
 
-      // Redirect to home after short delay
-      setTimeout(() => {
-        navigate("/user")
-      }, 1000)
-    } catch (err) {
-      setError(err.message || "Invalid OTP. Please try again.")
-      // Clear OTP on error
-      setOtp(["", "", "", "", "", ""])
-      inputRefs.current[0]?.focus()
-    } finally {
-      setIsLoading(false)
-    }
+    // Redirect to home after short delay
+    setTimeout(() => {
+      navigate("/user")
+    }, 500)
   }
 
   const handleResend = async () => {
     if (resendTimer > 0) return
 
     setIsLoading(true)
-    setError("")
 
     // Simulate resend API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 500))
 
-    // Reset timer
+    // Reset timer to 60 seconds
     setResendTimer(60)
     const timer = setInterval(() => {
       setResendTimer((prev) => {
@@ -197,15 +166,22 @@ export default function OTP() {
     }, 1000)
 
     setIsLoading(false)
-    setError("")
     setOtp(["", "", "", "", "", ""])
     inputRefs.current[0]?.focus()
   }
 
-  const getContactInfo = () => {
+  const getPhoneNumber = () => {
     if (!authData) return ""
     if (authData.method === "phone") {
-      return authData.phone || ""
+      // Format phone number as +91-9098569620
+      const phone = authData.phone || ""
+      // Remove spaces and format
+      const cleaned = phone.replace(/\s/g, "")
+      // Add hyphen after country code if not present
+      if (cleaned.startsWith("+91") && cleaned.length > 3) {
+        return cleaned.slice(0, 3) + "-" + cleaned.slice(3)
+      }
+      return cleaned
     }
     return authData.email || ""
   }
@@ -215,110 +191,93 @@ export default function OTP() {
   }
 
   return (
-    <AnimatedPage className="min-h-screen flex items-center justify-center bg-gradient-to-b from-yellow-50/30 via-white to-orange-50/20 p-4">
-      <Card className="w-full max-w-md shadow-lg relative">
-        <CardHeader className="text-center space-y-2 relative">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute left-4 top-4"
-            onClick={() => navigate("/user/auth/sign-in")}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <CardTitle className="text-3xl font-bold">Verify OTP</CardTitle>
-          <CardDescription className="text-base">
-            We sent a verification code to
-            <br />
-            <span className="font-semibold text-foreground">{getContactInfo()}</span>
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {success ? (
-            <div className="text-center space-y-4 py-4">
-              <div className="flex justify-center">
-                <CheckCircle2 className="h-16 w-16 text-green-500" />
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold text-green-600">Verification Successful!</h3>
-                <p className="text-muted-foreground mt-2">
-                  {authData.isSignUp ? "Your account has been created." : "You're signed in."}
-                </p>
-              </div>
+    <AnimatedPage className="min-h-screen bg-white flex flex-col">
+      {/* Header */}
+      <div className="relative flex items-center justify-center py-4 px-4 border-b border-gray-200">
+        <button
+          onClick={() => navigate("/user/auth/sign-in")}
+          className="absolute left-4 top-1/2 -translate-y-1/2"
+          aria-label="Go back"
+        >
+          <ArrowLeft className="h-5 w-5 text-black" />
+        </button>
+        <h1 className="text-lg font-bold text-black">OTP Verification</h1>
+      </div>
+
+
+      {/* Main Content */}
+      <div className="flex flex-col justify-center px-6 pt-8 pb-12">
+        <div className="max-w-md mx-auto w-full space-y-8">
+          {/* Message */}
+          <div className="text-center space-y-2">
+            <p className="text-base text-black">
+              We have sent a verification code to
+            </p>
+            <p className="text-base text-black font-medium">
+              {getPhoneNumber()}
+            </p>
+          </div>
+
+          {/* OTP Input Fields */}
+          <div className="flex justify-center gap-2">
+            {otp.map((digit, index) => (
+              <Input
+                key={index}
+                ref={(el) => (inputRefs.current[index] = el)}
+                type="text"
+                inputMode="numeric"
+                maxLength={1}
+                value={digit}
+                onChange={(e) => handleChange(index, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(index, e)}
+                onPaste={index === 0 ? handlePaste : undefined}
+                disabled={isLoading}
+                className="w-12 h-12 text-center text-lg font-semibold p-0 border border-black rounded-md focus-visible:ring-0 focus-visible:border-black bg-white"
+              />
+            ))}
+          </div>
+
+          {/* Resend Section */}
+          <div className="text-center space-y-1">
+            <p className="text-sm text-black">
+              Didn't get the OTP?
+            </p>
+            {resendTimer > 0 ? (
+              <p className="text-sm text-gray-500">
+                Resend SMS in {resendTimer}s
+              </p>
+            ) : (
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={isLoading}
+                className="text-sm text-gray-500 hover:text-gray-700 disabled:opacity-50"
+              >
+                Resend SMS
+              </button>
+            )}
+          </div>
+
+          {/* Loading Spinner */}
+          {isLoading && (
+            <div className="flex justify-center pt-4">
+              <Loader2 className="h-6 w-6 text-green-500 animate-spin" />
             </div>
-          ) : (
-            <>
-              <div className="space-y-4">
-                <div className="flex justify-center gap-2">
-                  {otp.map((digit, index) => (
-                    <Input
-                      key={index}
-                      ref={(el) => (inputRefs.current[index] = el)}
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={1}
-                      value={digit}
-                      onChange={(e) => handleChange(index, e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(index, e)}
-                      onPaste={index === 0 ? handlePaste : undefined}
-                      disabled={isLoading}
-                      className="w-12 h-12 text-center text-lg font-semibold p-0 border-2 border-black focus-visible:ring-2 focus-visible:ring-black focus-visible:border-black"
-                    />
-                  ))}
-                </div>
-
-                {error && (
-                  <div className="flex items-center gap-2 justify-center text-sm text-red-600 bg-red-50 p-3 rounded-lg">
-                    <AlertCircle className="h-4 w-4" />
-                    <span>{error}</span>
-                  </div>
-                )}
-
-                <div className="text-center text-sm text-muted-foreground">
-                  <p>Enter the 6-digit code sent to your {authData.method === "phone" ? "phone" : "email"}</p>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <Button
-                  onClick={() => handleVerify()}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white"
-                  disabled={isLoading || otp.some((digit) => !digit)}
-                >
-                  {isLoading ? (
-                    <>
-                      Verifying...
-                    </>
-                  ) : (
-                    "Verify Code"
-                  )}
-                </Button>
-
-                <div className="text-center text-sm">
-                  {resendTimer > 0 ? (
-                    <p className="text-muted-foreground">
-                      Resend code in <span className="font-semibold">{resendTimer}s</span>
-                    </p>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleResend}
-                      disabled={isLoading}
-                      className="text-primary hover:underline font-medium disabled:opacity-50"
-                    >
-                      Resend Code
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <div className="text-center text-xs text-muted-foreground pt-4 border-t">
-                <p>Didn't receive the code? Check your spam folder or try resending.</p>
-              </div>
-            </>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+
+      {/* Go back to login methods - moved to top */}
+      <div className="pt-4 mt-auto px-6 text-center">
+        <button
+          type="button"
+          onClick={() => navigate("/user/auth/sign-in")}
+          className="text-sm text-[#E23744] hover:underline"
+        >
+          Go back to login methods
+        </button>
+      </div>
     </AnimatedPage>
   )
 }
