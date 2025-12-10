@@ -169,11 +169,16 @@ export default function BottomPopup({
     }
   }, [isOpen])
 
-  // Handle backdrop click
+  // Handle backdrop click - close only when clicking the backdrop itself
   const handleBackdropClick = (e) => {
     if (closeOnBackdropClick && e.target === e.currentTarget) {
       handleClose()
     }
+  }
+
+  // Prevent clicks inside popup from closing it
+  const handlePopupClick = (e) => {
+    e.stopPropagation()
   }
 
   // Close handler
@@ -225,17 +230,19 @@ export default function BottomPopup({
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
+            onClick={handlePopupClick}
             className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl z-[110] overflow-hidden flex flex-col"
             style={{ 
               maxHeight: maxHeight,
               touchAction: 'none'
             }}
           >
-            {/* Drag Handle */}
+            {/* Top Drag Handle Bar - Always visible for dragging */}
             {showHandle && (
               <div
                 ref={handleRef}
-                className="flex items-center justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing"
+                className="flex items-center justify-center pt-4 pb-3 cursor-grab active:cursor-grabbing select-none bg-white sticky top-0 z-10"
+                style={{ touchAction: 'none' }}
               >
                 <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
               </div>

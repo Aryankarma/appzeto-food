@@ -1,6 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom"
 import { 
-  Home,
   FileText,
   UtensilsCrossed,
   User,
@@ -8,6 +7,7 @@ import {
   Wallet,
   Bell
 } from "lucide-react"
+import { MdFeed } from "react-icons/md"
 import { getUnreadDeliveryNotificationCount } from "../utils/deliveryNotifications"
 
 export default function BottomNavigation({ 
@@ -92,13 +92,13 @@ export default function BottomNavigation({
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
       <div className="flex items-center justify-around py-2 px-4">
-        {/* Home */}
+        {/* Feed */}
         <button 
           onClick={handleHomeClick}
           className={`flex flex-col items-center gap-1 p-2 ${getActiveClass("/delivery")}`}
         >
-          <Home className="w-6 h-6" />
-          <span className={`text-[10px] font-medium ${getActiveClass("/delivery")}`}>Home</span>
+          <MdFeed className="w-6 h-6" />
+          <span className={`text-[10px] font-medium ${getActiveClass("/delivery")}`}>Feed</span>
         </button>
 
         {/* Request or Pocket */}

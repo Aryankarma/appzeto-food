@@ -17,7 +17,8 @@ import {
   Ticket,
   Car,
   IndianRupee,
-  Sparkles
+  Sparkles,
+  LogOut
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 
@@ -106,6 +107,26 @@ export default function ProfilePage() {
       window.removeEventListener('deliveryProfileRefresh', handleProfileRefresh)
     }
   }, [])
+
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to logout?")) {
+      // Clear authentication state
+      localStorage.removeItem("delivery_authenticated")
+      localStorage.removeItem("delivery_user")
+      
+      // Clear gig store data
+      localStorage.removeItem("delivery_gig_storage")
+      
+      // Clear delivery module storage
+      localStorage.removeItem("delivery_module_storage")
+      
+      // Dispatch custom event for same-tab updates
+      window.dispatchEvent(new Event('deliveryAuthChanged'))
+      
+      // Redirect to login
+      navigate("/delivery/login", { replace: true })
+    }
+  }
 
   return (
     <div className="min-h-screen bg-white text-gray-900 font-poppins overflow-x-hidden">
@@ -251,6 +272,22 @@ export default function ProfilePage() {
                 <div className="flex items-center gap-3">
                   <Car className="w-5 h-5" />
                   <span className="text-sm font-medium">Rest points</span>
+                </div>
+                <ArrowRight className="w-5 h-5 text-gray-400" />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Logout Section */}
+          <div className="pt-4">
+            <Card 
+              onClick={handleLogout}
+              className="bg-gray-100 py-0 border-0 shadow-none rounded-lg cursor-pointer hover:bg-gray-200 transition-colors"
+            >
+              <CardContent className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <LogOut className="w-5 h-5 text-red-600" />
+                  <span className="text-sm font-medium text-red-600">Log out</span>
                 </div>
                 <ArrowRight className="w-5 h-5 text-gray-400" />
               </CardContent>

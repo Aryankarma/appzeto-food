@@ -21,7 +21,8 @@ const DEFAULT_STATE = {
   userLevel: 'Brown', // Default level
   isOnline: true,
   currentGig: null, // Currently active gig
-  zoneMapVisible: false
+  zoneMapVisible: false,
+  selectedDropLocation: null // Selected drop location
 }
 
 /**
@@ -37,6 +38,17 @@ const getUserLevel = () => {
 }
 
 /**
+ * Get selected drop location from localStorage or return null
+ */
+const getSelectedDropLocation = () => {
+  try {
+    return localStorage.getItem('selectedDropLocation') || null
+  } catch {
+    return null
+  }
+}
+
+/**
  * Gig Store
  */
 export const useGigStore = create(
@@ -44,6 +56,7 @@ export const useGigStore = create(
     (set, get) => ({
       ...DEFAULT_STATE,
       userLevel: getUserLevel(),
+      selectedDropLocation: getSelectedDropLocation(),
 
       // Set user level
       setUserLevel: (level) => {
@@ -237,6 +250,19 @@ export const useGigStore = create(
         const { bookedGigs } = get()
         const gig = bookedGigs.find(g => g.date === date)
         return gig ? gig.slots : []
+      },
+
+      // Set selected drop location
+      setSelectedDropLocation: (location) => {
+        localStorage.setItem('selectedDropLocation', location)
+        set({ selectedDropLocation: location })
+        window.dispatchEvent(new CustomEvent('dropLocationUpdated'))
+      },
+
+      // Get selected drop location
+      getSelectedDropLocation: () => {
+        const { selectedDropLocation } = get()
+        return selectedDropLocation || localStorage.getItem('selectedDropLocation')
       }
     }),
     {
@@ -245,7 +271,8 @@ export const useGigStore = create(
         bookedGigs: state.bookedGigs,
         userLevel: state.userLevel,
         isOnline: state.isOnline,
-        currentGig: state.currentGig
+        currentGig: state.currentGig,
+        selectedDropLocation: state.selectedDropLocation
       })
     }
   )

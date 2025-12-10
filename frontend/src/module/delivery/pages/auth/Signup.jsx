@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Phone, User, AlertCircle, Loader2, Truck } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
@@ -50,6 +50,14 @@ export default function DeliverySignup() {
     name: "",
   })
   const [isLoading, setIsLoading] = useState(false)
+
+  // Redirect to home if already authenticated
+  useEffect(() => {
+    const isAuthenticated = localStorage.getItem("delivery_authenticated") === "true"
+    if (isAuthenticated) {
+      navigate("/delivery", { replace: true })
+    }
+  }, [navigate])
 
   const validatePhone = (phone) => {
     if (!phone.trim()) {

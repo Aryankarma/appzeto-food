@@ -1,10 +1,13 @@
 import { Routes, Route } from "react-router-dom"
 import DeliveryLayout from "./DeliveryLayout"
+import ProtectedRoute from "./ProtectedRoute"
 
 // Auth pages (no layout needed)
 import DeliveryLogin from "../pages/auth/Login"
+import DeliverySignIn from "../pages/auth/SignIn"
 import DeliverySignup from "../pages/auth/Signup"
 import DeliveryOTP from "../pages/auth/OTP"
+import DeliveryWelcome from "../pages/auth/Welcome"
 
 // Main pages (with layout)
 import DeliveryHome from "../pages/DeliveryHome"
@@ -28,183 +31,280 @@ import TipsStatement from "../pages/TipsStatement"
 import PocketStatement from "../pages/PocketStatement"
 import OffersPage from "../pages/OffersPage"
 import UpdatesPage from "../pages/UpdatesPage"
+import HelpCenter from "../pages/HelpCenter"
+import SupportTickets from "../pages/SupportTickets"
+import ShowIdCard from "../pages/ShowIdCard"
+import ChangeLanguage from "../pages/ChangeLanguage"
+import SelectDropLocation from "../pages/SelectDropLocation"
 
 export default function DeliveryRouter() {
   return (
     <Routes>
       {/* Auth routes - no layout */}
       <Route path="/login" element={<DeliveryLogin />} />
+      <Route path="/sign-in" element={<DeliverySignIn />} />
       <Route path="/signup" element={<DeliverySignup />} />
       <Route path="/otp" element={<DeliveryOTP />} />
+      <Route path="/welcome" element={<DeliveryWelcome />} />
 
-      {/* Main routes with layout */}
-      <Route 
-        path="/" 
+      {/* Protected routes - require authentication */}
+      <Route
+        path="/"
         element={
-          <DeliveryLayout showGig={true}>
-            <DeliveryHome />
-          </DeliveryLayout>
-        } 
+          <ProtectedRoute>
+            <DeliveryLayout showGig={true}>
+              <DeliveryHome />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
       />
-      <Route 
-        path="/notifications" 
+      <Route
         element={
-          <DeliveryLayout>
-            <Notifications />
-          </DeliveryLayout>
-        } 
+          <ProtectedRoute>
+            <DeliveryLayout>
+              <Notifications />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/notifications"
       />
-      <Route 
-        path="/orders" 
+      <Route
         element={
-          <DeliveryLayout showGig={true}>
-            <MyOrders />
-          </DeliveryLayout>
-        } 
+          <ProtectedRoute>
+            <DeliveryLayout showGig={true}>
+              <MyOrders />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/orders"
       />
-      <Route 
-        path="/requests" 
+      <Route
         element={
-          <DeliveryLayout showGig={true} showPocket={true}>
-            <OrderRequestPage />
-          </DeliveryLayout>
-        } 
+          <ProtectedRoute>
+            <DeliveryLayout showGig={true} showPocket={true}>
+              <OrderRequestPage />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/requests"
       />
-      <Route 
-        path="/gig" 
+      <Route
         element={
-          <DeliveryLayout showGig={true}>
-            <GigBooking />
-          </DeliveryLayout>
-        } 
+          <ProtectedRoute>
+            <DeliveryLayout showGig={true}>
+              <GigBooking />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/gig"
       />
-      <Route 
-        path="/offers" 
+      <Route
         element={
-          <DeliveryLayout showGig={true}>
-            <OffersPage />
-          </DeliveryLayout>
-        } 
+          <ProtectedRoute>
+            <SelectDropLocation />
+          </ProtectedRoute>
+        }
+        path="/select-drop-location"
       />
-      <Route 
-        path="/pickup-directions" 
+      <Route
         element={
-          <DeliveryLayout>
-            <PickupDirectionsPage />
-          </DeliveryLayout>
-        } 
+          <ProtectedRoute>
+            <DeliveryLayout showGig={true}>
+              <OffersPage />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/offers"
       />
-      <Route 
-        path="/profile" 
+      <Route
         element={
-          <DeliveryLayout showGig={true}>
-            <ProfilePage />
-          </DeliveryLayout>
-        } 
+          <ProtectedRoute>
+            <DeliveryLayout>
+              <PickupDirectionsPage />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/pickup-directions"
       />
-      <Route 
-        path="/order/:orderId" 
+      <Route
         element={
-          <DeliveryLayout>
-            <AcceptedOrderDetails />
-          </DeliveryLayout>
-        } 
+          <ProtectedRoute>
+            <DeliveryLayout showGig={true}>
+              <ProfilePage />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/profile"
       />
-      <Route 
-        path="/account" 
+      <Route
         element={
-          <DeliveryLayout>
-            <MyAccount />
-          </DeliveryLayout>
-        } 
+          <ProtectedRoute>
+            <DeliveryLayout>
+              <AcceptedOrderDetails />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/order/:orderId"
       />
-      <Route 
-        path="/transactions" 
+      <Route
         element={
-          <DeliveryLayout>
-            <TransactionHistory />
-          </DeliveryLayout>
-        } 
+          <ProtectedRoute>
+            <DeliveryLayout>
+              <MyAccount />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/account"
       />
-      <Route 
-        path="/payout" 
+      <Route
         element={
-          <DeliveryLayout>
-            <Payout />
-          </DeliveryLayout>
-        } 
+          <ProtectedRoute>
+            <DeliveryLayout>
+              <TransactionHistory />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/transactions"
       />
-      <Route 
-        path="/deduction-statement" 
+      <Route
         element={
-          <DeliveryLayout>
-            <DeductionStatement />
-          </DeliveryLayout>
-        } 
+          <ProtectedRoute>
+            <DeliveryLayout>
+              <Payout />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/payout"
       />
-      <Route 
-        path="/tips-statement" 
+      <Route
         element={
-          <DeliveryLayout>
-            <TipsStatement />
-          </DeliveryLayout>
-        } 
+          <ProtectedRoute>
+            <DeliveryLayout>
+              <DeductionStatement />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/deduction-statement"
       />
-      <Route 
-        path="/pocket-statement" 
+      <Route
         element={
-          <DeliveryLayout>
-            <PocketStatement />
-          </DeliveryLayout>
-        } 
+          <ProtectedRoute>
+            <DeliveryLayout>
+              <TipsStatement />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/tips-statement"
       />
-      <Route 
-        path="/profile/edit" 
+      <Route
         element={
-          <DeliveryLayout>
-            <EditProfile />
-          </DeliveryLayout>
-        } 
+          <ProtectedRoute>
+            <DeliveryLayout>
+              <PocketStatement />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/pocket-statement"
       />
-      <Route 
-        path="/profile/settings" 
+      <Route
         element={
-          <DeliveryLayout>
-            <Settings />
-          </DeliveryLayout>
-        } 
+          <ProtectedRoute>
+            <DeliveryLayout>
+              <EditProfile />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/profile/edit"
       />
-      <Route 
-        path="/profile/conversation" 
+      <Route
         element={
-          <DeliveryLayout>
-            <Conversation />
-          </DeliveryLayout>
-        } 
+          <ProtectedRoute>
+            <DeliveryLayout>
+              <Settings />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/profile/settings"
       />
-      <Route 
-        path="/profile/terms" 
+      <Route
         element={
-          <DeliveryLayout>
-            <TermsAndConditions />
-          </DeliveryLayout>
-        } 
+          <ProtectedRoute>
+            <DeliveryLayout>
+              <Conversation />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/profile/conversation"
       />
-      <Route 
-        path="/profile/privacy" 
+      <Route
         element={
-          <DeliveryLayout>
-            <PrivacyPolicy />
-          </DeliveryLayout>
-        } 
+          <ProtectedRoute>
+            <DeliveryLayout>
+              <TermsAndConditions />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/profile/terms"
       />
-      <Route 
-        path="/updates" 
+      <Route
         element={
-          <DeliveryLayout showGig={true}>
-            <UpdatesPage />
-          </DeliveryLayout>
-        } 
+          <ProtectedRoute>
+            <DeliveryLayout>
+              <PrivacyPolicy />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/profile/privacy"
+      />
+      <Route
+        element={
+          <ProtectedRoute>
+            <DeliveryLayout showGig={true}>
+              <UpdatesPage />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/updates"
+      />
+      <Route
+        element={
+          <ProtectedRoute>
+            <DeliveryLayout>
+              <HelpCenter />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/help/center"
+      />
+      <Route
+        element={
+          <ProtectedRoute>
+            <DeliveryLayout>
+              <SupportTickets />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/help/tickets"
+      />
+      <Route
+        element={
+          <ProtectedRoute>
+            <DeliveryLayout>
+              <ShowIdCard />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/help/id-card"
+      />
+      <Route
+        element={
+          <ProtectedRoute>
+            <DeliveryLayout>
+              <ChangeLanguage />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/help/language"
       />
     </Routes>
   )
