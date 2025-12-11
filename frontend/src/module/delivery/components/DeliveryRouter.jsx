@@ -36,6 +36,11 @@ import SupportTickets from "../pages/SupportTickets"
 import ShowIdCard from "../pages/ShowIdCard"
 import ChangeLanguage from "../pages/ChangeLanguage"
 import SelectDropLocation from "../pages/SelectDropLocation"
+import ReferAndEarn from "../pages/ReferAndEarn"
+import YourReferrals from "../pages/YourReferrals"
+import Earnings from "../pages/Earnings"
+import TripHistory from "../pages/TripHistory"
+import TimeOnOrders from "../pages/TimeOnOrders"
 
 export default function DeliveryRouter() {
   return (
@@ -109,6 +114,26 @@ export default function DeliveryRouter() {
       <Route
         element={
           <ProtectedRoute>
+            <DeliveryLayout>
+              <ReferAndEarn />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/refer-and-earn"
+      />
+      <Route
+        element={
+          <ProtectedRoute>
+            <DeliveryLayout>
+              <YourReferrals />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/your-referrals"
+      />
+      <Route
+        element={
+          <ProtectedRoute>
             <DeliveryLayout showGig={true}>
               <OffersPage />
             </DeliveryLayout>
@@ -155,6 +180,36 @@ export default function DeliveryRouter() {
           </ProtectedRoute>
         }
         path="/account"
+      />
+      <Route
+        element={
+          <ProtectedRoute>
+            <DeliveryLayout>
+              <Earnings />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/earnings"
+      />
+      <Route
+        element={
+          <ProtectedRoute>
+            <DeliveryLayout>
+              <TripHistory />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/trip-history"
+      />
+      <Route
+        element={
+          <ProtectedRoute>
+            <DeliveryLayout>
+              <TimeOnOrders />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/time-on-orders"
       />
       <Route
         element={

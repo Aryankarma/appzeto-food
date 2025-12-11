@@ -1,13 +1,12 @@
 import { useNavigate, useLocation } from "react-router-dom"
 import { 
   FileText,
-  UtensilsCrossed,
   User,
   Sparkles,
   Wallet,
   Bell
 } from "lucide-react"
-import { MdFeed } from "react-icons/md"
+import { MdFeed, MdShoppingBag } from "react-icons/md"
 import { getUnreadDeliveryNotificationCount } from "../utils/deliveryNotifications"
 
 export default function BottomNavigation({ 
@@ -123,7 +122,7 @@ export default function BottomNavigation({
           onClick={() => navigate("/delivery/orders")}
           className={`flex flex-col items-center gap-1 p-2 ${getActiveClass("/delivery/orders")}`}
         >
-          <UtensilsCrossed className="w-6 h-6" />
+          <MdShoppingBag className="w-6 h-6" />
           <span className={`text-[10px] font-medium ${getActiveClass("/delivery/orders")}`}>Orders</span>
         </button>
 

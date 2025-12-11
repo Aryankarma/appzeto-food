@@ -28,6 +28,7 @@ import BottomPopup from "../components/BottomPopup"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useGigStore } from "../store/gigStore"
+import { useProgressStore } from "../store/progressStore"
 import { formatTimeDisplay, calculateTotalHours } from "../utils/gigUtils"
 import {
   getDeliveryWalletState,
@@ -199,12 +200,17 @@ export default function DeliveryHome() {
   const minimumHours = 2.67 // 2 hrs 40 mins = 2.67 hours
   const progressPercentage = Math.min((loginHours / minimumHours) * 100, 100)
 
-  // Calculate today's earnings
-  const todayEarnings = calculatePeriodEarnings(walletState, 'today')
+  // Get today's progress from store
+  const { getTodayProgress } = useProgressStore()
+  const todayProgress = getTodayProgress()
 
-  // Calculate today's trips
+  // Calculate today's earnings (use store value if available, otherwise calculate)
+  const calculatedEarnings = calculatePeriodEarnings(walletState, 'today')
+  const todayEarnings = todayProgress.earnings > 0 ? todayProgress.earnings : calculatedEarnings
+
+  // Calculate today's trips (use store value if available, otherwise calculate)
   const allOrders = getAllDeliveryOrders()
-  const todayTrips = allOrders.filter(order => {
+  const calculatedTrips = allOrders.filter(order => {
     const orderId = order.orderId || order.id
     const orderDateKey = `delivery_order_date_${orderId}`
     const orderDateStr = localStorage.getItem(orderDateKey)
@@ -213,14 +219,16 @@ export default function DeliveryHome() {
     orderDate.setHours(0, 0, 0, 0)
     return orderDate.getTime() === today.getTime()
   }).length
+  const todayTrips = todayProgress.trips > 0 ? todayProgress.trips : calculatedTrips
 
   // Calculate today's gigs count
   const todayGigsCount = bookedGigs.filter(gig => gig.date === todayDateKey).length
 
-  // Calculate total hours worked today
-  const todayHoursWorked = bookedGigs
+  // Calculate total hours worked today (use store value if available, otherwise calculate)
+  const calculatedHours = bookedGigs
     .filter(gig => gig.date === todayDateKey)
     .reduce((total, gig) => total + (gig.totalHours || 0), 0)
+  const todayHoursWorked = todayProgress.timeOnOrders > 0 ? todayProgress.timeOnOrders : calculatedHours
 
   const formatHours = (hours) => {
     const h = Math.floor(hours)
@@ -243,6 +251,22 @@ export default function DeliveryHome() {
       window.removeEventListener('storage', handleWalletUpdate)
     }
   }, [location.pathname])
+
+  // Listen for progress data updates
+  useEffect(() => {
+    const handleProgressUpdate = () => {
+      // Force re-render to show updated progress
+      setAnimationKey(prev => prev + 1)
+    }
+
+    window.addEventListener('progressDataUpdated', handleProgressUpdate)
+    window.addEventListener('storage', handleProgressUpdate)
+
+    return () => {
+      window.removeEventListener('progressDataUpdated', handleProgressUpdate)
+      window.removeEventListener('storage', handleProgressUpdate)
+    }
+  }, [])
 
   // Initialize Lenis
   useEffect(() => {
@@ -506,6 +530,8 @@ export default function DeliveryHome() {
   const swipeBarRef = useRef(null)
   const swipeBarStartY = useRef(0)
   const isSwipingBar = useRef(false)
+  const homeSectionsScrollRef = useRef(null)
+  const isScrollingHomeSections = useRef(false)
 
   // Emergency help popup state
   const [showEmergencyPopup, setShowEmergencyPopup] = useState(false)
@@ -738,17 +764,56 @@ export default function DeliveryHome() {
 
   // Handle swipe bar touch events
   const handleSwipeBarTouchStart = (e) => {
+    // Check if touch is on a button or interactive element
+    const target = e.target
+    const isInteractive = target.closest('button') || target.closest('a') || target.closest('[role="button"]')
+    
+    // If touching an interactive element, don't start swipe
+    if (isInteractive && !target.closest('[data-swipe-handle]')) {
+      return
+    }
+    
+    // Check if we're at the top of the scrollable area (within first 50px)
+    if (showHomeSections && homeSectionsScrollRef.current) {
+      const scrollTop = homeSectionsScrollRef.current.scrollTop
+      if (scrollTop > 50) {
+        // User is scrolling, not dragging
+        isScrollingHomeSections.current = true
+        return
+      }
+    }
+    
     isSwipingBar.current = true
     swipeBarStartY.current = e.touches[0].clientY
     setIsDraggingSwipeBar(true)
+    isScrollingHomeSections.current = false
   }
 
   const handleSwipeBarTouchMove = (e) => {
     if (!isSwipingBar.current) return
+    
+    // If user was scrolling, don't handle as swipe
+    if (isScrollingHomeSections.current) {
+      return
+    }
 
     const currentY = e.touches[0].clientY
     const deltaY = swipeBarStartY.current - currentY // Positive = swiping up, Negative = swiping down
     const windowHeight = window.innerHeight
+
+    // Check if we're scrolling vs dragging
+    if (showHomeSections && homeSectionsScrollRef.current) {
+      const scrollTop = homeSectionsScrollRef.current.scrollTop
+      // If scrolling down and content is scrollable, allow scrolling instead of dragging
+      if (deltaY < 0 && scrollTop > 0) {
+        return
+      }
+    }
+
+    // Only prevent default if we're actually dragging (not scrolling)
+    if (Math.abs(deltaY) > 5) {
+      e.preventDefault()
+    }
 
     if (showHomeSections) {
       // Currently showing home sections - swiping down should go back to map
@@ -765,6 +830,14 @@ export default function DeliveryHome() {
 
   const handleSwipeBarTouchEnd = (e) => {
     if (!isSwipingBar.current) return
+    
+    // If user was scrolling, don't handle as swipe
+    if (isScrollingHomeSections.current) {
+      isSwipingBar.current = false
+      setIsDraggingSwipeBar(false)
+      isScrollingHomeSections.current = false
+      return
+    }
 
     const windowHeight = window.innerHeight
     const threshold = 50 // Small threshold - just 50px to trigger
@@ -795,10 +868,20 @@ export default function DeliveryHome() {
     isSwipingBar.current = false
     setIsDraggingSwipeBar(false)
     swipeBarStartY.current = 0
+    isScrollingHomeSections.current = false
   }
 
   // Handle mouse events for desktop
   const handleSwipeBarMouseDown = (e) => {
+    // Check if click is on a button or interactive element
+    const target = e.target
+    const isInteractive = target.closest('button') || target.closest('a') || target.closest('[role="button"]')
+    
+    // If clicking an interactive element, don't start swipe
+    if (isInteractive && !target.closest('[data-swipe-handle]')) {
+      return
+    }
+    
     isSwipingBar.current = true
     swipeBarStartY.current = e.clientY
     setIsDraggingSwipeBar(true)
@@ -810,6 +893,9 @@ export default function DeliveryHome() {
     const currentY = e.clientY
     const deltaY = swipeBarStartY.current - currentY
     const windowHeight = window.innerHeight
+
+    // Prevent default to avoid text selection
+    e.preventDefault()
 
     if (showHomeSections) {
       // Currently showing home sections - swiping down should go back to map
@@ -1737,6 +1823,7 @@ export default function DeliveryHome() {
       ) : (
         /* Home Sections View - Full screen when swipe bar is dragged up */
         <motion.div
+          ref={swipeBarRef}
           initial={{ y: "100%" }}
           animate={{
             y: isDraggingSwipeBar
@@ -1745,16 +1832,15 @@ export default function DeliveryHome() {
           }}
           exit={{ y: "100%" }}
           transition={isDraggingSwipeBar ? { duration: 0 } : { type: "spring", damping: 30, stiffness: 300 }}
+          onTouchStart={handleSwipeBarTouchStart}
+          onTouchMove={handleSwipeBarTouchMove}
+          onTouchEnd={handleSwipeBarTouchEnd}
+          onMouseDown={handleSwipeBarMouseDown}
           className="relative flex-1 bg-white rounded-t-3xl shadow-2xl overflow-hidden"
-          style={{ height: 'calc(100vh - 200px)' }}
+          style={{ height: 'calc(100vh - 200px)', touchAction: 'pan-y' }}
         >
           {/* Swipe Handle at Top - Can be dragged down to go back to map */}
           <div
-            ref={swipeBarRef}
-            onTouchStart={handleSwipeBarTouchStart}
-            onTouchMove={handleSwipeBarTouchMove}
-            onTouchEnd={handleSwipeBarTouchEnd}
-            onMouseDown={handleSwipeBarMouseDown}
             className="flex flex-col items-center pt-4 pb-2 cursor-grab active:cursor-grabbing bg-white sticky top-0 z-10"
             style={{ touchAction: 'none' }}
           >
@@ -1773,37 +1859,29 @@ export default function DeliveryHome() {
             </motion.div>
           </div>
 
-          <div className="px-4 pt-4 pb-24 space-y-4 overflow-y-auto" style={{ height: 'calc(100vh - 250px)' }}>
+          <div 
+            ref={homeSectionsScrollRef}
+            className="px-4 pt-4 pb-16 space-y-4 overflow-y-auto" 
+            style={{ height: 'calc(100vh - 250px)' }}
+          >
             {/* Referral Bonus Banner */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              className="w-full rounded-xl p-6 shadow-lg relative overflow-hidden min-h-[140px] bg-gradient-to-b from-blue-600 to-blue-400"
+              onClick={() => navigate("/delivery/refer-and-earn")}
+              className="w-full rounded-xl p-6 shadow-lg relative overflow-hidden min-h-[70px] cursor-pointer"
+              style={{
+                backgroundImage: `url(${referralBonusBg})`,
+                backgroundSize: '100% 100%',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
+              }}
             >
-              <div className="flex items-center justify-between relative z-10">
-                <div className="flex-1">
-                  <div className="text-white text-3xl font-bold mb-1">₹6,000</div>
-                  <div className="text-white/90 text-base font-medium mb-1">referral bonus</div>
-                  <div className="text-white/80 text-sm">Refer your friends now</div>
-                </div>
-                <div className="relative">
-                  {/* Money illustration */}
-                  <div className="relative w-24 h-24">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="relative">
-                        {/* Stack of notes */}
-                        <div className="w-16 h-20 bg-green-500 rounded-sm transform rotate-[-8deg] absolute -left-2"></div>
-                        <div className="w-16 h-20 bg-green-400 rounded-sm transform rotate-[2deg] relative z-10"></div>
-                        <div className="w-16 h-20 bg-green-300 rounded-sm transform rotate-[8deg] absolute -right-2 z-20 flex items-center justify-center">
-                          <span className="text-2xl">₹</span>
-                        </div>
-                        {/* Ribbon */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-3 bg-red-500 rounded-full z-30"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <div className="relative z-10">
+                <div className="text-white text-3xl font-bold mb-1">₹6,000                 <span className="text-white/90 text-base font-medium mb-1">referral bonus</span>
+                 </div>
+                <div className="text-white/80 text-sm">Refer your friends now</div>
               </div>
             </motion.div>
 
@@ -1814,17 +1892,24 @@ export default function DeliveryHome() {
               transition={{ duration: 0.3, delay: 0.1 }}
               className="w-full rounded-xl p-6 shadow-lg bg-black text-white"
             >
-              <div className="flex items-center gap-2 mb-2">
-                <div className="text-4xl font-bold">₹100</div>
+              <div className="flex items-center text-center justify-center gap-2 mb-2">
+                <div className="text-4xl font-bold text-center">₹100</div>
                 <Lock className="w-5 h-5 text-white" />
               </div>
-              <p className="text-white/90 text-sm mb-4">Complete 1 order to unlock ₹100</p>
-              <div className="flex items-center gap-2 text-white/70 text-xs mb-4">
+              <p className="text-white/90 text-center text-sm mb-4">Complete 1 order to unlock ₹100</p>
+              <div className="flex items-center text-center justify-center gap-2 text-white/70 text-xs mb-4">
                 <Clock className="w-4 h-4" />
-                <span>Valid till 10 December 2025</span>
+                <span className="text-center">Valid till 10 December 2025</span>
               </div>
               <button
-                onClick={handleToggleOnline}
+                onClick={() => {
+                  if (isOnline) {
+                    goOffline()
+                  } else {
+                    // Always show the popup when offline (same as navbar behavior)
+                    setShowBookGigsPopup(true)
+                  }
+                }}
                 className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
               >
                 <span>Go online</span>
@@ -1891,7 +1976,7 @@ export default function DeliveryHome() {
                 <div className="grid grid-cols-2 gap-4">
                   {/* Top Left - Earnings */}
                   <button
-                    onClick={() => navigate("/delivery/account")}
+                    onClick={() => navigate("/delivery/earnings")}
                     className="flex flex-col items-start gap-1 hover:opacity-80 transition-opacity"
                   >
                     <span className="text-gray-900 text-2xl font-bold">
@@ -1905,7 +1990,7 @@ export default function DeliveryHome() {
 
                   {/* Top Right - Trips */}
                   <button
-                    onClick={() => navigate("/delivery/orders")}
+                    onClick={() => navigate("/delivery/trip-history")}
                     className="flex flex-col items-end gap-1 hover:opacity-80 transition-opacity"
                   >
                     <span className="text-gray-900 text-2xl font-bold">
@@ -1919,7 +2004,7 @@ export default function DeliveryHome() {
 
                   {/* Bottom Left - Time on orders */}
                   <button
-                    onClick={() => navigate("/delivery/orders")}
+                    onClick={() => navigate("/delivery/time-on-orders")}
                     className="flex flex-col items-start gap-1 hover:opacity-80 transition-opacity"
                   >
                     <span className="text-gray-900 text-2xl font-bold">

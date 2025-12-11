@@ -33,16 +33,27 @@ export default function DeliveryLayout({
     }
   }, [location.pathname])
 
+  // Pages where bottom navigation should be shown
+  const showBottomNav = [
+    '/delivery',
+    '/delivery/requests',
+    '/delivery/gig',
+    '/delivery/orders',
+    '/delivery/updates'
+  ].includes(location.pathname)
+
   return (
     <>
       {children}
-      <BottomNavigation
-        showGig={showGig}
-        showPocket={showPocket}
-        onHomeClick={onHomeClick}
-        onGigClick={onGigClick}
-        requestBadgeCount={requestBadgeCount}
-      />
+      {showBottomNav && (
+        <BottomNavigation
+          showGig={showGig}
+          showPocket={showPocket}
+          onHomeClick={onHomeClick}
+          onGigClick={onGigClick}
+          requestBadgeCount={requestBadgeCount}
+        />
+      )}
     </>
   )
 }

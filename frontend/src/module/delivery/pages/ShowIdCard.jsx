@@ -1,108 +1,95 @@
 import { useNavigate } from "react-router-dom"
-import { ArrowLeft, CreditCard, Download, Share2 } from "lucide-react"
+import { X } from "lucide-react"
 
 export default function ShowIdCard() {
   const navigate = useNavigate()
 
-  // Sample ID card data
+  // Sample ID card data - matching the image
   const idCardData = {
-    name: "John Doe",
-    id: "DP-123456",
-    phone: "+91 9876543210",
+    name: "Sumit Jaiswal",
+    id: "FE7583766",
+    phone: "7691810506",
     status: "Active",
-    validTill: "31 Dec 2025"
+    validTill: "11 December 2025",
+    fssaiLicence: "10019064001810"
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="flex items-center gap-4 px-4 py-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-700" />
-          </button>
-          <h1 className="text-xl font-bold text-gray-900">Show ID card</h1>
+    <div className="min-h-screen bg-gray-100 relative">
+      {/* Close Button - Top Right */}
+      <button
+        onClick={() => navigate(-1)}
+        className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors z-20"
+      >
+        <X className="w-6 h-6 text-black" />
+      </button>
+
+      {/* Top Grey Background Section */}
+      <div className="bg-gray-200 h-32 relative">
+        {/* Profile Picture - Positioned on gray area, overlapping into white */}
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 z-10">
+          <img
+            src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"
+            alt="Profile"
+            className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+            onError={(e) => {
+              e.target.src = "https://ui-avatars.com/api/?name=Sumit+Jaiswal&background=ff8100&color=fff&size=128"
+            }}
+          />
         </div>
       </div>
 
-      {/* Content */}
-      <div className="px-4 py-6 space-y-4">
-        {/* ID Card */}
-        <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-6 shadow-lg text-white">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-                <CreditCard className="w-6 h-6 text-blue-600" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold">Appzeto Delivery</h2>
-                <p className="text-sm text-blue-100">Partner ID Card</p>
-              </div>
-            </div>
+      {/* Main White Content Area */}
+      <div className="bg-white min-h-[calc(100vh-8rem)] relative pt-16">
+        {/* Content - Centered */}
+        <div className="flex flex-col items-center px-4 py-4">
+          {/* Brand Name */}
+          <p className="text-sm text-gray-400 mb-2">appzeto</p>
+
+          {/* Delivery Partner Title */}
+          <h1 className="text-3xl font-bold text-black mb-2">DELIVERY PARTNER</h1>
+
+          {/* Service Type */}
+          <p className="text-base text-gray-600 mb-4">Essential Services - Food Delivery</p>
+
+          {/* Active Status Button */}
+          <div className="mb-4">
+            <span className="bg-green-500 text-white px-6 py-2 rounded-lg text-sm font-medium">
+              Active
+            </span>
           </div>
 
-          <div className="space-y-4">
-            <div>
-              <p className="text-sm text-blue-100 mb-1">Name</p>
-              <p className="text-xl font-bold">{idCardData.name}</p>
-            </div>
-
-            <div>
-              <p className="text-sm text-blue-100 mb-1">Partner ID</p>
-              <p className="text-xl font-bold">{idCardData.id}</p>
-            </div>
-
-            <div>
-              <p className="text-sm text-blue-100 mb-1">Phone</p>
-              <p className="text-lg font-semibold">{idCardData.phone}</p>
-            </div>
-
-            <div className="flex items-center justify-between pt-4 border-t border-blue-400">
-              <div>
-                <p className="text-sm text-blue-100">Status</p>
-                <p className="text-lg font-bold text-green-300">{idCardData.status}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-blue-100">Valid till</p>
-                <p className="text-lg font-semibold">{idCardData.validTill}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="space-y-3">
-          <button
-            onClick={() => {
-              // Download ID card functionality
-              alert("Download ID card")
-            }}
-            className="w-full bg-white border-2 border-gray-300 text-gray-900 font-semibold py-4 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
-          >
-            <Download className="w-5 h-5" />
-            Download ID card
-          </button>
-
-          <button
-            onClick={() => {
-              // Share ID card functionality
-              alert("Share ID card")
-            }}
-            className="w-full bg-white border-2 border-gray-300 text-gray-900 font-semibold py-4 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
-          >
-            <Share2 className="w-5 h-5" />
-            Share ID card
-          </button>
-        </div>
-
-        {/* Info */}
-        <div className="bg-blue-50 rounded-lg p-4">
-          <p className="text-sm text-blue-900">
-            This is your official delivery partner ID card. Keep it handy for verification purposes.
+          {/* Valid Date */}
+          <p className="text-sm text-gray-600 mb-6">
+            Valid on: {idCardData.validTill}
           </p>
+
+          {/* Name */}
+          <h2 className="text-2xl font-bold text-black mb-2">{idCardData.name}</h2>
+
+          {/* ID Number */}
+          <p className="text-base text-black mb-6">{idCardData.id}</p>
+
+          {/* Phone Section */}
+          <div className="w-full max-w-md mb-4 text-center">
+            <p className="text-xs text-gray-500 mb-1">PHONE</p>
+            <p className="text-lg font-bold text-black">{idCardData.phone}</p>
+          </div>
+
+          {/* Vehicle Section */}
+          <div className="w-full max-w-md mb-4 text-center">
+            <p className="text-xs text-gray-500">VEHICLE</p>
+          </div>
+
+          {/* FSSAI Licence */}
+          <div className="w-full max-w-md mb-6 text-center">
+            <p className="text-sm text-black">
+              FSSAI Licence: {idCardData.fssaiLicence}
+            </p>
+          </div>
+
+          {/* Company Name */}
+          <p className="text-sm text-gray-500">Appzeto Limited</p>
         </div>
       </div>
     </div>
