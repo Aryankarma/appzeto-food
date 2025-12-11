@@ -321,7 +321,7 @@ export default function MyOrders() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f6e9dc] overflow-x-hidden">
+    <div className="min-h-screen bg-gray-100  overflow-x-hidden">
   
       {/* Feed Navbar */}
       <FeedNavbar

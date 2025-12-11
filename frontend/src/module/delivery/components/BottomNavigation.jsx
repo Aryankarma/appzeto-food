@@ -91,7 +91,7 @@ export default function BottomNavigation({
           className="flex flex-col items-center gap-1 p-2"
         >
           {TabIcon(isActive("/delivery/orders"), BagOutline, BagSolid)}
-          {TabLabel(isActive("/delivery/orders"), "Orders")}
+          {TabLabel(isActive("/delivery/orders"), "Bazaar")}
         </button>
 
         {/* Updates */}

@@ -113,22 +113,25 @@ export default function Payout() {
   ]
 
   return (
-    <div className="min-h-screen bg-[#f6e9dc] overflow-x-hidden pb-24 md:pb-6">
+    <div className="min-h-screen bg-gray-100 overflow-x-hidden pb-24 md:pb-6">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-4 md:py-6 flex items-center gap-4 rounded-b-3xl md:rounded-b-none">
-        <button 
-          onClick={() => navigate(-1)}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
-        </button>
-        <h1 className="text-xl md:text-2xl font-bold text-gray-900">Payout</h1>
-      </div>
-
-      {/* Main Content */}
-      <div className="px-4 py-6">
-        {/* Main Payout Summary Card */}
-        <div className="bg-white rounded-xl p-6 mb-6 shadow-md border border-gray-100">
+      <div className="bg-green-700 flex flex-col border-b border-gray-200 p-3 rounded-b-xl md:rounded-b-none">
+        <div className="relative flex items-center pt-2 justify-center text-white">
+          {/* Left button */} 
+          <button
+            onClick={() => navigate(-1)}
+            className="absolute left-0 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-white" />
+          </button>
+  
+          {/* Centered title */}
+          <h1 className="text-xl md:text-2xl font-semibold text-white ">
+            Payout
+          </h1>
+        </div>
+  
+        <div className="bg-white w-full rounded-xl p-6 mt-6 border border-gray-100">
           {/* Date Range Selector with Calendar */}
           <div className="flex justify-center mb-6 relative" ref={calendarRef}>
             <button 
@@ -170,12 +173,17 @@ export default function Payout() {
           </div>
         </div>
 
+      </div>
+
+      {/* Main Content */}
+      <div className="px-4 py-6">
+
         {/* Detailed Breakdown Cards */}
         <div className="space-y-3">
           {breakdownItems.map((item, index) => (
             <div
               key={index}
-              className="bg-white rounded-xl p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors shadow-md border border-gray-100"
+              className="bg-white rounded-xl p-4 flex items-center justify-between cursor-pointer hover:bg-white transition-colors border border-gray-100"
             >
               <span className="text-gray-900 text-sm md:text-base font-medium">{item.label}</span>
               <div className="flex items-center gap-2">

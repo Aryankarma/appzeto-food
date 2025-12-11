@@ -3,12 +3,14 @@ import { useNavigate } from "react-router-dom"
 import { 
   ArrowLeft,
   ChevronDown,
-  Calendar
+  Calendar,
+  CheckCircle
 } from "lucide-react"
 import { formatCurrency } from "../../restaurant/utils/currency"
 import { DateRangeCalendar } from "@/components/ui/date-range-calendar"
+import WeekSelector from "../components/WeekSelector"
 
-export default function DeductionStatement() {
+export default function TipsStatement() {
   const navigate = useNavigate()
   
   // Date range state
@@ -37,8 +39,8 @@ export default function DeductionStatement() {
   const handleDateRangeChange = (start, end) => {
     setStartDate(start)
     setEndDate(end)
-    // Here you would fetch deduction data for the selected date range
-    // fetchDeductionData(start, end)
+    // Here you would fetch tips data for the selected date range
+    // fetchTipsData(start, end)
   }
   
   // Close calendar when clicking outside
@@ -58,21 +60,21 @@ export default function DeductionStatement() {
     }
   }, [showCalendar])
   
-  // Fetch deduction data based on selected date range (mock function - replace with actual API call)
-  const getDeductionDataForDateRange = (start, end) => {
+  // Fetch tips data based on selected date range (mock function - replace with actual API call)
+  const getTipsDataForDateRange = (start, end) => {
     // This would be an API call in a real application
     // For now, return empty array
     return []
   }
   
-  // Get deduction data for current selected date range
-  const deductions = useMemo(() => {
+  // Get tips data for current selected date range
+  const tips = useMemo(() => {
     if (!startDate || !endDate) return []
-    return getDeductionDataForDateRange(startDate, endDate)
+    return getTipsDataForDateRange(startDate, endDate)
   }, [startDate, endDate])
   
   return (
-    <div className="min-h-screen bg-[#f6e9dc] overflow-x-hidden pb-24 md:pb-6">
+    <div className="min-h-screen bg-white overflow-x-hidden pb-24 md:pb-6">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-4 md:py-6 flex items-center gap-4 rounded-b-3xl md:rounded-b-none">
         <button 
@@ -87,33 +89,10 @@ export default function DeductionStatement() {
       {/* Main Content */}
       <div className="px-4 py-6">
         {/* Date Range Selector with Calendar */}
-        <div className="bg-white rounded-xl p-6 mb-6 shadow-md border border-gray-100">
-          <div className="flex justify-center relative" ref={calendarRef}>
-            <button
-              onClick={() => setShowCalendar(!showCalendar)}
-              className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-full transition-colors"
-            >
-              <Calendar className="w-4 h-4 text-gray-600" />
-              <span className="text-gray-900 text-sm font-medium">{dateRangeDisplay}</span>
-              <ChevronDown className={`w-4 h-4 text-gray-600 transition-transform ${showCalendar ? 'rotate-180' : ''}`} />
-            </button>
-            
-            {/* Calendar Popup */}
-            {showCalendar && (
-              <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 z-50 md:left-auto md:transform-none md:right-0">
-                <DateRangeCalendar
-                  startDate={startDate}
-                  endDate={endDate}
-                  onDateRangeChange={handleDateRangeChange}
-                  onClose={() => setShowCalendar(false)}
-                />
-              </div>
-            )}
-          </div>
-        </div>
+          <WeekSelector />
 
         {/* Transactions List */}
-        {deductions.length === 0 ? (
+        {tips.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12">
             {/* Empty State Illustration */}
             <div className="flex flex-col gap-2 mb-6">
@@ -148,25 +127,25 @@ export default function DeductionStatement() {
             <p className="text-gray-600 text-base font-medium">No transactions</p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {deductions.map((deduction, index) => (
+          <div className="space-y-3 mb-6">
+            {tips.map((tip, index) => (
               <div
                 key={index}
                 className="bg-white rounded-xl p-4 shadow-md border border-gray-100"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded ${
+                    <div className={`w-2 h-2 rounded ${ 
                       index % 3 === 0 ? 'bg-green-500' : 
                       index % 3 === 1 ? 'bg-orange-500' : 'bg-blue-500'
                     }`}></div>
                     <div>
-                      <p className="text-gray-900 text-sm font-medium">{deduction.description}</p>
-                      <p className="text-gray-500 text-xs">{deduction.date}</p>
+                      <p className="text-gray-900 text-sm font-medium">{tip.description}</p>
+                      <p className="text-gray-500 text-xs">{tip.date}</p>
                     </div>
                   </div>
-                  <div className="text-orange-500 text-sm font-medium">
-                    -{formatCurrency(Math.abs(deduction.amount))}
+                  <div className="text-green-600 text-sm font-medium">
+                    +{formatCurrency(Math.abs(tip.amount))}
                   </div>
                 </div>
               </div>

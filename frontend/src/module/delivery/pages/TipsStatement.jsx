@@ -8,6 +8,7 @@ import {
 } from "lucide-react"
 import { formatCurrency } from "../../restaurant/utils/currency"
 import { DateRangeCalendar } from "@/components/ui/date-range-calendar"
+import WeekSelector from "../components/WeekSelector"
 
 export default function TipsStatement() {
   const navigate = useNavigate()
@@ -73,7 +74,7 @@ export default function TipsStatement() {
   }, [startDate, endDate])
   
   return (
-    <div className="min-h-screen bg-[#f6e9dc] overflow-x-hidden pb-24 md:pb-6">
+    <div className="min-h-screen bg-white overflow-x-hidden pb-24 md:pb-6">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-4 md:py-6 flex items-center gap-4 rounded-b-3xl md:rounded-b-none">
         <button 
@@ -88,30 +89,7 @@ export default function TipsStatement() {
       {/* Main Content */}
       <div className="px-4 py-6">
         {/* Date Range Selector with Calendar */}
-        <div className="bg-white rounded-xl p-6 mb-6 shadow-md border border-gray-100">
-          <div className="flex justify-center relative" ref={calendarRef}>
-            <button
-              onClick={() => setShowCalendar(!showCalendar)}
-              className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-full transition-colors"
-            >
-              <Calendar className="w-4 h-4 text-gray-600" />
-              <span className="text-gray-900 text-sm font-medium">{dateRangeDisplay}</span>
-              <ChevronDown className={`w-4 h-4 text-gray-600 transition-transform ${showCalendar ? 'rotate-180' : ''}`} />
-            </button>
-            
-            {/* Calendar Popup */}
-            {showCalendar && (
-              <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 z-50 md:left-auto md:transform-none md:right-0">
-                <DateRangeCalendar
-                  startDate={startDate}
-                  endDate={endDate}
-                  onDateRangeChange={handleDateRangeChange}
-                  onClose={() => setShowCalendar(false)}
-                />
-              </div>
-            )}
-          </div>
-        </div>
+          <WeekSelector />
 
         {/* Transactions List */}
         {tips.length === 0 ? (
@@ -175,55 +153,58 @@ export default function TipsStatement() {
           </div>
         )}
 
+
         {/* 100% TIP TRANSFER GUARANTEE Card */}
-        <div className="bg-gray-200 rounded-xl p-6 shadow-lg border border-gray-300">
-          <div className="flex items-start gap-4 mb-4">
-            {/* Circular Icon */}
-            <div className="relative shrink-0">
-              <svg width="80" height="80" viewBox="0 0 80 80" className="shrink-0">
-                {/* Outer circle */}
-                <circle cx="40" cy="40" r="38" fill="white" stroke="#9ca3af" strokeWidth="2"/>
-                {/* Checkmark */}
-                <path d="M 25 40 L 35 50 L 55 30" stroke="#9ca3af" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                {/* Circular text path */}
-                <defs>
-                  <path id="tipCircle" d="M 40,40 m -30,0 a 30,30 0 1,1 60,0 a 30,30 0 1,1 -60,0" fill="none"/>
-                </defs>
-                <text fill="#9ca3af" fontSize="7" fontWeight="600" letterSpacing="0.5">
-                  <textPath href="#tipCircle" startOffset="0%">
-                    100% TIP TRANSFER
-                  </textPath>
-                </text>
-              </svg>
-            </div>
-            
-            {/* Heading */}
-            <div className="flex-1 pt-1">
-              <h2 className="text-lg md:text-xl font-semibold text-gray-700">
-                100% TIP TRANSFER GUARANTEE
-              </h2>
-            </div>
-          </div>
+        <div className="bg-gray-50 rounded-xl p-2 shadow-sm border border-gray-50 fixed bottom-0 w-[90%] mx-auto left-1/2 transform -translate-x-1/2 mb-4">
+  {/* Icon + Label */}
+  <div className="flex items-center gap-2 mb-2">
+    {/* Circular Icon */}
+    <div className="relative shrink-0 scale-75">
+      <svg width="80" height="80" viewBox="0 0 80 80" className="shrink-0">
+        {/* Outer circle */}
+        <circle cx="40" cy="40" r="38" fill="white" stroke="#9ca3af" strokeWidth="2"/>
+        {/* Checkmark */}
+        <path d="M 25 40 L 35 50 L 55 30" stroke="#9ca3af" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+        {/* Circular text path */}
+        <defs>
+          <path id="tipCircle" d="M 40,40 m -30,0 a 30,30 0 1,1 60,0 a 30,30 0 1,1 -60,0" fill="none"/>
+        </defs>
+        <text fill="#9ca3af" fontSize="7" fontWeight="600" letterSpacing="0.5">
+          <textPath href="#tipCircle" startOffset="0%">
+            100% TIP TRANSFER
+          </textPath>
+        </text>
+      </svg>
+    </div>
 
-          {/* Dotted Separator */}
-          <div className="border-t border-dashed border-gray-400 mb-4"></div>
+    {/* Heading */}
+    <div className="flex-1">
+      <h2 className="text-sm md:text-md font-semibold text-gray-400 truncate">
+        100% TIP TRANSFER GUARANTEE
+      </h2>
+    </div>
+  </div>
 
-          {/* Bullet Points */}
-          <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-gray-600 mt-2 shrink-0"></div>
-              <p className="text-gray-700 text-sm md:text-base">
-                Tips are never used to settle your deductions.
-              </p>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-gray-600 mt-2 shrink-0"></div>
-              <p className="text-gray-700 text-sm md:text-base">
-                Tips are transferred to your bank account weekly, if not withdrawn.
-              </p>
-            </div>
-          </div>
-        </div>
+  {/* Dotted Separator */}
+  <div className="border-t border-dashed border-gray-400 mb-4"></div>
+
+  {/* Bullet Points */}
+  <div className="space-y-3">
+    <div className="flex items-start gap-3">
+      <div className="w-1.5 h-1.5 rounded-full bg-gray-400 mt-2 shrink-0"></div>
+      <p className="text-gray-400 text-sm md:text-base">
+        Tips are never used to settle your deductions.
+      </p>
+    </div>
+    <div className="flex items-start gap-3">
+      <div className="w-1.5 h-1.5 rounded-full bg-gray-400 mt-2 shrink-0"></div>
+      <p className="text-gray-400 text-sm md:text-base">
+        Tips are transferred to your bank account weekly, if not withdrawn.
+      </p>
+    </div>
+  </div>
+</div>
+
       </div>
     </div>
   )

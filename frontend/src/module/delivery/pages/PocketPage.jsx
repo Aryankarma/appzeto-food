@@ -13,6 +13,7 @@ import {
   CheckCircle,
   Receipt,
   FileText as FileTextIcon,
+  FuelIcon,
   Wallet as WalletIcon,
   Sparkles
 } from "lucide-react"
@@ -462,7 +463,7 @@ export default function PocketPage() {
         <Card className=" py-0  bg-white border-0 shadow-none mb-6">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+              <div onClick={() => navigate("/delivery/customer-tips-balance")} className="flex items-center gap-3">
                 <Wallet className="w-5 h-5 text-black" />
                 <span className="text-black text-sm">Customer tips balance</span>
               </div>
@@ -533,6 +534,19 @@ export default function PocketPage() {
                   <WalletIcon className="w-8 h-8 text-black" />
                 </div>
                 <div className="text-black text-sm font-medium">Pocket statement</div>
+              </CardContent>
+            </Card>
+          
+            {/* Fuel Payment */}
+            <Card
+              className=" py-0  bg-white border-0 shadow-none cursor-pointer hover:bg-gray-200 transition-colors"
+              onClick={() => navigate("/delivery/fuel-payment")}
+            >
+              <CardContent className="p-4 flex flex-col items-start text-start">
+                <div className="w-12 h-12 flex items-center justify-center mb-3">
+                  <FuelIcon className="w-8 h-8 text-black" />
+                </div>
+                <div className="text-black text-sm font-medium">Fuel Payment</div>
               </CardContent>
             </Card>
           </div>

@@ -183,7 +183,7 @@ export default function UpdatesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f6e9dc]  text-gray-900 overflow-x-hidden pb-24">
+    <div className="min-h-screen bg-white  text-gray-900 overflow-x-hidden pb-24">
       {/* Top Bar */}
       <FeedNavbar
         isOnline={isOnline}
