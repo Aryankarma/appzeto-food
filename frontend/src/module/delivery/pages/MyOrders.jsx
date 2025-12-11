@@ -14,6 +14,8 @@ import {
   Sparkles
 } from "lucide-react"
 import { formatCurrency } from "../../restaurant/utils/currency"
+import FeedNavbar from "../components/FeedNavbar"
+import { useGigStore } from "../store/gigStore"
 import { 
   getAllDeliveryOrders, 
   getDeliveryOrderStatus,
@@ -25,6 +27,7 @@ import {
 
 export default function MyOrders() {
   const navigate = useNavigate()
+  const { isOnline, goOnline, goOffline } = useGigStore()
   const [activeTab, setActiveTab] = useState("orderHistory")
   const [activeFilter, setActiveFilter] = useState("all")
   const [allOrders, setAllOrders] = useState(() => getAllDeliveryOrders())
@@ -319,10 +322,21 @@ export default function MyOrders() {
 
   return (
     <div className="min-h-screen bg-[#f6e9dc] overflow-x-hidden">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-4 md:py-3 rounded-b-3xl md:rounded-b-none">
-        <h1 className="text-center text-lg font-bold text-gray-900">My Orders</h1>
-      </div>
+  
+      {/* Feed Navbar */}
+      <FeedNavbar
+        isOnline={isOnline}
+        onToggleOnline={() => {
+          if (isOnline) {
+            goOffline()
+          } else {
+            goOnline()
+          }
+        }}
+        onEmergencyClick={() => {}}
+        onHelpClick={() => {}}
+        className=""
+      />
 
       {/* Primary Navigation Tabs */}
       <div className="px-4 py-4 flex gap-3">

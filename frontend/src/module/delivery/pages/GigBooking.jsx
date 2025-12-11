@@ -43,6 +43,7 @@ import {
   getCategoryTimeRange
 } from "../utils/gigUtils"
 import { toast } from "sonner"
+import FeedNavbar from "../components/FeedNavbar"
 
 export default function GigBooking() {
   const navigate = useNavigate()
@@ -292,36 +293,20 @@ export default function GigBooking() {
 
   return (
     <div className="min-h-screen bg-[#f6e9dc] overflow-x-hidden">
-      {/* Header Section */}
-      <div className="bg-white border-b border-gray-200 px-4 py-4 md:py-3 flex items-center justify-between rounded-b-3xl md:rounded-b-none sticky top-0 z-10">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate("/delivery")}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <X className="w-5 h-5 text-gray-600" />
-          </button>
-          <div className="flex items-center gap-2">
-            <div className="bg-[#ff8100] rounded-lg p-1.5 md:p-1.5">
-              <Calendar className="w-5 h-5 md:w-4 md:h-4 text-white" />
-            </div>
-            <span className="text-[#ff8100] font-bold text-xl md:text-lg">
-              {activeTab === "history" ? "Gig History" : "Book Gig"}
-            </span>
-          </div>
-        </div>
-        {/* User Level Badge */}
-        <div 
-          className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold"
-          style={{ 
-            backgroundColor: `${levelColor}20`,
-            color: levelColor
-          }}
-        >
-          <span>{levelIcon}</span>
-          <span>{userLevel}</span>
-        </div>
-      </div>
+      {/* Feed Navbar */}
+      <FeedNavbar
+        isOnline={isOnline}
+        onToggleOnline={() => {
+          if (isOnline) {
+            goOffline()
+          } else {
+            goOnline()
+          }
+        }}
+        onEmergencyClick={() => {}}
+        onHelpClick={() => {}}
+        className=""
+      />
 
       {/* View All Offers Button */}
       <div className="px-4 pt-4 pb-4">

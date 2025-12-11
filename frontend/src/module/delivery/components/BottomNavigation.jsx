@@ -1,16 +1,29 @@
 import { useNavigate, useLocation } from "react-router-dom"
-import { 
-  FileText,
-  User,
-  Sparkles,
-  Wallet,
-  Bell
-} from "lucide-react"
-import { MdFeed, MdShoppingBag } from "react-icons/md"
+
+// Heroicons Outline
+import {
+  HomeIcon as HomeOutline,
+  WalletIcon as WalletOutline,
+  SparklesIcon as SparklesOutline,
+  ShoppingBagIcon as BagOutline,
+  BellIcon as BellOutline,
+  UserIcon as UserOutline
+} from "@heroicons/react/24/outline"
+
+// Heroicons Solid
+import {
+  HomeIcon as HomeSolid,
+  WalletIcon as WalletSolid,
+  SparklesIcon as SparklesSolid,
+  ShoppingBagIcon as BagSolid,
+  BellIcon as BellSolid,
+  UserIcon as UserSolid
+} from "@heroicons/react/24/solid"
+
 import { getUnreadDeliveryNotificationCount } from "../utils/deliveryNotifications"
 
-export default function BottomNavigation({ 
-  showGig = false, 
+export default function BottomNavigation({
+  showGig = false,
   showPocket = false,
   onHomeClick,
   onGigClick,
@@ -18,129 +31,85 @@ export default function BottomNavigation({
 }) {
   const navigate = useNavigate()
   const location = useLocation()
-  
-  // Get unread notification count if not provided
+
   const unreadCount = requestBadgeCount !== undefined 
     ? requestBadgeCount 
     : getUnreadDeliveryNotificationCount()
 
   const isActive = (path) => {
-    if (path === "/delivery") {
-      return location.pathname === "/delivery"
-    }
+    if (path === "/delivery") return location.pathname === "/delivery"
     return location.pathname.startsWith(path)
   }
 
-  const getActiveClass = (path) => {
-    return isActive(path) 
-      ? "text-[#ff8100]" 
-      : "text-gray-600"
+  const iconClass = "w-6 h-6"
+
+  const TabIcon = (active, Outline, Solid) => {
+    const Icon = active ? Solid : Outline
+    return <Icon className={iconClass} />
   }
 
-  const handleHomeClick = () => {
-    if (location.pathname === "/delivery") {
-      // Trigger refresh event for components that listen to it
-      window.dispatchEvent(new CustomEvent('deliveryHomeRefresh'))
-    } else {
-      navigate("/delivery")
-    }
-    if (onHomeClick) {
-      onHomeClick()
-    }
-  }
-
-  const handleGigClick = () => {
-    if (location.pathname === "/delivery/gig") {
-      // Trigger refresh event for components that listen to it
-      window.dispatchEvent(new CustomEvent('deliveryGigRefresh'))
-    } else {
-      navigate("/delivery/gig")
-    }
-    if (onGigClick) {
-      onGigClick()
-    }
-  }
-
-  const handleProfileClick = () => {
-    if (location.pathname === "/delivery/profile") {
-      // Trigger refresh event for components that listen to it
-      window.dispatchEvent(new CustomEvent('deliveryProfileRefresh'))
-    } else {
-      navigate("/delivery/profile")
-    }
-  }
-
-  const handleRequestClick = () => {
-    if (location.pathname === "/delivery/requests") {
-      // Trigger refresh event for components that listen to it
-      window.dispatchEvent(new CustomEvent('deliveryRequestRefresh'))
-    } else {
-      navigate("/delivery/requests")
-    }
-  }
-
-  const handleUpdatesClick = () => {
-    if (location.pathname === "/delivery/updates") {
-      // Trigger refresh event for components that listen to it
-      window.dispatchEvent(new CustomEvent('deliveryUpdatesRefresh'))
-    } else {
-      navigate("/delivery/updates")
-    }
-  }
+  const TabLabel = (active, label) => (
+    <span className={`text-[10px] font-medium ${active ? "text-black" : "text-gray-500"}`}>
+      {label}
+    </span>
+  )
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
       <div className="flex items-center justify-around py-2 px-4">
+
         {/* Feed */}
-        <button 
-          onClick={handleHomeClick}
-          className={`flex flex-col items-center gap-1 p-2 ${getActiveClass("/delivery")}`}
+        <button
+          onClick={() => navigate("/delivery")}
+          className="flex flex-col items-center gap-1 p-2"
         >
-          <MdFeed className="w-6 h-6" />
-          <span className={`text-[10px] font-medium ${getActiveClass("/delivery")}`}>Feed</span>
+          {TabIcon(isActive("/delivery"), HomeOutline, HomeSolid)}
+          {TabLabel(isActive("/delivery"), "Feed")}
         </button>
 
-        {/* Request or Pocket */}
-          <button 
-            onClick={handleRequestClick}
-            className={`flex flex-col items-center gap-1 p-2 ${getActiveClass("/delivery/requests")}`}
-          >
-            <Wallet className="w-6 h-6" />
-            <span className={`text-[10px] font-medium ${getActiveClass("/delivery/requests")}`}>Pocket</span>
-          </button>
+        {/* Pocket */}
+        <button
+          onClick={() => navigate("/delivery/requests")}
+          className="flex flex-col items-center gap-1 p-2"
+        >
+          {TabIcon(isActive("/delivery/requests"), WalletOutline, WalletSolid)}
+          {TabLabel(isActive("/delivery/requests"), "Pocket")}
+        </button>
 
-          <button 
-            onClick={handleGigClick}
-            className={`flex flex-col items-center gap-1 p-2 ${getActiveClass("/delivery/gig")}`}
-          >
-            <Sparkles className="w-6 h-6" />
-            <span className={`text-[10px] font-medium ${getActiveClass("/delivery/gig")}`}>Gig</span>
-          </button>
+        {/* Gig */}
+        <button
+          onClick={() => navigate("/delivery/gig")}
+          className="flex flex-col items-center gap-1 p-2"
+        >
+          {TabIcon(isActive("/delivery/gig"), SparklesOutline, SparklesSolid)}
+          {TabLabel(isActive("/delivery/gig"), "Gig")}
+        </button>
 
         {/* Orders */}
-        <button 
+        <button
           onClick={() => navigate("/delivery/orders")}
-          className={`flex flex-col items-center gap-1 p-2 ${getActiveClass("/delivery/orders")}`}
+          className="flex flex-col items-center gap-1 p-2"
         >
-          <MdShoppingBag className="w-6 h-6" />
-          <span className={`text-[10px] font-medium ${getActiveClass("/delivery/orders")}`}>Orders</span>
+          {TabIcon(isActive("/delivery/orders"), BagOutline, BagSolid)}
+          {TabLabel(isActive("/delivery/orders"), "Orders")}
         </button>
 
         {/* Updates */}
-        <button 
-          onClick={handleUpdatesClick}
-          className={`flex flex-col items-center gap-1 p-2 relative ${getActiveClass("/delivery/updates")}`}
+        <button
+          onClick={() => navigate("/delivery/updates")}
+          className="flex flex-col items-center gap-1 p-2 relative"
         >
-          <Bell className="w-6 h-6" />
+          {TabIcon(isActive("/delivery/updates"), BellOutline, BellSolid)}
+          
           {unreadCount > 0 && (
             <span className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-bold rounded-full w-3 h-3 flex items-center justify-center">
-              {unreadCount > 9 ? '9+' : unreadCount}
+              {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
-          <span className={`text-[10px] font-medium ${getActiveClass("/delivery/updates")}`}>Updates</span>
+
+          {TabLabel(isActive("/delivery/updates"), "Updates")}
         </button>
       </div>
     </div>
   )
 }
-

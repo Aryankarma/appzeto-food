@@ -155,6 +155,14 @@ export const useProgressStore = create(
         return state.dailyData[dateKey] || { earnings: 0, trips: 0, timeOnOrders: 0 }
       },
 
+      // Check if data exists for a specific date
+      hasDateData: (date) => {
+        const state = get()
+        const dateKey = typeof date === 'string' ? date : 
+          `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+        return !!state.dailyData[dateKey]
+      },
+
       // Reset today's progress (useful for new day)
       resetTodayProgress: () => {
         const todayKey = getTodayKey()

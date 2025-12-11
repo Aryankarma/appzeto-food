@@ -25,6 +25,7 @@ import {
   TargetIcon,
 } from "lucide-react"
 import BottomPopup from "../components/BottomPopup"
+import FeedNavbar from "../components/FeedNavbar"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useGigStore } from "../store/gigStore"
@@ -201,14 +202,22 @@ export default function DeliveryHome() {
   const progressPercentage = Math.min((loginHours / minimumHours) * 100, 100)
 
   // Get today's progress from store
-  const { getTodayProgress } = useProgressStore()
+  const { getTodayProgress, getDateData, hasDateData } = useProgressStore()
   const todayProgress = getTodayProgress()
+  
+  // Check if store has data for today
+  const hasStoreDataForToday = hasDateData(today)
+  const todayData = hasStoreDataForToday ? getDateData(today) : null
 
-  // Calculate today's earnings (use store value if available, otherwise calculate)
+  // Calculate today's earnings (use store value if exists, otherwise calculate, but don't show 0 if no data)
   const calculatedEarnings = calculatePeriodEarnings(walletState, 'today')
-  const todayEarnings = todayProgress.earnings > 0 ? todayProgress.earnings : calculatedEarnings
+  const todayEarnings = hasStoreDataForToday && todayData && todayData.earnings > 0 
+    ? todayData.earnings 
+    : calculatedEarnings > 0 
+    ? calculatedEarnings 
+    : null
 
-  // Calculate today's trips (use store value if available, otherwise calculate)
+  // Calculate today's trips (use store value if exists, otherwise calculate, but don't show 0 if no data)
   const allOrders = getAllDeliveryOrders()
   const calculatedTrips = allOrders.filter(order => {
     const orderId = order.orderId || order.id
@@ -219,16 +228,24 @@ export default function DeliveryHome() {
     orderDate.setHours(0, 0, 0, 0)
     return orderDate.getTime() === today.getTime()
   }).length
-  const todayTrips = todayProgress.trips > 0 ? todayProgress.trips : calculatedTrips
+  const todayTrips = hasStoreDataForToday && todayData && todayData.trips > 0 
+    ? todayData.trips 
+    : calculatedTrips > 0 
+    ? calculatedTrips 
+    : null
 
   // Calculate today's gigs count
   const todayGigsCount = bookedGigs.filter(gig => gig.date === todayDateKey).length
 
-  // Calculate total hours worked today (use store value if available, otherwise calculate)
+  // Calculate total hours worked today (use store value if exists, otherwise calculate, but don't show 0 if no data)
   const calculatedHours = bookedGigs
     .filter(gig => gig.date === todayDateKey)
     .reduce((total, gig) => total + (gig.totalHours || 0), 0)
-  const todayHoursWorked = todayProgress.timeOnOrders > 0 ? todayProgress.timeOnOrders : calculatedHours
+  const todayHoursWorked = hasStoreDataForToday && todayData && todayData.timeOnOrders > 0 
+    ? todayData.timeOnOrders 
+    : calculatedHours > 0 
+    ? calculatedHours 
+    : null
 
   const formatHours = (hours) => {
     const h = Math.floor(hours)
@@ -1284,97 +1301,12 @@ export default function DeliveryHome() {
   return (
     <div className="min-h-screen bg-[#f6e9dc] overflow-x-hidden">
       {/* Top Navigation Bar */}
-      <div className="bg-white px-4 py-3 flex items-center justify-between sticky top-0 z-50 border-b border-gray-200">
-        {/* Online/Offline Toggle Switch */}
-        <div className="relative" style={{ zIndex: 100 }}>
-          <button
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              handleToggleOnline()
-            }}
-            onTouchStart={(e) => {
-              e.stopPropagation()
-            }}
-            className="focus:outline-none relative cursor-pointer"
-            type="button"
-            style={{
-              pointerEvents: 'auto',
-              zIndex: 100,
-              WebkitTapHighlightColor: 'transparent'
-            }}
-          >
-            <div className={`relative w-20 h-8 rounded-full transition-colors duration-300 ${isOnline ? "bg-green-500" : "bg-gray-400"
-              }`}>
-              {/* Label inside switch - positioned based on state, visible when handle is not covering */}
-              <span
-                className={`text-[11px] font-bold text-white absolute top-1/2 -translate-y-1/2 whitespace-nowrap transition-all duration-300 ${isOnline ? "left-2" : "right-2"
-                  }`}
-                style={{
-                  opacity: 1,
-                  zIndex: 2,
-                  pointerEvents: 'none'
-                }}
-              >
-                {isOnline ? "Online" : "Offline"}
-              </span>
-
-              {/* Toggle handle */}
-              <motion.div
-                className="absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg"
-                animate={{
-                  x: isOnline ? 48 : 2
-                }}
-                transition={{
-                  type: "spring",
-                  stiffness: 500,
-                  damping: 30
-                }}
-                style={{
-                  pointerEvents: 'none',
-                  zIndex: 10
-                }}
-              />
-            </div>
-          </button>
-        </div>
-
-        {/* Right Icons */}
-        <div className="flex items-center gap-3">
-          {/* Emergency Icon */}
-          <button
-            onClick={() => setShowEmergencyPopup(true)}
-            className="w-10 h-10 rounded-full bg-gray-200  flex items-center justify-center hover:bg-red-600 transition-colors relative"
-          >
-            <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </button>
-
-          {/* Help/Question Mark Icon */}
-          <button
-            onClick={() => setShowHelpPopup(true)}
-            className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300 transition-colors"
-          >
-            <HelpCircle className="w-5 h-5 text-gray-700" />
-          </button>
-
-          {/* Profile Picture */}
-          <button
-            onClick={() => navigate("/delivery/profile")}
-            className="w-9 h-9 rounded-full overflow-hidden ring-2 ring-gray-300"
-          >
-            <img
-              src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"
-              alt="Profile"
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.target.src = "https://ui-avatars.com/api/?name=User&background=ff8100&color=fff&size=40"
-              }}
-            />
-          </button>
-        </div>
-      </div>
+      <FeedNavbar
+        isOnline={isOnline}
+        onToggleOnline={handleToggleOnline}
+        onEmergencyClick={() => setShowEmergencyPopup(true)}
+        onHelpClick={() => setShowHelpPopup(true)}
+      />
 
       {/* Carousel */}
       <div
@@ -1979,12 +1911,12 @@ export default function DeliveryHome() {
                     onClick={() => navigate("/delivery/earnings")}
                     className="flex flex-col items-start gap-1 hover:opacity-80 transition-opacity"
                   >
-                    <span className="text-gray-900 text-2xl font-bold">
-                      {formatCurrency(todayEarnings)}
+                    <span className={`text-2xl font-bold ${todayEarnings !== null ? 'text-gray-900' : 'text-gray-400'}`}>
+                      {todayEarnings !== null ? formatCurrency(todayEarnings) : '-'}
                     </span>
-                    <div className="flex items-center gap-1 text-gray-600 text-sm">
+                    <div className={`flex items-center gap-1 text-sm ${todayEarnings !== null ? 'text-gray-600' : 'text-gray-400'}`}>
                       <span>Earnings</span>
-                      <ArrowRight className="w-4 h-4" />
+                      {todayEarnings !== null && <ArrowRight className="w-4 h-4" />}
                     </div>
                   </button>
 
@@ -1993,12 +1925,12 @@ export default function DeliveryHome() {
                     onClick={() => navigate("/delivery/trip-history")}
                     className="flex flex-col items-end gap-1 hover:opacity-80 transition-opacity"
                   >
-                    <span className="text-gray-900 text-2xl font-bold">
-                      {todayTrips}
+                    <span className={`text-2xl font-bold ${todayTrips !== null ? 'text-gray-900' : 'text-gray-400'}`}>
+                      {todayTrips !== null ? todayTrips : '-'}
                     </span>
-                    <div className="flex items-center gap-1 text-gray-600 text-sm">
+                    <div className={`flex items-center gap-1 text-sm ${todayTrips !== null ? 'text-gray-600' : 'text-gray-400'}`}>
                       <span>Trips</span>
-                      <ArrowRight className="w-4 h-4" />
+                      {todayTrips !== null && <ArrowRight className="w-4 h-4" />}
                     </div>
                   </button>
 
@@ -2007,12 +1939,12 @@ export default function DeliveryHome() {
                     onClick={() => navigate("/delivery/time-on-orders")}
                     className="flex flex-col items-start gap-1 hover:opacity-80 transition-opacity"
                   >
-                    <span className="text-gray-900 text-2xl font-bold">
-                      {formatHours(todayHoursWorked)} hrs
+                    <span className={`text-2xl font-bold ${todayHoursWorked !== null ? 'text-gray-900' : 'text-gray-400'}`}>
+                      {todayHoursWorked !== null ? `${formatHours(todayHoursWorked)} hrs` : '-'}
                     </span>
-                    <div className="flex items-center gap-1 text-gray-600 text-sm">
+                    <div className={`flex items-center gap-1 text-sm ${todayHoursWorked !== null ? 'text-gray-600' : 'text-gray-400'}`}>
                       <span>Time on orders</span>
-                      <ArrowRight className="w-4 h-4" />
+                      {todayHoursWorked !== null && <ArrowRight className="w-4 h-4" />}
                     </div>
                   </button>
 
@@ -2021,12 +1953,12 @@ export default function DeliveryHome() {
                     onClick={() => navigate("/delivery/gig")}
                     className="flex flex-col items-end gap-1 hover:opacity-80 transition-opacity"
                   >
-                    <span className="text-gray-900 text-2xl font-bold">
-                      {todayGigsCount} Gigs
+                    <span className={`text-2xl font-bold ${todayGigsCount > 0 ? 'text-gray-900' : 'text-gray-400'}`}>
+                      {todayGigsCount > 0 ? `${todayGigsCount} Gigs` : '-'}
                     </span>
-                    <div className="flex items-center gap-1 text-gray-600 text-sm">
+                    <div className={`flex items-center gap-1 text-sm ${todayGigsCount > 0 ? 'text-gray-600' : 'text-gray-400'}`}>
                       <span>History</span>
-                      <ArrowRight className="w-4 h-4" />
+                      {todayGigsCount > 0 && <ArrowRight className="w-4 h-4" />}
                     </div>
                   </button>
                 </div>

@@ -13,7 +13,7 @@ import DeliveryWelcome from "../pages/auth/Welcome"
 import DeliveryHome from "../pages/DeliveryHome"
 import Notifications from "../pages/Notifications"
 import MyOrders from "../pages/MyOrders"
-import OrderRequestPage from "../pages/OrderRequestPage"
+import PocketPage from "../pages/PocketPage"
 import GigBooking from "../pages/GigBooking"
 import PickupDirectionsPage from "../pages/PickupDirectionsPage"
 import ProfilePage from "../pages/ProfilePage"
@@ -41,6 +41,7 @@ import YourReferrals from "../pages/YourReferrals"
 import Earnings from "../pages/Earnings"
 import TripHistory from "../pages/TripHistory"
 import TimeOnOrders from "../pages/TimeOnOrders"
+import PocketBalancePage from "../pages/PocketBalance"
 
 export default function DeliveryRouter() {
   return (
@@ -87,7 +88,7 @@ export default function DeliveryRouter() {
         element={
           <ProtectedRoute>
             <DeliveryLayout showGig={true} showPocket={true}>
-              <OrderRequestPage />
+              <PocketPage />
             </DeliveryLayout>
           </ProtectedRoute>
         }
@@ -240,6 +241,16 @@ export default function DeliveryRouter() {
           </ProtectedRoute>
         }
         path="/deduction-statement"
+      />
+      <Route
+        element={
+          <ProtectedRoute>
+            <DeliveryLayout>
+              <PocketBalancePage />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/pocket-balance"
       />
       <Route
         element={

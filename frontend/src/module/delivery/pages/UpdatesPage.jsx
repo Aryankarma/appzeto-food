@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useGigStore } from "../store/gigStore"
+import FeedNavbar from "../components/FeedNavbar"
 
 // Mock stories data
 const stories = [
@@ -184,43 +185,13 @@ export default function UpdatesPage() {
   return (
     <div className="min-h-screen bg-[#f6e9dc]  text-gray-900 overflow-x-hidden pb-24">
       {/* Top Bar */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between rounded-b-3xl md:rounded-b-none sticky top-0 z-50">
-        {/* Online Toggle */}
-        <button
-          onClick={handleToggleOnline}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
-            isOnline 
-              ? "bg-green-100 border border-green-500 text-green-700" 
-              : "bg-gray-100 border border-gray-300 text-gray-600"
-          }`}
-        >
-          <div className={`w-2 h-2 rounded-full ${isOnline ? "bg-green-500" : "bg-gray-500"}`} />
-          <span className="text-sm font-medium">{isOnline ? "Online" : "Offline"}</span>
-        </button>
-
-        {/* Right Icons */}
-        <div className="flex items-center gap-3">
-          <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <Sun className="w-5 h-5 text-orange-500" />
-          </button>
-          <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <HelpCircle className="w-5 h-5 text-gray-600" />
-          </button>
-          <button 
-            onClick={() => navigate("/delivery/profile")}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <img 
-              src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face"
-              alt="Profile"
-              className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
-              onError={(e) => {
-                e.target.src = "https://ui-avatars.com/api/?name=User&background=ff8100&color=fff&size=32"
-              }}
-            />
-          </button>
-        </div>
-      </div>
+      <FeedNavbar
+        isOnline={isOnline}
+        onToggleOnline={handleToggleOnline}
+        onEmergencyClick={() => {}}
+        onHelpClick={() => {}}
+        className=""
+      />
 
       {/* Stories Section */}
       <div className="px-4 py-4 overflow-x-auto scrollbar-hide bg-transparent">
