@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
@@ -10,7 +10,13 @@ import {
   Trophy,
   X,
   ChevronRight,
-  Info
+  ChevronLeft,
+  Info,
+  ArrowLeft,
+  ThumbsUp,
+  ThumbsDown,
+  Eye,
+  Play
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useGigStore } from "../store/gigStore"
@@ -28,8 +34,8 @@ const stories = [
     ]
   },
   {
-    id: "zomato",
-    title: "Zomato",
+    id: "Appzeto",
+    title: "Appzeto",
     image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=100&h=100&fit=crop",
     content: [
       { type: "image", url: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&h=1200&fit=crop" },
@@ -54,75 +60,52 @@ const stories = [
   }
 ]
 
-// Mock notifications data
-const notifications = [
+// Mock videos data
+const videos = [
   {
     id: 1,
-    type: "ad",
-    title: "Heavy Winter Jacket",
-    description: "Get yours today at a discounted rate",
-    image: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&h=600&fit=crop",
-    date: "Today"
+    title: "Summer Mela Champions",
+    thumbnail: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=600&fit=crop",
+    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    views: 12500,
+    likes: 890,
+    dislikes: 12
   },
   {
     id: 2,
-    type: "ad",
-    title: "Early Winter Deal on Heavy Winter",
-    description: "Special offers just for you",
-    image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400&h=600&fit=crop",
-    date: "Today"
+    title: "Delivery Excellence",
+    thumbnail: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&h=600&fit=crop",
+    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+    views: 9800,
+    likes: 650,
+    dislikes: 8
   },
   {
     id: 3,
-    type: "update",
-    title: "New Feature Available",
-    description: "Check out the latest updates in the app",
-    date: "Today"
+    title: "Team Spotlight",
+    thumbnail: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400&h=600&fit=crop",
+    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    views: 15200,
+    likes: 1200,
+    dislikes: 15
   },
   {
     id: 4,
-    type: "ad",
-    title: "Special Weekend Offer",
-    description: "50% off on all orders this weekend",
-    image: "https://images.unsplash.com/photo-1562967914-608f82629710?w=400&h=600&fit=crop",
-    date: "Today"
+    title: "Success Stories",
+    thumbnail: "https://images.unsplash.com/photo-1562967914-608f82629710?w=400&h=600&fit=crop",
+    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+    views: 11200,
+    likes: 980,
+    dislikes: 10
   },
   {
     id: 5,
-    type: "update",
-    title: "Order Completed Successfully",
-    description: "Your order #12345 has been delivered",
-    date: "2 hours ago"
-  },
-  {
-    id: 6,
-    type: "ad",
-    title: "New Restaurant Added",
-    description: "Check out the latest restaurant in your area",
-    image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=600&fit=crop",
-    date: "Yesterday"
-  },
-  {
-    id: 7,
-    type: "update",
-    title: "Payment Received",
-    description: "₹500 has been credited to your wallet",
-    date: "Yesterday"
-  },
-  {
-    id: 8,
-    type: "ad",
-    title: "Flash Sale Alert",
-    description: "Limited time offer - Don't miss out!",
-    image: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=400&h=600&fit=crop",
-    date: "2 days ago"
-  },
-  {
-    id: 9,
-    type: "update",
-    title: "Rating Reminder",
-    description: "Rate your recent delivery experience",
-    date: "2 days ago"
+    title: "Customer First",
+    thumbnail: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=600&fit=crop",
+    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+    views: 8700,
+    likes: 720,
+    dislikes: 5
   }
 ]
 
@@ -130,6 +113,16 @@ export default function UpdatesPage() {
   const navigate = useNavigate()
   const [selectedStory, setSelectedStory] = useState(null)
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0)
+  const [selectedVideo, setSelectedVideo] = useState(null)
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
+  const [videoLikes, setVideoLikes] = useState({})
+  const [videoDislikes, setVideoDislikes] = useState({})
+  const [userReactions, setUserReactions] = useState({})
+  const videoRef = useRef(null)
+  const carouselRef1 = useRef(null)
+  const carouselRef2 = useRef(null)
+  const touchStartY = useRef(0)
+  const touchEndY = useRef(0)
   
   const {
     isOnline,
@@ -181,6 +174,174 @@ export default function UpdatesPage() {
       }
     }
   }
+
+  // Video carousel handlers - Separate state for each carousel
+  const [currentCarouselIndex1, setCurrentCarouselIndex1] = useState(0)
+  const [currentCarouselIndex2, setCurrentCarouselIndex2] = useState(0)
+
+  // First carousel handlers
+  const handleCarouselScroll1 = () => {
+    if (carouselRef1.current) {
+      const scrollLeft = carouselRef1.current.scrollLeft
+      const cardWidth = 320 // width of card + gap
+      const index = Math.round(scrollLeft / cardWidth)
+      setCurrentCarouselIndex1(index)
+    }
+  }
+
+  const goToCarouselSlide1 = (index) => {
+    if (carouselRef1.current) {
+      const cardWidth = 320
+      carouselRef1.current.scrollTo({
+        left: index * cardWidth,
+        behavior: "smooth"
+      })
+      setCurrentCarouselIndex1(index)
+    }
+  }
+
+  // Second carousel handlers
+  const handleCarouselScroll2 = () => {
+    if (carouselRef2.current) {
+      const scrollLeft = carouselRef2.current.scrollLeft
+      const cardWidth = 320 // width of card + gap
+      const index = Math.round(scrollLeft / cardWidth)
+      setCurrentCarouselIndex2(index)
+    }
+  }
+
+  const goToCarouselSlide2 = (index) => {
+    if (carouselRef2.current) {
+      const cardWidth = 320
+      carouselRef2.current.scrollTo({
+        left: index * cardWidth,
+        behavior: "smooth"
+      })
+      setCurrentCarouselIndex2(index)
+    }
+  }
+
+  const handleVideoClick = (video, index) => {
+    setSelectedVideo(video)
+    setCurrentVideoIndex(index)
+    // Initialize likes/dislikes if not set
+    if (!videoLikes[video.id]) {
+      setVideoLikes(prev => ({ ...prev, [video.id]: video.likes }))
+      setVideoDislikes(prev => ({ ...prev, [video.id]: video.dislikes }))
+    }
+  }
+
+  const handleLike = (videoId) => {
+    const currentReaction = userReactions[videoId]
+    if (currentReaction === 'like') {
+      // Remove like
+      setVideoLikes(prev => ({ ...prev, [videoId]: prev[videoId] - 1 }))
+      setUserReactions(prev => {
+        const newReactions = { ...prev }
+        delete newReactions[videoId]
+        return newReactions
+      })
+    } else {
+      // Add like, remove dislike if exists
+      setVideoLikes(prev => ({ ...prev, [videoId]: (prev[videoId] || 0) + 1 }))
+      if (currentReaction === 'dislike') {
+        setVideoDislikes(prev => ({ ...prev, [videoId]: prev[videoId] - 1 }))
+      }
+      setUserReactions(prev => ({ ...prev, [videoId]: 'like' }))
+    }
+  }
+
+  const handleDislike = (videoId) => {
+    const currentReaction = userReactions[videoId]
+    if (currentReaction === 'dislike') {
+      // Remove dislike
+      setVideoDislikes(prev => ({ ...prev, [videoId]: prev[videoId] - 1 }))
+      setUserReactions(prev => {
+        const newReactions = { ...prev }
+        delete newReactions[videoId]
+        return newReactions
+      })
+    } else {
+      // Add dislike, remove like if exists
+      setVideoDislikes(prev => ({ ...prev, [videoId]: (prev[videoId] || 0) + 1 }))
+      if (currentReaction === 'like') {
+        setVideoLikes(prev => ({ ...prev, [videoId]: prev[videoId] - 1 }))
+      }
+      setUserReactions(prev => ({ ...prev, [videoId]: 'dislike' }))
+    }
+  }
+
+  const handleCloseVideo = () => {
+    if (videoRef.current) {
+      videoRef.current.pause()
+    }
+    setSelectedVideo(null)
+  }
+
+  const handleNextVideo = () => {
+    if (currentVideoIndex < videos.length - 1) {
+      const nextIndex = currentVideoIndex + 1
+      setCurrentVideoIndex(nextIndex)
+      setSelectedVideo(videos[nextIndex])
+      if (videoRef.current) {
+        videoRef.current.load()
+        videoRef.current.play()
+      }
+    }
+  }
+
+  const handlePrevVideo = () => {
+    if (currentVideoIndex > 0) {
+      const prevIndex = currentVideoIndex - 1
+      setCurrentVideoIndex(prevIndex)
+      setSelectedVideo(videos[prevIndex])
+      if (videoRef.current) {
+        videoRef.current.load()
+        videoRef.current.play()
+      }
+    }
+  }
+
+  // Touch handlers for vertical swipe
+  const handleTouchStart = (e) => {
+    touchStartY.current = e.touches[0].clientY
+  }
+
+  const handleTouchMove = (e) => {
+    touchEndY.current = e.touches[0].clientY
+  }
+
+  const handleTouchEnd = () => {
+    if (!touchStartY.current || !touchEndY.current) return
+    
+    const distance = touchStartY.current - touchEndY.current
+    const minSwipeDistance = 50
+
+    if (Math.abs(distance) > minSwipeDistance) {
+      if (distance > 0) {
+        // Swiped up - next video
+        handleNextVideo()
+      } else {
+        // Swiped down - previous video
+        handlePrevVideo()
+      }
+    }
+
+    touchStartY.current = 0
+    touchEndY.current = 0
+  }
+
+  // Initialize video likes/dislikes
+  useEffect(() => {
+    const initialLikes = {}
+    const initialDislikes = {}
+    videos.forEach(video => {
+      initialLikes[video.id] = video.likes
+      initialDislikes[video.id] = video.dislikes
+    })
+    setVideoLikes(initialLikes)
+    setVideoDislikes(initialDislikes)
+  }, [])
 
   return (
     <div className="min-h-screen bg-white  text-gray-900 overflow-x-hidden pb-24">
@@ -260,66 +421,149 @@ export default function UpdatesPage() {
         </Button>
       </div>
 
-      {/* Notifications Section Header */}
+      <div className="bg-black text-white py-6">
       <div className="px-4 mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-bold text-gray-900">Notifications</h2>
-        <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 transition-colors">
-          <span>See all</span>
+          <div className="flex items-center gap-2">
+            <span className="text-white font-semibold font-medium">Cares for you</span>
+          </div>
+          <button className="flex items-center gap-1 text-sm text-white hover:text-gray-300 transition-colors">
+            <span>View all</span>
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Notification Cards */}
-      <div className="px-4 space-y-4 pb-6">
-        {notifications.map((notification) => (
-          <motion.div
-            key={notification.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+        {/* Video Carousel */}
+        <div className="relative">
+          {/* Carousel Container */}
+          <div
+            ref={carouselRef1}
+            onScroll={handleCarouselScroll1}
+            className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth px-4"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
-            {notification.type === "ad" && notification.image ? (
-              <div className="flex">
-                {/* Text Content */}
-                <div className="flex-1 p-4 flex flex-col justify-between">
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">
-                      {notification.title}
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-4">
-                      {notification.description}
-                    </p>
+            {videos.map((video) => (
+              <motion.div
+                key={video.id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex-shrink-0 w-[280px] cursor-pointer"
+                onClick={() => handleVideoClick(video, videos.findIndex(v => v.id === video.id))}
+              >
+                <div className="relative rounded-lg overflow-hidden bg-gray-900">
+                  {/* Thumbnail - Horizontal */}
+                  <div className="relative aspect-video">
+                    <img
+                      src={video.thumbnail}
+                      alt={video.title}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.src = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=600&fit=crop"
+                      }}
+                    />
+                    {/* Play Button Overlay */}
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                      <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                        <Play className="w-8 h-8 text-white ml-1" fill="white" />
+                      </div>
+                    </div>
+                    {/* Title Overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                      <h3 className="text-white font-semibold text-sm">{video.title}</h3>
+                    </div>
                   </div>
-                  <button className="self-start px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-1">
-                    <Info className="w-3 h-3" />
-                    Info
-                  </button>
                 </div>
-                {/* Image */}
-                <div className="w-32 h-40 shrink-0 relative">
-                  <img 
-                    src={notification.image}
-                    alt={notification.title}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.src = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=600&fit=crop"
-                    }}
-                  />
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Dots Indicator - Center Below */}
+          <div className="flex justify-center gap-2 mt-4">
+            {videos.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => goToCarouselSlide1(index)}
+                className={`w-2 h-2 rounded-full transition-all ${
+                  index === currentCarouselIndex1
+                    ? "bg-white w-6"
+                    : "bg-white/40 hover:bg-white/60"
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="text-black py-6">
+        {/* Header */}
+      <div className="px-4 mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-black font-semibold font-medium">Videos for you</span>
+          </div>
+          <button className="flex items-center gap-1 text-sm text-black hover:text-gray-300 transition-colors">
+            <span>View all</span>
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+
+        {/* Video Carousel */}
+        <div className="relative">
+          {/* Carousel Container */}
+          <div
+            ref={carouselRef2}
+            onScroll={handleCarouselScroll2}
+            className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth px-4"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            {videos.map((video) => (
+              <motion.div
+                key={video.id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex-shrink-0 w-[280px] cursor-pointer"
+                onClick={() => handleVideoClick(video, videos.findIndex(v => v.id === video.id))}
+              >
+                <div className="relative rounded-lg overflow-hidden bg-gray-900">
+                  {/* Thumbnail - Horizontal */}
+                  <div className="relative aspect-video">
+                    <img
+                      src={video.thumbnail}
+                      alt={video.title}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.src = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=600&fit=crop"
+                      }}
+                    />
+                    {/* Play Button Overlay */}
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                      <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                        <Play className="w-8 h-8 text-white ml-1" fill="white" />
+                      </div>
+                    </div>
+                    {/* Title Overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                      <h3 className="text-white font-semibold text-sm">{video.title}</h3>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="p-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                  {notification.title}
-                </h3>
-                <p className="text-sm text-gray-600 mb-2">
-                  {notification.description}
-                </p>
-                <p className="text-xs text-gray-500">{notification.date}</p>
-              </div>
-            )}
-          </motion.div>
-        ))}
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Dots Indicator - Center Below */}
+          <div className="flex justify-center gap-2 mt-4">
+            {videos.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => goToCarouselSlide2(index)}
+                className={`w-2 h-2 rounded-full transition-all ${
+                  index === currentCarouselIndex2
+                    ? "bg-black w-6"
+                    : "bg-black/40 hover:bg-black/60"
+                }`}
+              />
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Story Viewer Modal */}
@@ -395,6 +639,125 @@ export default function UpdatesPage() {
                   ))}
                 </div>
               )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Video Player Modal */}
+      <AnimatePresence>
+        {selectedVideo && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black z-[60]"
+            />
+            
+            {/* Video Player */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[60] flex items-center justify-center bg-black"
+            >
+              {/* Back Button */}
+              <button
+                onClick={handleCloseVideo}
+                className="absolute top-4 left-4 z-10 p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
+              >
+                <ArrowLeft className="w-6 h-6 text-white" />
+              </button>
+
+              {/* Video Container - Fullscreen Vertical */}
+              <div 
+                className="w-full h-full flex items-center justify-center"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
+                <div className="relative w-full h-full flex flex-col items-center justify-center">
+                  {/* Video Element - Fullscreen Vertical */}
+                  <video
+                    ref={videoRef}
+                    src={selectedVideo.videoUrl}
+                    className="w-full h-full object-contain"
+                    controls
+                    autoPlay
+                    playsInline
+                    onError={(e) => {
+                      console.error("Video load error:", e)
+                    }}
+                  />
+
+                  {/* Video Info Overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-6">
+                    <h3 className="text-white font-bold text-lg mb-4">{selectedVideo.title}</h3>
+                    
+                    {/* Actions Bar - Bottom Right */}
+                    <div className="flex items-center justify-end gap-4">
+                      {/* Like Button */}
+                      <button
+                        onClick={() => handleLike(selectedVideo.id)}
+                        className={`flex flex-col items-center gap-1 transition-colors ${
+                          userReactions[selectedVideo.id] === 'like'
+                            ? 'text-blue-500'
+                            : 'text-white hover:text-blue-400'
+                        }`}
+                      >
+                        <ThumbsUp className="w-6 h-6" fill={userReactions[selectedVideo.id] === 'like' ? 'currentColor' : 'none'} />
+                        <span className="text-xs font-medium">
+                          {videoLikes[selectedVideo.id] || selectedVideo.likes}
+                        </span>
+                      </button>
+
+                      {/* Dislike Button */}
+                      <button
+                        onClick={() => handleDislike(selectedVideo.id)}
+                        className={`flex flex-col items-center gap-1 transition-colors ${
+                          userReactions[selectedVideo.id] === 'dislike'
+                            ? 'text-red-500'
+                            : 'text-white hover:text-red-400'
+                        }`}
+                      >
+                        <ThumbsDown className="w-6 h-6" fill={userReactions[selectedVideo.id] === 'dislike' ? 'currentColor' : 'none'} />
+                        <span className="text-xs font-medium">
+                          {videoDislikes[selectedVideo.id] || selectedVideo.dislikes}
+                        </span>
+                      </button>
+
+                      {/* Views */}
+                      <div className="flex items-center gap-2 text-white">
+                        <Eye className="w-5 h-5" />
+                        <span className="text-sm font-medium">
+                          {selectedVideo.views.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Navigation Arrows */}
+                  {currentVideoIndex > 0 && (
+                    <button
+                      onClick={handlePrevVideo}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
+                    >
+                      <ChevronLeft className="w-6 h-6 text-white" />
+                    </button>
+                  )}
+                  
+                  {currentVideoIndex < videos.length - 1 && (
+                    <button
+                      onClick={handleNextVideo}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
+                    >
+                      <ChevronRight className="w-6 h-6 text-white" />
+                    </button>
+                  )}
+                </div>
+              </div>
             </motion.div>
           </>
         )}
