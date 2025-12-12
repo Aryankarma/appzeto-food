@@ -280,7 +280,7 @@ export default function MyOrders() {
       />
 
       {/* Top Carousel */}
-      <div className="relative mb-6">
+      <div className="relative my-6">
         <div className="overflow-hidden">
           <div 
             className="flex transition-transform duration-500 ease-in-out"
@@ -573,43 +573,46 @@ export default function MyOrders() {
                   {/* Video Info Overlay */}
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-6">
                     <h3 className="text-white font-bold text-lg mb-4">{selectedVideo.title}</h3>
-                    
-                    {/* Actions Bar - Bottom Right */}
-                    <div className="flex items-center justify-end gap-4">
-                      <button
-                        onClick={() => handleLike(selectedVideo.id)}
-                        className={`flex flex-col items-center gap-1 transition-colors ${
-                          userReactions[selectedVideo.id] === 'like'
-                            ? 'text-blue-500'
-                            : 'text-white hover:text-blue-400'
-                        }`}
-                      >
-                        <ThumbsUp className="w-6 h-6" fill={userReactions[selectedVideo.id] === 'like' ? 'currentColor' : 'none'} />
-                        <span className="text-xs font-medium">
-                          {videoLikes[selectedVideo.id] || selectedVideo.likes || 0}
-                        </span>
-                      </button>
+                  </div>
 
-                      <button
-                        onClick={() => handleDislike(selectedVideo.id)}
-                        className={`flex flex-col items-center gap-1 transition-colors ${
-                          userReactions[selectedVideo.id] === 'dislike'
-                            ? 'text-red-500'
-                            : 'text-white hover:text-red-400'
-                        }`}
-                      >
-                        <ThumbsDown className="w-6 h-6" fill={userReactions[selectedVideo.id] === 'dislike' ? 'currentColor' : 'none'} />
-                        <span className="text-xs font-medium">
-                          {videoDislikes[selectedVideo.id] || selectedVideo.dislikes || 0}
-                        </span>
-                      </button>
+                  {/* Actions Bar - Bottom Right Column */}
+                  <div className="absolute bottom-6 right-6 flex flex-col items-center gap-4">
+                    {/* Like Button */}
+                    <button
+                      onClick={() => handleLike(selectedVideo.id)}
+                      className={`flex flex-col items-center gap-1 transition-colors ${
+                        userReactions[selectedVideo.id] === 'like'
+                          ? 'text-blue-500'
+                          : 'text-white hover:text-blue-400'
+                      }`}
+                    >
+                      <ThumbsUp className="w-6 h-6" fill={userReactions[selectedVideo.id] === 'like' ? 'currentColor' : 'none'} />
+                      <span className="text-xs font-medium">
+                        {videoLikes[selectedVideo.id] || selectedVideo.likes || 0}
+                      </span>
+                    </button>
 
-                      <div className="flex items-center gap-2 text-white">
-                        <Eye className="w-5 h-5" />
-                        <span className="text-sm font-medium">
-                          {selectedVideo.views?.toLocaleString() || 0}
-                        </span>
-                      </div>
+                    {/* Dislike Button */}
+                    <button
+                      onClick={() => handleDislike(selectedVideo.id)}
+                      className={`flex flex-col items-center gap-1 transition-colors ${
+                        userReactions[selectedVideo.id] === 'dislike'
+                          ? 'text-red-500'
+                          : 'text-white hover:text-red-400'
+                      }`}
+                    >
+                      <ThumbsDown className="w-6 h-6" fill={userReactions[selectedVideo.id] === 'dislike' ? 'currentColor' : 'none'} />
+                      <span className="text-xs font-medium">
+                        {videoDislikes[selectedVideo.id] || selectedVideo.dislikes || 0}
+                      </span>
+                    </button>
+
+                    {/* Views */}
+                    <div className="flex flex-col items-center gap-1 text-white">
+                      <Eye className="w-6 h-6" />
+                      <span className="text-xs font-medium">
+                        {selectedVideo.views?.toLocaleString() || 0}
+                      </span>
                     </div>
                   </div>
                 </div>
