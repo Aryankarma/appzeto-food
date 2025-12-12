@@ -37,9 +37,8 @@ export default function DeliveryLayout({
   const showBottomNav = [
     '/delivery',
     '/delivery/requests',
-    '/delivery/gig',
-    '/delivery/orders',
-    '/delivery/updates'
+    '/delivery/trip-history',
+    '/delivery/profile'
   ].includes(location.pathname)
 
   return (

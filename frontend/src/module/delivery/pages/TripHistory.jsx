@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { ArrowLeft, ChevronDown } from "lucide-react"
 import { useProgressStore } from "../store/progressStore"
+import FeedNavbar from "../components/FeedNavbar"
 
 export default function TripHistory() {
   const navigate = useNavigate()
