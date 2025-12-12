@@ -4,37 +4,19 @@ import { useNavigate, useLocation } from "react-router-dom"
 import {
   HomeIcon as HomeOutline,
   WalletIcon as WalletOutline,
-  SparklesIcon as SparklesOutline,
-  ShoppingBagIcon as BagOutline,
-  BellIcon as BellOutline,
-  UserIcon as UserOutline
+  ClockIcon as ClockOutline,
 } from "@heroicons/react/24/outline"
 
 // Heroicons Solid
 import {
   HomeIcon as HomeSolid,
   WalletIcon as WalletSolid,
-  SparklesIcon as SparklesSolid,
-  ShoppingBagIcon as BagSolid,
-  BellIcon as BellSolid,
-  UserIcon as UserSolid
+  ClockIcon as ClockSolid,
 } from "@heroicons/react/24/solid"
 
-import { getUnreadDeliveryNotificationCount } from "../utils/deliveryNotifications"
-
-export default function BottomNavigation({
-  showGig = false,
-  showPocket = false,
-  onHomeClick,
-  onGigClick,
-  requestBadgeCount
-}) {
+export default function BottomNavigation() {
   const navigate = useNavigate()
   const location = useLocation()
-
-  const unreadCount = requestBadgeCount !== undefined 
-    ? requestBadgeCount 
-    : getUnreadDeliveryNotificationCount()
 
   const isActive = (path) => {
     if (path === "/delivery") return location.pathname === "/delivery"
@@ -76,38 +58,28 @@ export default function BottomNavigation({
           {TabLabel(isActive("/delivery/requests"), "Pocket")}
         </button>
 
-        {/* Gig */}
+        {/* Trip History */}
         <button
-          onClick={() => navigate("/delivery/gig")}
+          onClick={() => navigate("/delivery/trip-history")}
           className="flex flex-col items-center gap-1 p-2"
         >
-          {TabIcon(isActive("/delivery/gig"), SparklesOutline, SparklesSolid)}
-          {TabLabel(isActive("/delivery/gig"), "Gig")}
+          {TabIcon(isActive("/delivery/trip-history"), ClockOutline, ClockSolid)}
+          {TabLabel(isActive("/delivery/trip-history "), "Trip History")}
         </button>
 
-        {/* Orders */}
+        {/* Profile */}
         <button
-          onClick={() => navigate("/delivery/orders")}
+          onClick={() => navigate("/delivery/profile")}
           className="flex flex-col items-center gap-1 p-2"
         >
-          {TabIcon(isActive("/delivery/orders"), BagOutline, BagSolid)}
-          {TabLabel(isActive("/delivery/orders"), "Bazaar")}
-        </button>
-
-        {/* Updates */}
-        <button
-          onClick={() => navigate("/delivery/updates")}
-          className="flex flex-col items-center gap-1 p-2 relative"
-        >
-          {TabIcon(isActive("/delivery/updates"), BellOutline, BellSolid)}
-          
-          {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-bold rounded-full w-3 h-3 flex items-center justify-center">
-              {unreadCount > 9 ? "9+" : unreadCount}
-            </span>
-          )}
-
-          {TabLabel(isActive("/delivery/updates"), "Updates")}
+          <img
+              src="https://i.pravatar.cc/80?img=12"
+              alt="Profile"
+            className={`w-7 h-7 rounded-full border-2 ${
+              isActive("/delivery/profile") ? "border-black" : "border-gray-300"
+            }`}
+          />
+          {TabLabel(isActive("/delivery/profile"), "Profile")}
         </button>
       </div>
     </div>
