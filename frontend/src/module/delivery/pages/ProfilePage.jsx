@@ -16,6 +16,7 @@ import {
   Headphones,
   Ticket,
   Car,
+  ChevronRight,
   IndianRupee,
   Sparkles,
   LogOut
@@ -129,70 +130,69 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 font-poppins overflow-x-hidden">
+    <div className="min-h-screen bg-gray-100 text-gray-900 font-poppins overflow-x-hidden">
       {/* Main Content */}
-      <div className="px-4 py-6 pb-24 md:pb-6">
         {/* Back Button and Profile Section */}
-        <div ref={profileRef} className="mb-6">
-          {/* Back Button */}
-          <button
-            onClick={() => navigate(-1)}
-            className="mb-6"
-          >
-            <ArrowLeft className="w-6 h-6" />
-          </button>
+        <div ref={profileRef} className="mb-0">
+          <div className="bg-white p-4 w-full shadow-sm">
+            {/* Back Button */}
+            <button
+              onClick={() => navigate(-1)}
+              className="mb-6"
+            >
+              <ArrowLeft className="w-6 h-6" />
+            </button>
 
-          {/* Profile Information */}
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <h2 className="text-2xl md:text-3xl font-bold">Manish Kumar Yadav</h2>
-                <ArrowRight className="w-5 h-5" />
+            {/* Profile Information */}
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <h2 className="text-2xl md:text-3xl font-bold">Manish Kumar Yadav</h2>
+                  <ChevronRight className="w-5 h-5" />
+                </div>
+                <p className="text-gray-600 text-sm md:text-base mb-3">FE2411651</p>
               </div>
-              <p className="text-gray-600 text-sm md:text-base mb-3">FE2411651</p>
-              <div className="inline-flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-full">
-                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                <span className="text-sm font-medium">4.7</span>
-              </div>
-            </div>
-            <div className="relative shrink-0 ml-4">
-              <img 
-                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"
-                alt="Profile"
-                className="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover"
-              />
-              <div className="absolute bottom-0 right-0 bg-gray-100 rounded-full p-2 border-2 border-white">
-                <Briefcase className="w-4 h-4" />
+              <div className="relative shrink-0 ml-4">
+                <img 
+                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"
+                  alt="Profile"
+                  className="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover"
+                />
+                <div className="absolute bottom-0 right-0 bg-white rounded-full p-2 border-2 border-white">
+                  <Briefcase className="w-4 h-4" />
+                </div>
               </div>
             </div>
           </div>
         </div>
+      
+      <div className="px-4 py-6 pb-24 md:pb-6">
 
         {/* Navigation Buttons */}
         <div ref={navButtonsRef} className="grid grid-cols-3 gap-3 mb-6">
           <button
             onClick={() => navigate("/delivery/gig?tab=history")}
-            className="bg-gray-100 rounded-lg p-4 flex flex-col items-center gap-2 hover:bg-gray-200 transition-colors"
+            className="bg-white rounded-lg p-4 flex flex-col items-center gap-2 hover:bg-gray-200 transition-colors"
           >
-            <div className="bg-white rounded-lg p-2">
+            <div className="bg-gray-100 rounded-lg p-2">
               <span className="text-xl font-bold">g</span>
             </div>
             <span className="text-xs font-medium">Gigs history</span>
           </button>
           <button
             onClick={() => navigate("/delivery/orders")}
-            className="bg-gray-100 rounded-lg p-4 flex flex-col items-center gap-2 hover:bg-gray-200 transition-colors"
+            className="bg-white rounded-lg p-4 flex flex-col items-center gap-2 hover:bg-gray-200 transition-colors"
           >
-            <div className="bg-white rounded-lg p-2">
+            <div className="bg-gray-100 rounded-lg p-2">
               <Bike className="w-5 h-5" />
             </div>
             <span className="text-xs font-medium">Trips history</span>
           </button>
           <button
             onClick={() => {}}
-            className="bg-gray-100 rounded-lg p-4 flex flex-col items-center gap-2 hover:bg-gray-200 transition-colors"
+            className="bg-white rounded-lg p-4 flex flex-col items-center gap-2 hover:bg-gray-200 transition-colors"
           >
-            <div className="bg-white rounded-lg p-2">
+            <div className="bg-gray-100 rounded-lg p-2">
               <Tag className="w-5 h-5" />
             </div>
             <span className="text-xs font-medium">Your offers</span>
@@ -202,7 +202,7 @@ export default function ProfilePage() {
         {/* Sections */}
         <div ref={sectionsRef} className="space-y-4">
           {/* Your fleet coach */}
-          <Card className="py-0 bg-gray-100 border-0 shadow-none">
+          <Card className="py-0 bg-white border-0 shadow-none">
             <CardContent className="p-4 flex items-center justify-between">
               <div>
                 <h3 className="text-base font-medium mb-1">Your fleet coach</h3>
@@ -217,7 +217,7 @@ export default function ProfilePage() {
           </Card>
 
           {/* Referral bonus */}
-          <Card className="py-0 bg-gray-100 border-0 shadow-none">
+          <Card className="py-0 bg-white border-0 shadow-none">
             <CardContent className="p-4 flex items-center justify-between">
               <div>
                 <h3 className="text-base font-medium mb-1">₹2000 referral bonus</h3>
@@ -235,7 +235,7 @@ export default function ProfilePage() {
             <div className="space-y-0">
               <Card 
                 onClick={() => {}}
-                className="bg-gray-100 py-0 border-0 shadow-none rounded-none first:rounded-t-lg last:rounded-b-lg cursor-pointer hover:bg-gray-200 transition-colors"
+                className="bg-white py-0 border-0 shadow-none rounded-none first:rounded-t-lg last:rounded-b-lg cursor-pointer hover:bg-gray-200 transition-colors"
               >
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -248,7 +248,7 @@ export default function ProfilePage() {
               <div className="h-px bg-gray-200"></div>
               <Card 
                 onClick={() => {}}
-                className="bg-gray-100 py-0 border-0 shadow-none rounded-none first:rounded-t-lg last:rounded-b-lg cursor-pointer hover:bg-gray-200 transition-colors"
+                className="bg-white py-0 border-0 shadow-none rounded-none first:rounded-t-lg last:rounded-b-lg cursor-pointer hover:bg-gray-200 transition-colors"
               >
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -266,7 +266,7 @@ export default function ProfilePage() {
             <h3 className="text-base font-medium mb-3 px-1">Partner options</h3>
             <Card 
               onClick={() => {}}
-              className="bg-gray-100 py-0 border-0 shadow-none rounded-lg cursor-pointer hover:bg-gray-200 transition-colors"
+              className="bg-white py-0 border-0 shadow-none rounded-lg cursor-pointer hover:bg-gray-200 transition-colors"
             >
               <CardContent className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -282,7 +282,7 @@ export default function ProfilePage() {
           <div className="pt-4">
             <Card 
               onClick={handleLogout}
-              className="bg-gray-100 py-0 border-0 shadow-none rounded-lg cursor-pointer hover:bg-gray-200 transition-colors"
+              className="bg-white py-0 border-0 shadow-none rounded-lg cursor-pointer hover:bg-gray-200 transition-colors"
             >
               <CardContent className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">

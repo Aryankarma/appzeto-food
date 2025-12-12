@@ -311,7 +311,7 @@ export default function MyOrders() {
         {/* Dots Indicator */}
         <div className="flex justify-center gap-2 mt-4">
           {topCarouselSlides.map((_, index) => (
-            <button
+        <button
               key={index}
               onClick={() => setCurrentCarouselSlide(index)}
               className={`w-2 h-2 rounded-full transition-all ${
@@ -414,7 +414,7 @@ export default function MyOrders() {
           <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 transition-colors">
             <span>See all</span>
             <ChevronRight className="w-4 h-4" />
-          </button>
+            </button>
         </div>
         <div className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth px-4">
           {zomatoStoreClothes.map((item) => (
@@ -446,7 +446,7 @@ export default function MyOrders() {
           <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 transition-colors">
             <span>See all</span>
             <ChevronRight className="w-4 h-4" />
-          </button>
+            </button>
         </div>
         <div 
           className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-green-400 to-green-600 cursor-pointer"
@@ -497,33 +497,33 @@ export default function MyOrders() {
             <span>See all</span>
             <ChevronRight className="w-4 h-4" />
           </button>
-        </div>
+                    </div>
         <div className="grid grid-cols-3 gap-3">
           {/* Insurance */}
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-shadow">
             <div className="text-gray-900 font-semibold text-sm mb-3">Insurance</div>
             <div className="w-full h-24 bg-red-50 rounded-lg flex items-center justify-center">
               <Shield className="w-12 h-12 text-red-500" />
-            </div>
-          </div>
+                      </div>
+                    </div>
           
           {/* Recurring deposits */}
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-shadow">
             <div className="text-gray-900 font-semibold text-sm mb-3">Recurring deposits</div>
             <div className="w-full h-24 bg-yellow-50 rounded-lg flex items-center justify-center">
               <Coins className="w-12 h-12 text-yellow-600" />
-            </div>
-          </div>
+                    </div>
+                  </div>
           
           {/* Fixed deposits */}
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-shadow">
             <div className="text-gray-900 font-semibold text-sm mb-3">Fixed deposits</div>
             <div className="w-full h-24 bg-green-50 rounded-lg flex items-center justify-center">
               <Coins className="w-12 h-12 text-green-600" />
-            </div>
+                </div>
           </div>
         </div>
-      </div>
+              </div>
 
       {/* Video Player Modal */}
       <AnimatePresence>
@@ -536,7 +536,7 @@ export default function MyOrders() {
               className="fixed inset-0 bg-black z-[60]"
             />
             
-            <motion.div
+              <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -589,7 +589,7 @@ export default function MyOrders() {
                       <ThumbsUp className="w-6 h-6" fill={userReactions[selectedVideo.id] === 'like' ? 'currentColor' : 'none'} />
                       <span className="text-xs font-medium">
                         {videoLikes[selectedVideo.id] || selectedVideo.likes || 0}
-                      </span>
+                    </span>
                     </button>
 
                     {/* Dislike Button */}
@@ -615,9 +615,9 @@ export default function MyOrders() {
                       </span>
                     </div>
                   </div>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>
           </>
         )}
       </AnimatePresence>

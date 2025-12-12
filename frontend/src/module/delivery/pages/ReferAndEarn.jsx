@@ -208,7 +208,7 @@ export default function ReferAndEarn() {
       </div>
 
       {/* Refer Now Button - Fixed at bottom */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
+      <div className="fixed bottom-0 z-50 left-0 right-0 bg-white border-t border-gray-200 p-4">
         <button
           onClick={handleRefer}
           disabled={!isFormValid}

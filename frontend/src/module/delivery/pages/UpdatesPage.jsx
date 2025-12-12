@@ -528,11 +528,11 @@ export default function UpdatesPage() {
                     <img
                       src={video.thumbnail}
                       alt={video.title}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.src = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=600&fit=crop"
-                      }}
-                    />
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=600&fit=crop"
+                    }}
+                  />
                     {/* Play Button Overlay */}
                     <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                       <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
@@ -545,8 +545,8 @@ export default function UpdatesPage() {
                     </div>
                   </div>
                 </div>
-              </motion.div>
-            ))}
+          </motion.div>
+        ))}
           </div>
 
           {/* Dots Indicator - Center Below */}

@@ -40,6 +40,7 @@ import { getAllDeliveryOrders } from "../utils/deliveryOrderStatus"
 import { getUnreadDeliveryNotificationCount } from "../utils/deliveryNotifications"
 import referralBonusBg from "../../../assets/referralbonuscardbg.png"
 import dropLocationBanner from "../../../assets/droplocationbanner.png"
+import alertSound from "../../../assets/audio/alert.mp3"
 
 // Fix Leaflet default icon issue
 delete (L.Icon.Default.prototype)._getIconUrl
@@ -145,6 +146,22 @@ export default function DeliveryHome() {
   const [bottomSheetExpanded, setBottomSheetExpanded] = useState(false)
   const [acceptButtonProgress, setAcceptButtonProgress] = useState(0)
   const [isAnimatingToComplete, setIsAnimatingToComplete] = useState(false)
+  const [hasAutoShown, setHasAutoShown] = useState(false)
+  const [showNewOrderPopup, setShowNewOrderPopup] = useState(false)
+  const [countdownSeconds, setCountdownSeconds] = useState(300)
+  const countdownTimerRef = useRef(null)
+  const alertAudioRef = useRef(null)
+  const newOrderAcceptButtonRef = useRef(null)
+  const newOrderAcceptButtonSwipeStartX = useRef(0)
+  const newOrderAcceptButtonSwipeStartY = useRef(0)
+  const newOrderAcceptButtonIsSwiping = useRef(false)
+  const [newOrderAcceptButtonProgress, setNewOrderAcceptButtonProgress] = useState(0)
+  const [newOrderIsAnimatingToComplete, setNewOrderIsAnimatingToComplete] = useState(false)
+  const newOrderPopupRef = useRef(null)
+  const newOrderSwipeStartY = useRef(0)
+  const newOrderIsSwiping = useRef(false)
+  const [newOrderDragY, setNewOrderDragY] = useState(0)
+  const [isDraggingNewOrderPopup, setIsDraggingNewOrderPopup] = useState(false)
   const bottomSheetRef = useRef(null)
   const handleRef = useRef(null)
   const acceptButtonRef = useRef(null)
@@ -153,15 +170,90 @@ export default function DeliveryHome() {
   const acceptButtonSwipeStartX = useRef(0)
   const acceptButtonSwipeStartY = useRef(0)
   const acceptButtonIsSwiping = useRef(false)
+  const autoShowTimerRef = useRef(null)
 
   const {
     bookedGigs,
-    isOnline,
     currentGig,
     goOnline,
     goOffline,
     getSelectedDropLocation
   } = useGigStore()
+
+  // Use same localStorage key as FeedNavbar for online status
+  const LS_KEY = "app:isOnline"
+  
+  // Initialize online status from localStorage (same as FeedNavbar)
+  const [isOnline, setIsOnline] = useState(() => {
+    try {
+      const raw = localStorage.getItem(LS_KEY)
+      return raw ? JSON.parse(raw) === true : false
+    } catch {
+      return false
+    }
+  })
+
+  // Sync online status with localStorage changes (from FeedNavbar or other tabs)
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === LS_KEY && e.newValue != null) {
+        const next = JSON.parse(e.newValue) === true
+        console.log('[DeliveryHome] Storage event - online status changed:', next)
+        setIsOnline(prev => {
+          // Only update if different to avoid unnecessary re-renders
+          if (prev !== next) {
+            console.log('[DeliveryHome] Updating isOnline state:', prev, '->', next)
+            return next
+          }
+          return prev
+        })
+      }
+    }
+
+    // Listen for storage events (cross-tab sync)
+    window.addEventListener('storage', handleStorageChange)
+    
+    // Also listen for custom events (same-tab sync from FeedNavbar)
+    const handleCustomStorageChange = () => {
+      try {
+        const raw = localStorage.getItem(LS_KEY)
+        const next = raw ? JSON.parse(raw) === true : false
+        console.log('[DeliveryHome] Custom event - online status changed:', next)
+        setIsOnline(prev => {
+          if (prev !== next) {
+            console.log('[DeliveryHome] Updating isOnline state from custom event:', prev, '->', next)
+            return next
+          }
+          return prev
+        })
+      } catch (error) {
+        console.error('[DeliveryHome] Error reading online status:', error)
+      }
+    }
+    
+    window.addEventListener('onlineStatusChanged', handleCustomStorageChange)
+
+    // Also poll localStorage periodically to catch any missed updates (fallback)
+    const pollInterval = setInterval(() => {
+      try {
+        const raw = localStorage.getItem(LS_KEY)
+        const next = raw ? JSON.parse(raw) === true : false
+        setIsOnline(prev => {
+          if (prev !== next) {
+            console.log('[DeliveryHome] Polling detected change:', prev, '->', next)
+            return next
+          }
+          return prev
+        })
+      } catch {}
+    }, 1000) // Check every second
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('onlineStatusChanged', handleCustomStorageChange)
+      clearInterval(pollInterval)
+    }
+  }, [])
 
   // Calculate today's stats
   const today = new Date()
@@ -209,15 +301,13 @@ export default function DeliveryHome() {
   const hasStoreDataForToday = hasDateData(today)
   const todayData = hasStoreDataForToday ? getDateData(today) : null
 
-  // Calculate today's earnings (use store value if exists, otherwise calculate, but don't show 0 if no data)
-  const calculatedEarnings = calculatePeriodEarnings(walletState, 'today')
-  const todayEarnings = hasStoreDataForToday && todayData && todayData.earnings > 0 
-    ? todayData.earnings 
-    : calculatedEarnings > 0 
-    ? calculatedEarnings 
-    : null
+  // Calculate today's earnings (prefer store, then calculated; default to 0 so UI is not empty)
+  const calculatedEarnings = calculatePeriodEarnings(walletState, 'today') || 0
+  const todayEarnings = hasStoreDataForToday && todayData
+    ? (todayData.earnings ?? calculatedEarnings)
+    : calculatedEarnings
 
-  // Calculate today's trips (use store value if exists, otherwise calculate, but don't show 0 if no data)
+  // Calculate today's trips (prefer store, then calculated; default to 0)
   const allOrders = getAllDeliveryOrders()
   const calculatedTrips = allOrders.filter(order => {
     const orderId = order.orderId || order.id
@@ -228,24 +318,20 @@ export default function DeliveryHome() {
     orderDate.setHours(0, 0, 0, 0)
     return orderDate.getTime() === today.getTime()
   }).length
-  const todayTrips = hasStoreDataForToday && todayData && todayData.trips > 0 
-    ? todayData.trips 
-    : calculatedTrips > 0 
-    ? calculatedTrips 
-    : null
+  const todayTrips = hasStoreDataForToday && todayData
+    ? (todayData.trips ?? calculatedTrips)
+    : calculatedTrips
 
   // Calculate today's gigs count
   const todayGigsCount = bookedGigs.filter(gig => gig.date === todayDateKey).length
 
-  // Calculate total hours worked today (use store value if exists, otherwise calculate, but don't show 0 if no data)
+  // Calculate total hours worked today (prefer store, then calculated; default to 0)
   const calculatedHours = bookedGigs
     .filter(gig => gig.date === todayDateKey)
     .reduce((total, gig) => total + (gig.totalHours || 0), 0)
-  const todayHoursWorked = hasStoreDataForToday && todayData && todayData.timeOnOrders > 0 
-    ? todayData.timeOnOrders 
-    : calculatedHours > 0 
-    ? calculatedHours 
-    : null
+  const todayHoursWorked = hasStoreDataForToday && todayData
+    ? (todayData.timeOnOrders ?? calculatedHours)
+    : calculatedHours
 
   const formatHours = (hours) => {
     const h = Math.floor(hours)
@@ -305,6 +391,232 @@ export default function DeliveryHome() {
     }
   }, [location.pathname, animationKey])
 
+  // Play alert sound function - plays until countdown ends (30 seconds)
+  const playAlertSound = async () => {
+    try {
+      // Use local alert.mp3 file from assets
+      const audio = new Audio(alertSound)
+      
+      audio.volume = 0.7
+      audio.loop = true // Loop the sound
+      
+      // Play the sound
+      const playPromise = audio.play()
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            // Audio is playing, it will loop until countdown ends
+            // The countdown timer will handle stopping it
+            console.log('Alert sound started playing')
+          })
+          .catch((error) => {
+            // Autoplay was prevented
+            console.log('Could not play alert sound:', error)
+          })
+      }
+      
+      // Store audio reference to stop it when countdown ends
+      return audio
+    } catch (error) {
+      console.log('Could not play alert sound:', error)
+      return null
+    }
+  }
+
+  // Auto-show bottom sheet after 5 seconds when online on delivery home
+  useEffect(() => {
+    // Only trigger on delivery home page
+    const isOnDeliveryHome = location.pathname === '/delivery' || location.pathname === '/delivery/'
+    
+    console.log('[AutoShow] Effect triggered:', { 
+      isOnline, 
+      isOnDeliveryHome, 
+      pathname: location.pathname,
+      hasAutoShown,
+      bookedGigs: bookedGigs.length 
+    })
+    
+    // Clear any existing timer first
+    if (autoShowTimerRef.current) {
+      clearTimeout(autoShowTimerRef.current)
+      autoShowTimerRef.current = null
+    }
+    
+    // Reset auto-show state when going offline or leaving page
+    if (!isOnline || !isOnDeliveryHome) {
+      if (hasAutoShown) {
+        setHasAutoShown(false)
+      }
+      return
+    }
+    
+    // Start timer if: online, on delivery home, and hasn't auto-shown yet
+    // Note: We show the bottom sheet even without booked gigs (it will show mock restaurants)
+    if (isOnDeliveryHome && isOnline && !hasAutoShown) {
+      console.log('[AutoShow] ✅ Starting 5-second timer...')
+      
+      // Set timer for 5 seconds
+      autoShowTimerRef.current = setTimeout(async () => {
+        console.log('[AutoShow] ⏰ Timer fired after 5 seconds!')
+        
+        // Double-check conditions before showing (user might have gone offline)
+        const currentIsOnline = (() => {
+          try {
+            const raw = localStorage.getItem(LS_KEY)
+            const result = raw ? JSON.parse(raw) === true : false
+            console.log('[AutoShow] Current online status from localStorage:', result)
+            return result
+          } catch {
+            return false
+          }
+        })()
+        
+        const stillOnDeliveryHome = location.pathname === '/delivery' || location.pathname === '/delivery/'
+        
+        console.log('[AutoShow] Final conditions check:', { 
+          currentIsOnline, 
+          stillOnDeliveryHome,
+          pathname: location.pathname,
+          mockRestaurants: mockRestaurants.length,
+          selectedRestaurant: !!selectedRestaurant
+        })
+        
+        if (currentIsOnline && stillOnDeliveryHome) {
+          console.log('[AutoShow] 🎉 All conditions met! Showing bottom sheet...')
+          
+          // Show new order popup with first restaurant
+          if (mockRestaurants.length > 0) {
+            setSelectedRestaurant(mockRestaurants[0])
+            setShowNewOrderPopup(true)
+            setCountdownSeconds(300) // Reset countdown to 30 seconds
+            
+            // Play alert sound and store reference
+            try {
+              const audio = await playAlertSound()
+              if (audio) {
+                alertAudioRef.current = audio
+              }
+              console.log('[AutoShow] 🔊 Sound played')
+            } catch (error) {
+              console.log('[AutoShow] ⚠️ Sound failed:', error)
+            }
+            
+            console.log('[AutoShow] 🍽️ Showing new order popup for:', mockRestaurants[0].name)
+          }
+          
+          setHasAutoShown(true)
+          console.log('[AutoShow] ✅ New order popup shown and marked as shown')
+        } else {
+          console.log('[AutoShow] ❌ Conditions not met, not showing')
+        }
+        
+        autoShowTimerRef.current = null
+      }, 5000)
+      
+      console.log('[AutoShow] ⏱️ Timer set for 5 seconds, ID:', autoShowTimerRef.current)
+    } else {
+      console.log('[AutoShow] ⏸️ Timer not started:', { 
+        isOnDeliveryHome, 
+        isOnline, 
+        hasAutoShown 
+      })
+    }
+    
+    return () => {
+      if (autoShowTimerRef.current) {
+        console.log('[AutoShow] 🧹 Cleaning up timer')
+        clearTimeout(autoShowTimerRef.current)
+        autoShowTimerRef.current = null
+      }
+    }
+  }, [isOnline, hasAutoShown, selectedRestaurant, location.pathname])
+
+  // Countdown timer for new order popup
+  useEffect(() => {
+    if (showNewOrderPopup && countdownSeconds > 0) {
+      countdownTimerRef.current = setInterval(() => {
+        setCountdownSeconds((prev) => {
+          if (prev <= 1) {
+            // Stop audio when countdown reaches 0
+            if (alertAudioRef.current) {
+              alertAudioRef.current.pause()
+              alertAudioRef.current.currentTime = 0
+              alertAudioRef.current = null
+            }
+            // Auto-close when countdown reaches 0
+            setShowNewOrderPopup(false)
+            return 0
+          }
+          return prev - 1
+        })
+      }, 1000)
+    } else {
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current)
+        countdownTimerRef.current = null
+      }
+      // Stop audio if popup closes
+      if (alertAudioRef.current) {
+        alertAudioRef.current.pause()
+        alertAudioRef.current.currentTime = 0
+        alertAudioRef.current = null
+      }
+    }
+
+    return () => {
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current)
+        countdownTimerRef.current = null
+      }
+      // Clean up audio on unmount
+      if (alertAudioRef.current) {
+        alertAudioRef.current.pause()
+        alertAudioRef.current.currentTime = 0
+        alertAudioRef.current = null
+      }
+    }
+  }, [showNewOrderPopup, countdownSeconds])
+
+  // Reset countdown and stop audio when popup closes
+  useEffect(() => {
+    if (!showNewOrderPopup) {
+      setCountdownSeconds(300)
+      // Stop audio when popup closes
+      if (alertAudioRef.current) {
+        alertAudioRef.current.pause()
+        alertAudioRef.current.currentTime = 0
+        alertAudioRef.current = null
+      }
+    }
+  }, [showNewOrderPopup])
+
+  // Reset popup state on page load/refresh - ensure no popup shows on refresh
+  useEffect(() => {
+    // Clear any popup state on mount
+    setShowNewOrderPopup(false)
+    setSelectedRestaurant(null)
+    setHasAutoShown(false)
+    setCountdownSeconds(300)
+    
+    // Clear any timers
+    if (autoShowTimerRef.current) {
+      clearTimeout(autoShowTimerRef.current)
+      autoShowTimerRef.current = null
+    }
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current)
+      countdownTimerRef.current = null
+    }
+    
+    // Stop and cleanup audio
+    if (alertAudioRef.current) {
+      alertAudioRef.current.pause()
+      alertAudioRef.current.currentTime = 0
+      alertAudioRef.current = null
+    }
+  }, []) // Only run on mount
+
   // Get rider location when online
   useEffect(() => {
     if (isOnline && bookedGigs.length > 0) {
@@ -328,7 +640,7 @@ export default function DeliveryHome() {
             setRiderLocation([position.coords.latitude, position.coords.longitude])
           },
           () => { },
-          { enableHighAccuracy: true, maximumAge: 10000 }
+          { enableHighAccuracy: true, maximumAge: 5000 }
         )
 
         return () => navigator.geolocation.clearWatch(watchId)
@@ -338,6 +650,130 @@ export default function DeliveryHome() {
       }
     }
   }, [isOnline, bookedGigs.length])
+
+  // Handle new order popup accept button swipe
+  const handleNewOrderAcceptTouchStart = (e) => {
+    newOrderAcceptButtonSwipeStartX.current = e.touches[0].clientX
+    newOrderAcceptButtonSwipeStartY.current = e.touches[0].clientY
+    newOrderAcceptButtonIsSwiping.current = false
+    setNewOrderIsAnimatingToComplete(false)
+    setNewOrderAcceptButtonProgress(0)
+  }
+
+  const handleNewOrderAcceptTouchMove = (e) => {
+    const deltaX = e.touches[0].clientX - newOrderAcceptButtonSwipeStartX.current
+    const deltaY = e.touches[0].clientY - newOrderAcceptButtonSwipeStartY.current
+
+    // Only handle horizontal swipes (swipe right)
+    if (Math.abs(deltaX) > 5 && Math.abs(deltaX) > Math.abs(deltaY) && deltaX > 0) {
+      newOrderAcceptButtonIsSwiping.current = true
+      e.preventDefault()
+
+      // Calculate max swipe distance
+      const buttonWidth = newOrderAcceptButtonRef.current?.offsetWidth || 300
+      const circleWidth = 56 // w-14 = 56px
+      const padding = 16 // px-4 = 16px
+      const maxSwipe = buttonWidth - circleWidth - (padding * 2)
+
+      const progress = Math.min(Math.max(deltaX / maxSwipe, 0), 1)
+      setNewOrderAcceptButtonProgress(progress)
+    }
+  }
+
+  const handleNewOrderAcceptTouchEnd = (e) => {
+    if (!newOrderAcceptButtonIsSwiping.current) {
+      setNewOrderAcceptButtonProgress(0)
+      return
+    }
+
+    const deltaX = e.changedTouches[0].clientX - newOrderAcceptButtonSwipeStartX.current
+    const buttonWidth = newOrderAcceptButtonRef.current?.offsetWidth || 300
+    const circleWidth = 56
+    const padding = 16
+    const maxSwipe = buttonWidth - circleWidth - (padding * 2)
+    const threshold = maxSwipe * 0.7 // 70% of max swipe
+
+    if (deltaX > threshold) {
+      // Animate to completion
+      setNewOrderIsAnimatingToComplete(true)
+      setNewOrderAcceptButtonProgress(1)
+
+      // Navigate to pickup directions page after animation
+      setTimeout(() => {
+        setShowNewOrderPopup(false)
+        navigate("/delivery/pickup-directions", {
+          state: { restaurants: mockRestaurants, selectedRestaurant },
+          replace: false
+        })
+
+        // Reset after navigation
+        setTimeout(() => {
+          setNewOrderAcceptButtonProgress(0)
+          setNewOrderIsAnimatingToComplete(false)
+        }, 500)
+      }, 200)
+    } else {
+      // Reset smoothly
+      setNewOrderAcceptButtonProgress(0)
+    }
+
+    newOrderAcceptButtonSwipeStartX.current = 0
+    newOrderAcceptButtonSwipeStartY.current = 0
+    newOrderAcceptButtonIsSwiping.current = false
+  }
+
+  // Handle new order popup swipe down to close
+  const handleNewOrderPopupTouchStart = (e) => {
+    const target = e.target
+    const rect = newOrderPopupRef.current?.getBoundingClientRect()
+    if (!rect) return
+
+    const touchY = e.touches[0].clientY
+    const handleArea = rect.top + 100 // Top 100px is swipeable area
+
+    if (touchY <= handleArea) {
+      e.stopPropagation()
+      newOrderSwipeStartY.current = touchY
+      newOrderIsSwiping.current = true
+      setIsDraggingNewOrderPopup(true)
+    }
+  }
+
+  const handleNewOrderPopupTouchMove = (e) => {
+    if (!newOrderIsSwiping.current) return
+
+    const deltaY = e.touches[0].clientY - newOrderSwipeStartY.current
+
+    if (deltaY > 0) {
+      e.preventDefault()
+      e.stopPropagation()
+      setNewOrderDragY(deltaY)
+    }
+  }
+
+  const handleNewOrderPopupTouchEnd = (e) => {
+    if (!newOrderIsSwiping.current) {
+      newOrderIsSwiping.current = false
+      setIsDraggingNewOrderPopup(false)
+      return
+    }
+
+    e.stopPropagation()
+
+    const deltaY = e.changedTouches[0].clientY - newOrderSwipeStartY.current
+    const threshold = 100
+
+    if (deltaY > threshold) {
+      setShowNewOrderPopup(false)
+      setCountdownSeconds(300)
+    } else {
+      setNewOrderDragY(0)
+    }
+
+    newOrderIsSwiping.current = false
+    setIsDraggingNewOrderPopup(false)
+    newOrderSwipeStartY.current = 0
+  }
 
   // Handle accept orders button swipe
   const handleAcceptOrdersTouchStart = (e) => {
@@ -513,20 +949,21 @@ export default function DeliveryHome() {
       goOffline()
     } else {
       // Check if there are any booked gigs
-      if (bookedGigs.length === 0) {
-        // Show popup to book gigs
-        setShowBookGigsPopup(true)
-        return
-      }
+      // if (bookedGigs.length === 0) {
+      //   // Show popup to book gigs
+      //   setShowBookGigsPopup(true)
+      //   return
+      // }
       
-      // If gigs exist, proceed with going online
-      const success = goOnline()
-      if (!success) {
-        // If goOnline fails (no gig), just set online status directly
-        useGigStore.setState({ isOnline: true })
-        localStorage.setItem('delivery_online_status', 'true')
-        window.dispatchEvent(new CustomEvent('deliveryOnlineStatusChanged'))
-      }
+      // // If gigs exist, proceed with going online
+      // const success = goOnline()
+      // if (!success) {
+      //   // If goOnline fails (no gig), just set online status directly
+      //   useGigStore.setState({ isOnline: true })
+      //   localStorage.setItem('delivery_online_status', 'true')
+      //   window.dispatchEvent(new CustomEvent('deliveryOnlineStatusChanged'))
+      // }
+      goOnline();
     }
   }
 
@@ -997,305 +1434,288 @@ export default function DeliveryHome() {
 
   const nextSlot = getNextAvailableSlot()
 
-  // Render map view when online and has booked gig
+  // Render map view when online
   // Show map even if riderLocation is not set yet (will show loading state)
-  if (isOnline && bookedGigs.length > 0) {
-    return (
-      <div className="min-h-screen bg-gray-900 overflow-hidden relative">
-        {/* Header Section */}
-        <div className="bg-white/95 backdrop-blur-sm border-b border-gray-200 px-4 py-3 flex items-center justify-between rounded-b-3xl md:rounded-b-none sticky top-0 z-50">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <div className="bg-[#ff8100] rounded-lg p-1.5">
-                <MapPin className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-[#ff8100] font-bold text-lg">Appzeto Food</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                goOffline()
-                setSelectedRestaurant(null)
-              }}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-red-100 text-red-700 hover:bg-red-200"
-            >
-              <div className="w-2 h-2 rounded-full bg-red-600" />
-              <span className="text-sm">Go Offline</span>
-            </button>
-            <button
-              onClick={() => navigate("/delivery/notifications")}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors relative"
-            >
-              <Bell className="w-5 h-5 text-gray-600" />
-              {unreadNotificationCount > 0 && (
-                <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                  {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
+  // Show bottom sheet with restaurants when online (even without booked gigs for testing)
+  // if (isOnline) {
+  //   return (
+  //     <div className="min-h-screen bg-gray-900 overflow-hidden relative">
 
-        {/* Map */}
-        <div className="relative w-full" style={{ height: 'calc(100vh - 60px)' }}>
-          {!riderLocation ? (
-            <div className="flex items-center justify-center h-full bg-gray-200">
-              <div className="text-center">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                  className="w-12 h-12 border-4 border-[#ff8100] border-t-transparent rounded-full mx-auto mb-4"
-                />
-                <p className="text-gray-600">Loading map...</p>
-              </div>
-            </div>
-          ) : (
-            <MapContainer
-              key={`map-${riderLocation[0]}-${riderLocation[1]}`}
-              center={riderLocation}
-              zoom={13}
-              style={{ height: '100%', width: '100%', zIndex: 1 }}
-              zoomControl={true}
-              scrollWheelZoom={true}
-              whenCreated={(mapInstance) => {
-                setTimeout(() => {
-                  mapInstance.invalidateSize()
-                }, 100)
-              }}
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <MapUpdater center={riderLocation} />
+  //       {/* Map */}
+  //       <div className="relative w-full" style={{ height: 'calc(100vh - 60px)' }}>
+  //         {!riderLocation ? (
+  //           <div className="flex items-center justify-center h-full bg-gray-200">
+  //             <div className="text-center">
+  //               <motion.div
+  //                 animate={{ rotate: 360 }}
+  //                 transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+  //                 className="w-12 h-12 border-4 border-[#ff8100] border-t-transparent rounded-full mx-auto mb-4"
+  //               />
+  //               <p className="text-gray-600">Loading map...</p>
+  //             </div>
+  //           </div>
+  //         ) : (
+  //           <MapContainer
+  //             key={`map-${riderLocation[0]}-${riderLocation[1]}`}
+  //             center={riderLocation}
+  //             zoom={13}
+  //             style={{ height: '100%', width: '100%', zIndex: 1 }}
+  //             zoomControl={true}
+  //             scrollWheelZoom={true}
+  //             whenCreated={(mapInstance) => {
+  //               setTimeout(() => {
+  //                 mapInstance.invalidateSize()
+  //               }, 100)
+  //             }}
+  //           >
+  //             <TileLayer
+  //               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  //               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+  //             />
+  //             <MapUpdater center={riderLocation} />
 
-              {/* Rider location marker */}
-              <Marker
-                position={riderLocation}
-                icon={createCustomIcon('#10b981', '<div style="width: 20px; height: 20px; background: white; border-radius: 50%;"></div>')}
-              >
-                <Popup>Your Location</Popup>
-              </Marker>
+  //             {/* Rider location marker */}
+  //             <Marker
+  //               position={riderLocation}
+  //               icon={createCustomIcon('#10b981', '<div style="width: 20px; height: 20px; background: white; border-radius: 50%;"></div>')}
+  //             >
+  //               <Popup>Your Location</Popup>
+  //             </Marker>
 
-              {/* Restaurant markers */}
-              {mockRestaurants.map((restaurant) => (
-                <Marker
-                  key={restaurant.id}
-                  position={[restaurant.lat, restaurant.lng]}
-                  icon={createCustomIcon(
-                    '#ff8100',
-                    '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>'
-                  )}
-                  eventHandlers={{
-                    click: () => {
-                      setSelectedRestaurant(restaurant)
-                      if (!bottomSheetExpanded) {
-                        setBottomSheetExpanded(true)
-                      }
-                    }
-                  }}
-                >
-                  <Popup>{restaurant.name}</Popup>
-                </Marker>
-              ))}
-            </MapContainer>
-          )}
+  //             {/* Restaurant markers */}
+  //             {mockRestaurants.map((restaurant) => (
+  //               <Marker
+  //                 key={restaurant.id}
+  //                 position={[restaurant.lat, restaurant.lng]}
+  //                 icon={createCustomIcon(
+  //                   '#ff8100',
+  //                   '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>'
+  //                 )}
+  //                 eventHandlers={{
+  //                   click: () => {
+  //                     setSelectedRestaurant(restaurant)
+  //                     if (!bottomSheetExpanded) {
+  //                       setBottomSheetExpanded(true)
+  //                     }
+  //                   }
+  //                 }}
+  //               >
+  //                 <Popup>{restaurant.name}</Popup>
+  //               </Marker>
+  //             ))}
+  //           </MapContainer>
+  //         )}
 
-          {/* Bottom Sheet with Restaurants */}
-          <motion.div
-            ref={bottomSheetRef}
-            className="absolute bottom-0 left-0 right-0 bg-gray-900 rounded-t-3xl z-40 touch-none shadow-2xl"
-            initial={false}
-            animate={{
-              height: bottomSheetExpanded ? '70vh' : '40vh',
-            }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            onTouchStart={handleBottomSheetTouchStart}
-            onTouchMove={handleBottomSheetTouchMove}
-            onTouchEnd={handleBottomSheetTouchEnd}
-          >
-            {/* Handle - Always visible at top */}
-            <div
-              ref={handleRef}
-              className="flex justify-center pt-4 pb-3 cursor-grab active:cursor-grabbing touch-pan-y relative z-50 bg-gray-900 rounded-t-3xl"
-              onClick={() => setBottomSheetExpanded(!bottomSheetExpanded)}
-              onTouchStart={handleBottomSheetTouchStart}
-            >
-              <div className="w-16 h-2 bg-white/50 rounded-full shadow-lg flex items-center justify-center border border-white/20">
-                <div className="w-12 h-1 bg-white rounded-full" />
-              </div>
-            </div>
+  //         {/* Bottom Sheet with Restaurants */}
+  //         <motion.div
+  //           ref={bottomSheetRef}
+  //           className="absolute bottom-0 left-0 right-0 bg-gray-900 rounded-t-3xl z-40 touch-none shadow-2xl"
+  //           initial={false}
+  //           animate={{
+  //             height: bottomSheetExpanded ? '70vh' : '40vh',
+  //           }}
+  //           transition={{ type: "spring", damping: 25, stiffness: 300 }}
+  //           onTouchStart={handleBottomSheetTouchStart}
+  //           onTouchMove={handleBottomSheetTouchMove}
+  //           onTouchEnd={handleBottomSheetTouchEnd}
+  //         >
+  //           {/* Handle - Always visible at top */}
+  //           <div
+  //             ref={handleRef}
+  //             className="flex justify-center pt-4 pb-3 cursor-grab active:cursor-grabbing touch-pan-y relative z-50 bg-gray-900 rounded-t-3xl"
+  //             onClick={() => setBottomSheetExpanded(!bottomSheetExpanded)}
+  //             onTouchStart={handleBottomSheetTouchStart}
+  //           >
+  //             <div className="w-16 h-2 bg-white/50 rounded-full shadow-lg flex items-center justify-center border border-white/20">
+  //               <div className="w-12 h-1 bg-white rounded-full" />
+  //             </div>
+  //           </div>
 
-            {bottomSheetExpanded && selectedRestaurant ? (
-              /* Expanded view with restaurant details */
-              <div className="px-4 pb-4 overflow-y-auto h-full scrollable-content">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-white text-lg font-bold">Restaurant Details</h3>
-                  <button
-                    onClick={() => {
-                      setSelectedRestaurant(null)
-                      setBottomSheetExpanded(false)
-                    }}
-                    className="p-2 hover:bg-gray-800 rounded-full"
-                  >
-                    <ChevronUp className="w-5 h-5 text-white rotate-180" />
-                  </button>
-                </div>
+  //           <AnimatePresence mode="wait">
+  //             {bottomSheetExpanded && selectedRestaurant ? (
+  //               /* Expanded view with restaurant details */
+  //               <motion.div
+  //                 key="expanded"
+  //                 initial={{ opacity: 0, y: 20 }}
+  //                 animate={{ opacity: 1, y: 0 }}
+  //                 exit={{ opacity: 0, y: 20 }}
+  //                 transition={{ type: "spring", damping: 30, stiffness: 400, delay: 0.1 }}
+  //                 className="px-4 pb-4 overflow-y-auto h-full scrollable-content"
+  //               >
+  //               <div className="flex items-center justify-between mb-4">
+  //                 <h3 className="text-white text-lg font-bold">Restaurant Details</h3>
+  //                 <button
+  //                   onClick={() => {
+  //                     setSelectedRestaurant(null)
+  //                     setBottomSheetExpanded(false)
+  //                   }}
+  //                   className="p-2 hover:bg-gray-800 rounded-full"
+  //                 >
+  //                   <ChevronUp className="w-5 h-5 text-white rotate-180" />
+  //                 </button>
+  //               </div>
 
-                <div className="bg-gray-800 rounded-lg p-4 mb-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="bg-[#ff8100] rounded-lg p-2">
-                      <ChefHat className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="text-white font-bold text-lg">{selectedRestaurant.name}</h4>
-                      <p className="text-white/70 text-sm">{selectedRestaurant.address}</p>
-                    </div>
-                  </div>
+  //               <div className="bg-gray-800 rounded-lg p-4 mb-4">
+  //                 <div className="flex items-center gap-3 mb-3">
+  //                   <div className="bg-[#ff8100] rounded-lg p-2">
+  //                     <ChefHat className="w-6 h-6 text-white" />
+  //                   </div>
+  //                   <div className="flex-1">
+  //                     <h4 className="text-white font-bold text-lg">{selectedRestaurant.name}</h4>
+  //                     <p className="text-white/70 text-sm">{selectedRestaurant.address}</p>
+  //                   </div>
+  //                 </div>
 
-                  <div className="flex items-center gap-4 text-sm text-white/80 mb-4">
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      <span>{selectedRestaurant.timeAway} away</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <MapPin className="w-4 h-4" />
-                      <span>{selectedRestaurant.distance}</span>
-                    </div>
-                  </div>
+  //                 <div className="flex items-center gap-4 text-sm text-white/80 mb-4">
+  //                   <div className="flex items-center gap-1">
+  //                     <Clock className="w-4 h-4" />
+  //                     <span>{selectedRestaurant.timeAway} away</span>
+  //                   </div>
+  //                   <div className="flex items-center gap-1">
+  //                     <MapPin className="w-4 h-4" />
+  //                     <span>{selectedRestaurant.distance}</span>
+  //                   </div>
+  //                 </div>
 
-                  <div className="border-t border-gray-700 pt-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-white/70">Estimated Earnings</span>
-                      <span className="text-white font-bold text-lg">₹{selectedRestaurant.estimatedEarnings.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm text-white/60">
-                      <span>Pickup: {selectedRestaurant.pickupDistance}</span>
-                      <span>Drop: {selectedRestaurant.dropDistance}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              /* Collapsed view with horizontal scrollable restaurants */
-              <div className="px-4 pb-4 touch-pan-x">
-                {/* Estimated Earnings Summary */}
-                <div className="mb-3">
-                  <p className="text-white text-sm mb-1">Estimated earnings</p>
-                  <p className="text-white text-2xl font-bold mb-1">
-                    ₹{mockRestaurants.reduce((sum, r) => sum + r.estimatedEarnings, 0).toFixed(2)}
-                  </p>
-                  <p className="text-white/70 text-xs">
-                    {mockRestaurants.length} pickup{mockRestaurants.length > 1 ? 's' : ''}
-                  </p>
-                </div>
+  //                 <div className="border-t border-gray-700 pt-4">
+  //                   <div className="flex justify-between items-center mb-2">
+  //                     <span className="text-white/70">Estimated Earnings</span>
+  //                     <span className="text-white font-bold text-lg">₹{selectedRestaurant.estimatedEarnings.toFixed(2)}</span>
+  //                   </div>
+  //                   <div className="flex justify-between items-center text-sm text-white/60">
+  //                     <span>Pickup: {selectedRestaurant.pickupDistance}</span>
+  //                     <span>Drop: {selectedRestaurant.dropDistance}</span>
+  //                   </div>
+  //                 </div>
+  //               </div>
+  //               </motion.div>
+  //             ) : (
+  //               /* Collapsed view with horizontal scrollable restaurants */
+  //               <motion.div
+  //                 key="collapsed"
+  //                 initial={{ opacity: 0 }}
+  //                 animate={{ opacity: 1 }}
+  //                 exit={{ opacity: 0 }}
+  //                 transition={{ duration: 0.2 }}
+  //                 className="px-4 pb-4 touch-pan-x"
+  //               >
+  //               {/* Estimated Earnings Summary */}
+  //               <div className="mb-3">
+  //                 <p className="text-white text-sm mb-1">Estimated earnings</p>
+  //                 <p className="text-white text-2xl font-bold mb-1">
+  //                   ₹{mockRestaurants.reduce((sum, r) => sum + r.estimatedEarnings, 0).toFixed(2)}
+  //                 </p>
+  //                 <p className="text-white/70 text-xs">
+  //                   {mockRestaurants.length} pickup{mockRestaurants.length > 1 ? 's' : ''}
+  //                 </p>
+  //               </div>
 
-                {/* Separator */}
-                <div className="h-px bg-gray-700 mb-3" />
+  //               {/* Separator */}
+  //               <div className="h-px bg-gray-700 mb-3" />
 
-                {/* Restaurant cards */}
-                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-3">
-                  {mockRestaurants.map((restaurant) => (
-                    <motion.div
-                      key={restaurant.id}
-                      className="relative shrink-0 w-[280px] bg-gray-800 rounded-lg p-4 cursor-pointer"
-                      onClick={() => {
-                        setSelectedRestaurant(restaurant)
-                        setBottomSheetExpanded(true)
-                      }}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <div className="absolute top-3 left-3 bg-gray-700 rounded px-2 py-0.5">
-                        <span className="text-white text-xs font-medium">Pick up</span>
-                      </div>
+  //               {/* Restaurant cards */}
+  //               <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-3">
+  //                 {mockRestaurants.map((restaurant) => (
+  //                   <motion.div
+  //                     key={restaurant.id}
+  //                     className="relative shrink-0 w-[280px] bg-gray-800 rounded-lg p-4 cursor-pointer"
+  //                     onClick={() => {
+  //                       setSelectedRestaurant(restaurant)
+  //                       setBottomSheetExpanded(true)
+  //                     }}
+  //                     whileHover={{ scale: 1.02 }}
+  //                     whileTap={{ scale: 0.98 }}
+  //                   >
+  //                     <div className="absolute top-3 left-3 bg-gray-700 rounded px-2 py-0.5">
+  //                       <span className="text-white text-xs font-medium">Pick up</span>
+  //                     </div>
 
-                      <div className="mt-8 mb-3">
-                        <h4 className="text-white font-bold text-base mb-1">{restaurant.name}</h4>
-                        <p className="text-white/70 text-xs">{restaurant.address}</p>
-                      </div>
+  //                     <div className="mt-8 mb-3">
+  //                       <h4 className="text-white font-bold text-base mb-1">{restaurant.name}</h4>
+  //                       <p className="text-white/70 text-xs">{restaurant.address}</p>
+  //                     </div>
 
-                      <div className="flex items-center gap-1 text-xs text-white/60">
-                        <Clock className="w-3.5 h-3.5" />
-                        <span>{restaurant.timeAway} away</span>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </motion.div>
+  //                     <div className="flex items-center gap-1 text-xs text-white/60">
+  //                       <Clock className="w-3.5 h-3.5" />
+  //                       <span>{restaurant.timeAway} away</span>
+  //                     </div>
+  //                   </motion.div>
+  //                 ))}
+  //               </div>
+  //               </motion.div>
+  //             )}
+  //           </AnimatePresence>
+  //         </motion.div>
 
-          {/* Accept Orders Button - Sticky at bottom, above navigation */}
-          <div className="fixed bottom-20 left-0 right-0 z-50 px-4 pb-4 bg-gray-900/95 backdrop-blur-sm md:bottom-4">
-            <motion.div
-              ref={acceptButtonRef}
-              className="relative w-full bg-green-600 rounded-full overflow-hidden shadow-xl"
-              onTouchStart={handleAcceptOrdersTouchStart}
-              onTouchMove={handleAcceptOrdersTouchMove}
-              onTouchEnd={handleAcceptOrdersTouchEnd}
-              whileTap={{ scale: 0.98 }}
-              initial={{ y: 100, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3, type: "spring", stiffness: 300, damping: 30 }}
-            >
-              {/* Swipe progress background */}
-              <motion.div
-                className="absolute inset-0 bg-green-500 rounded-full"
-                animate={{
-                  width: `${acceptButtonProgress * 100}%`
-                }}
-                transition={isAnimatingToComplete ? {
-                  type: "spring",
-                  stiffness: 200,
-                  damping: 25
-                } : { duration: 0 }}
-              />
+  //         {/* Accept Orders Button - Sticky at bottom, above navigation */}
+  //         <div className="fixed bottom-20 left-0 right-0 z-50 px-4 pb-4 bg-gray-900/95 backdrop-blur-sm md:bottom-4">
+  //           <motion.div
+  //             ref={acceptButtonRef}
+  //             className="relative w-full bg-green-600 rounded-full overflow-hidden shadow-xl"
+  //             onTouchStart={handleAcceptOrdersTouchStart}
+  //             onTouchMove={handleAcceptOrdersTouchMove}
+  //             onTouchEnd={handleAcceptOrdersTouchEnd}
+  //             whileTap={{ scale: 0.98 }}
+  //             initial={{ y: 100, opacity: 0 }}
+  //             animate={{ y: 0, opacity: 1 }}
+  //             transition={{ delay: 0.3, type: "spring", stiffness: 300, damping: 30 }}
+  //           >
+  //             {/* Swipe progress background */}
+  //             <motion.div
+  //               className="absolute inset-0 bg-green-500 rounded-full"
+  //               animate={{
+  //                 width: `${acceptButtonProgress * 100}%`
+  //               }}
+  //               transition={isAnimatingToComplete ? {
+  //                 type: "spring",
+  //                 stiffness: 200,
+  //                 damping: 25
+  //               } : { duration: 0 }}
+  //             />
 
-              {/* Button content container */}
-              <div className="relative flex items-center h-[64px] px-1">
-                {/* Left: Black circle with arrow */}
-                <motion.div
-                  className="w-14 h-14 bg-gray-900 rounded-full flex items-center justify-center shrink-0 relative z-20 shadow-2xl"
-                  animate={{
-                    x: acceptButtonProgress * (acceptButtonRef.current ? (acceptButtonRef.current.offsetWidth - 56 - 32) : 240)
-                  }}
-                  transition={isAnimatingToComplete ? {
-                    type: "spring",
-                    stiffness: 300,
-                    damping: 30
-                  } : { duration: 0 }}
-                >
-                  <div className="flex items-center justify-center gap-1.5">
-                    <ArrowRight className="w-5 h-5 text-white" />
-                  </div>
-                </motion.div>
+  //             {/* Button content container */}
+  //             <div className="relative flex items-center h-[64px] px-1">
+  //               {/* Left: Black circle with arrow */}
+  //               <motion.div
+  //                 className="w-14 h-14 bg-gray-900 rounded-full flex items-center justify-center shrink-0 relative z-20 shadow-2xl"
+  //                 animate={{
+  //                   x: acceptButtonProgress * (acceptButtonRef.current ? (acceptButtonRef.current.offsetWidth - 56 - 32) : 240)
+  //                 }}
+  //                 transition={isAnimatingToComplete ? {
+  //                   type: "spring",
+  //                   stiffness: 300,
+  //                   damping: 30
+  //                 } : { duration: 0 }}
+  //               >
+  //                 <div className="flex items-center justify-center gap-1.5">
+  //                   <ArrowRight className="w-5 h-5 text-white" />
+  //                 </div>
+  //               </motion.div>
 
-                {/* Text - centered and stays visible */}
-                <div className="absolute inset-0 flex items-center justify-center left-16 right-4 pointer-events-none">
-                  <motion.span
-                    className="text-white font-semibold flex items-center justify-center text-center text-base select-none"
-                    animate={{
-                      opacity: acceptButtonProgress > 0.5 ? Math.max(0.2, 1 - acceptButtonProgress * 0.8) : 1,
-                      x: acceptButtonProgress > 0.5 ? acceptButtonProgress * 15 : 0
-                    }}
-                    transition={isAnimatingToComplete ? {
-                      type: "spring",
-                      stiffness: 200,
-                      damping: 25
-                    } : { duration: 0 }}
-                  >
-                    {acceptButtonProgress > 0.5 ? 'Release to Accept' : 'Accept orders'}
-                  </motion.span>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  //               {/* Text - centered and stays visible */}
+  //               <div className="absolute inset-0 flex items-center justify-center left-16 right-4 pointer-events-none">
+  //                 <motion.span
+  //                   className="text-white font-semibold flex items-center justify-center text-center text-base select-none"
+  //                   animate={{
+  //                     opacity: acceptButtonProgress > 0.5 ? Math.max(0.2, 1 - acceptButtonProgress * 0.8) : 1,
+  //                     x: acceptButtonProgress > 0.5 ? acceptButtonProgress * 15 : 0
+  //                   }}
+  //                   transition={isAnimatingToComplete ? {
+  //                     type: "spring",
+  //                     stiffness: 200,
+  //                     damping: 25
+  //                   } : { duration: 0 }}
+  //                 >
+  //                   {acceptButtonProgress > 0.5 ? 'Release to Accept' : 'Accept orders'}
+  //                 </motion.span>
+  //               </div>
+  //             </div>
+  //           </motion.div>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   )
+  // }
 
   // Render normal feed view when offline or no gig booked
   return (
@@ -1911,12 +2331,12 @@ export default function DeliveryHome() {
                     onClick={() => navigate("/delivery/earnings")}
                     className="flex flex-col items-start gap-1 hover:opacity-80 transition-opacity"
                   >
-                    <span className={`text-2xl font-bold ${todayEarnings !== null ? 'text-gray-900' : 'text-gray-400'}`}>
-                      {todayEarnings !== null ? formatCurrency(todayEarnings) : '-'}
+                    <span className="text-2xl font-bold text-gray-900">
+                      {formatCurrency(todayEarnings)}
                     </span>
-                    <div className={`flex items-center gap-1 text-sm ${todayEarnings !== null ? 'text-gray-600' : 'text-gray-400'}`}>
+                    <div className="flex items-center gap-1 text-sm text-gray-600">
                       <span>Earnings</span>
-                      {todayEarnings !== null && <ArrowRight className="w-4 h-4" />}
+                      <ArrowRight className="w-4 h-4" />
                     </div>
                   </button>
 
@@ -1925,12 +2345,12 @@ export default function DeliveryHome() {
                     onClick={() => navigate("/delivery/trip-history")}
                     className="flex flex-col items-end gap-1 hover:opacity-80 transition-opacity"
                   >
-                    <span className={`text-2xl font-bold ${todayTrips !== null ? 'text-gray-900' : 'text-gray-400'}`}>
-                      {todayTrips !== null ? todayTrips : '-'}
+                    <span className="text-2xl font-bold text-gray-900">
+                      {todayTrips}
                     </span>
-                    <div className={`flex items-center gap-1 text-sm ${todayTrips !== null ? 'text-gray-600' : 'text-gray-400'}`}>
+                    <div className="flex items-center gap-1 text-sm text-gray-600">
                       <span>Trips</span>
-                      {todayTrips !== null && <ArrowRight className="w-4 h-4" />}
+                      <ArrowRight className="w-4 h-4" />
                     </div>
                   </button>
 
@@ -1939,12 +2359,12 @@ export default function DeliveryHome() {
                     onClick={() => navigate("/delivery/time-on-orders")}
                     className="flex flex-col items-start gap-1 hover:opacity-80 transition-opacity"
                   >
-                    <span className={`text-2xl font-bold ${todayHoursWorked !== null ? 'text-gray-900' : 'text-gray-400'}`}>
-                      {todayHoursWorked !== null ? `${formatHours(todayHoursWorked)} hrs` : '-'}
+                    <span className="text-2xl font-bold text-gray-900">
+                      {`${formatHours(todayHoursWorked)} hrs`}
                     </span>
-                    <div className={`flex items-center gap-1 text-sm ${todayHoursWorked !== null ? 'text-gray-600' : 'text-gray-400'}`}>
+                    <div className="flex items-center gap-1 text-sm text-gray-600">
                       <span>Time on orders</span>
-                      {todayHoursWorked !== null && <ArrowRight className="w-4 h-4" />}
+                      <ArrowRight className="w-4 h-4" />
                     </div>
                   </button>
 
@@ -1953,12 +2373,12 @@ export default function DeliveryHome() {
                     onClick={() => navigate("/delivery/gig")}
                     className="flex flex-col items-end gap-1 hover:opacity-80 transition-opacity"
                   >
-                    <span className={`text-2xl font-bold ${todayGigsCount > 0 ? 'text-gray-900' : 'text-gray-400'}`}>
-                      {todayGigsCount > 0 ? `${todayGigsCount} Gigs` : '-'}
+                    <span className="text-2xl font-bold text-gray-900">
+                      {`${todayGigsCount} Gigs`}
                     </span>
-                    <div className={`flex items-center gap-1 text-sm ${todayGigsCount > 0 ? 'text-gray-600' : 'text-gray-400'}`}>
+                    <div className="flex items-center gap-1 text-sm text-gray-600">
                       <span>History</span>
-                      {todayGigsCount > 0 && <ArrowRight className="w-4 h-4" />}
+                      <ArrowRight className="w-4 h-4" />
                     </div>
                   </button>
                 </div>
@@ -2155,6 +2575,220 @@ export default function DeliveryHome() {
           </button>
         </div>
       </BottomPopup>
+
+      {/* New Order Popup with Countdown Timer - Custom Implementation */}
+      <AnimatePresence>
+        {showNewOrderPopup && selectedRestaurant && isOnline && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/50 z-[100] backdrop-blur-sm"
+            />
+
+            {/* Popup */}
+            <motion.div
+              ref={newOrderPopupRef}
+              initial={{ y: "100%" }}
+              animate={{ 
+                y: isDraggingNewOrderPopup ? newOrderDragY : 0,
+                transition: isDraggingNewOrderPopup ? { duration: 0 } : { 
+                  type: "spring", 
+                  damping: 30, 
+                  stiffness: 300 
+                }
+              }}
+              exit={{ y: "100%" }}
+              transition={{ 
+                type: "spring", 
+                damping: 30, 
+                stiffness: 300 
+              }}
+              onTouchStart={handleNewOrderPopupTouchStart}
+              onTouchMove={handleNewOrderPopupTouchMove}
+              onTouchEnd={handleNewOrderPopupTouchEnd}
+              className="fixed bottom-0 left-0 right-0 bg-transparent rounded-t-3xl z-[110] overflow-visible"
+              style={{ touchAction: 'none' }}
+            >
+              {/* Swipe Handle */}
+              <div className="flex justify-center pt-4 pb-2 cursor-grab active:cursor-grabbing">
+                <div className="w-12 h-1.5 bg-white/30 rounded-full" />
+              </div>
+
+              {/* Green Countdown Header */}
+              <div className="relative mb-0 bg-green-500 rounded-t-3xl overflow-visible">
+                {/* Small countdown badge - positioned at center edge, half above popup */}
+                <div className="absolute left-1/2 -translate-x-1/2 -top-5 z-20">
+                  <div className="relative">
+                    {/* Animated green border around badge */}
+                    <svg 
+                      className="absolute -inset-1 w-full h-full"
+                      viewBox="0 0 180 50"
+                      preserveAspectRatio="none"
+                    >
+                      <defs>
+                        <linearGradient id="newOrderCountdownGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#22c55e" stopOpacity="1" />
+                          <stop offset="100%" stopColor="#16a34a" stopOpacity="1" />
+                        </linearGradient>
+                      </defs>
+                      
+                      {/* Background border (full rounded rectangle) */}
+                      <motion.rect
+                        x="2"
+                        y="2"
+                        width="176"
+                        height="46"
+                        rx="23"
+                        ry="23"
+                        fill="none"
+                        stroke="rgba(34, 197, 94, 0.3)"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                      />
+                      
+                      {/* Animated progress border */}
+                      <motion.rect
+                        x="2"
+                        y="2"
+                        width="176"
+                        height="46"
+                        rx="23"
+                        ry="23"
+                        fill="none"
+                        stroke="url(#newOrderCountdownGradient)"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeDasharray="360"
+                        initial={{ strokeDashoffset: 0 }}
+                        animate={{
+                          strokeDashoffset: `${360 * (1 - countdownSeconds / 300)}`
+                        }}
+                        transition={{ duration: 1, ease: "linear" }}
+                      />
+                    </svg>
+                    
+                    {/* White pill-shaped badge */}
+                    <div className="relative bg-white rounded-full px-5 py-2 shadow-lg">
+                      <div className="flex items-center gap-2">
+                        <div className="text-base font-bold text-gray-900">
+                          {countdownSeconds}s
+                        </div>
+                        <div className="text-xs font-semibold text-gray-900">New order</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Minimal spacer for the badge */}
+                <div className="h-8"></div>
+              </div>
+
+              {/* White Content Card */}
+              <div className="bg-white rounded-b-3xl ">
+                <div className="p-6">
+                  {/* Estimated Earnings */}
+
+                  <div className="mb-5">
+                    <p className="text-gray-500 text-sm mb-1">Estimated earnings</p>
+                    <p className="text-4xl font-bold text-gray-900 mb-2">
+                      ₹{selectedRestaurant?.estimatedEarnings?.toFixed(2) || '0.00'}
+                    </p>
+                    <p className="text-gray-400 text-xs">
+                      Pickup: {selectedRestaurant?.pickupDistance || '0 km'} | Drop: {selectedRestaurant?.dropDistance || '0 km'}
+                    </p>
+                  </div>
+
+                  {/* Pickup Details */}
+                  <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                    <div className="mb-3">
+                      <span className="bg-gray-200 text-gray-700 text-xs font-medium px-2 py-1 rounded-lg">
+                        Pick up
+                      </span>
+                    </div>
+                    
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">
+                      {selectedRestaurant?.name || 'Restaurant'}
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-3 leading-relaxed">
+                      {selectedRestaurant?.address || 'Address'}
+                    </p>
+                    
+                    <div className="flex items-center gap-1.5 text-gray-500 text-sm">
+                      <Clock className="w-4 h-4" />
+                      <span>{selectedRestaurant?.timeAway || '0 mins'} away</span>
+                    </div>
+                  </div>
+
+                  {/* Accept Order Button with Swipe */}
+                  <div className="relative w-full">
+                    <motion.div
+                      ref={newOrderAcceptButtonRef}
+                      className="relative w-full bg-green-600 rounded-full overflow-hidden shadow-xl"
+                      onTouchStart={handleNewOrderAcceptTouchStart}
+                      onTouchMove={handleNewOrderAcceptTouchMove}
+                      onTouchEnd={handleNewOrderAcceptTouchEnd}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      {/* Swipe progress background */}
+                      <motion.div
+                        className="absolute inset-0 bg-green-500 rounded-full"
+                        animate={{
+                          width: `${newOrderAcceptButtonProgress * 100}%`
+                        }}
+                        transition={newOrderIsAnimatingToComplete ? {
+                          type: "spring",
+                          stiffness: 200,
+                          damping: 25
+                        } : { duration: 0 }}
+                      />
+
+                      {/* Button content container */}
+                      <div className="relative flex items-center h-[64px] px-1">
+                        {/* Left: Black circle with arrow */}
+                        <motion.div
+                          className="w-14 h-14 bg-gray-900 rounded-full flex items-center justify-center shrink-0 relative z-20 shadow-2xl"
+                          animate={{
+                            x: newOrderAcceptButtonProgress * (newOrderAcceptButtonRef.current ? (newOrderAcceptButtonRef.current.offsetWidth - 56 - 32) : 240)
+                          }}
+                          transition={newOrderIsAnimatingToComplete ? {
+                            type: "spring",
+                            stiffness: 300,
+                            damping: 30
+                          } : { duration: 0 }}
+                        >
+                          <ArrowRight className="w-5 h-5 text-white" />
+                        </motion.div>
+
+                        {/* Text - centered and stays visible */}
+                        <div className="absolute inset-0 flex items-center justify-center left-16 right-4 pointer-events-none">
+                          <motion.span
+                            className="text-white font-semibold flex items-center justify-center text-center text-base select-none"
+                            animate={{
+                              opacity: newOrderAcceptButtonProgress > 0.5 ? Math.max(0.2, 1 - newOrderAcceptButtonProgress * 0.8) : 1,
+                              x: newOrderAcceptButtonProgress > 0.5 ? newOrderAcceptButtonProgress * 15 : 0
+                            }}
+                            transition={newOrderIsAnimatingToComplete ? {
+                              type: "spring",
+                              stiffness: 200,
+                              damping: 25
+                            } : { duration: 0 }}
+                          >
+                            {newOrderAcceptButtonProgress > 0.5 ? 'Release to Accept' : 'Accept order'}
+                          </motion.span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

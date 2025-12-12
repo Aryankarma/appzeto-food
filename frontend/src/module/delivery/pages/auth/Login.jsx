@@ -48,15 +48,13 @@ export default function DeliveryLogin() {
          
 
           {/* Mobile Number Input */}
-          <div className="mb-4">
+          {/* <div className="mb-4">
             <div className="flex items-center bg-white rounded-lg border border-gray-300 overflow-hidden">
-              {/* Indian Flag and Country Code */}
               <div className="flex items-center gap-2 px-4 py-3 border-r border-gray-300">
                 <span className="text-xl">🇮🇳</span>
                 <span className="text-gray-700 font-medium">+91</span>
               </div>
               
-              {/* Phone Input */}
               <input
                 type="tel"
                 inputMode="numeric"
@@ -67,7 +65,7 @@ export default function DeliveryLogin() {
                 className="flex-1 px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none text-base"
               />
             </div>
-          </div>
+          </div> */}
 
           {/* Continue Button */}
           <button
