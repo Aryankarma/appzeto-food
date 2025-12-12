@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import Lenis from "lenis"
-import { MapContainer, TileLayer, Marker, Popup, useMap, Circle } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, useMap, Circle, Polyline } from 'react-leaflet'
 import L from 'leaflet'
 import {
   Lightbulb,
@@ -162,6 +162,23 @@ export default function DeliveryHome() {
   const newOrderIsSwiping = useRef(false)
   const [newOrderDragY, setNewOrderDragY] = useState(0)
   const [isDraggingNewOrderPopup, setIsDraggingNewOrderPopup] = useState(false)
+  const [showDirectionsMap, setShowDirectionsMap] = useState(false)
+  const [showreachedPickupPopup, setShowreachedPickupPopup] = useState(false)
+  const [showReachedDropPopup, setShowReachedDropPopup] = useState(false)
+  const [showOrderDeliveredAnimation, setShowOrderDeliveredAnimation] = useState(false)
+  const [routePolyline, setRoutePolyline] = useState([])
+  const [reachedPickupButtonProgress, setreachedPickupButtonProgress] = useState(0)
+  const [reachedPickupIsAnimatingToComplete, setreachedPickupIsAnimatingToComplete] = useState(false)
+  const reachedPickupButtonRef = useRef(null)
+  const reachedPickupSwipeStartX = useRef(0)
+  const reachedPickupSwipeStartY = useRef(0)
+  const reachedPickupIsSwiping = useRef(false)
+  const [reachedDropButtonProgress, setReachedDropButtonProgress] = useState(0)
+  const [reachedDropIsAnimatingToComplete, setReachedDropIsAnimatingToComplete] = useState(false)
+  const reachedDropButtonRef = useRef(null)
+  const reachedDropSwipeStartX = useRef(0)
+  const reachedDropSwipeStartY = useRef(0)
+  const reachedDropIsSwiping = useRef(false)
   const bottomSheetRef = useRef(null)
   const handleRef = useRef(null)
   const acceptButtonRef = useRef(null)
@@ -397,29 +414,39 @@ export default function DeliveryHome() {
       // Use local alert.mp3 file from assets
       const audio = new Audio(alertSound)
       
-      audio.volume = 0.7
+      audio.volume = 1
       audio.loop = true // Loop the sound
       
-      // Play the sound
-      const playPromise = audio.play()
+      // Set up error handler
+      audio.addEventListener('error', (e) => {
+        console.error('Audio error:', e)
+        console.error('Audio error details:', {
+          code: audio.error?.code,
+          message: audio.error?.message
+        })
+      })
       
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            // Audio is playing, it will loop until countdown ends
-            // The countdown timer will handle stopping it
-            console.log('Alert sound started playing')
-          })
-          .catch((error) => {
-            // Autoplay was prevented
-            console.log('Could not play alert sound:', error)
-          })
+      // Play the sound and wait for it to start
+      try {
+        await audio.play()
+        console.log('✅ Alert sound started playing successfully')
+        return audio
+      } catch (playError) {
+        // Autoplay was prevented or other error
+        console.error('❌ Could not play alert sound:', playError)
+        // Try to load the audio first
+        audio.load()
+        try {
+          await audio.play()
+          console.log('✅ Alert sound started playing after load()')
+          return audio
+        } catch (retryError) {
+          console.error('❌ Could not play alert sound after retry:', retryError)
+          return null
+        }
       }
-      
-      // Store audio reference to stop it when countdown ends
-      return audio
     } catch (error) {
-      console.log('Could not play alert sound:', error)
+      console.error('❌ Could not create audio:', error)
       return null
     }
   }
@@ -491,17 +518,7 @@ export default function DeliveryHome() {
             setShowNewOrderPopup(true)
             setCountdownSeconds(300) // Reset countdown to 30 seconds
             
-            // Play alert sound and store reference
-            try {
-              const audio = await playAlertSound()
-              if (audio) {
-                alertAudioRef.current = audio
-              }
-              console.log('[AutoShow] 🔊 Sound played')
-            } catch (error) {
-              console.log('[AutoShow] ⚠️ Sound failed:', error)
-            }
-            
+            // Audio will be played by the dedicated useEffect when showNewOrderPopup becomes true
             console.log('[AutoShow] 🍽️ Showing new order popup for:', mockRestaurants[0].name)
           }
           
@@ -543,6 +560,7 @@ export default function DeliveryHome() {
               alertAudioRef.current.pause()
               alertAudioRef.current.currentTime = 0
               alertAudioRef.current = null
+              console.log('[NewOrder] 🔇 Audio stopped (countdown ended)')
             }
             // Auto-close when countdown reaches 0
             setShowNewOrderPopup(false)
@@ -556,38 +574,93 @@ export default function DeliveryHome() {
         clearInterval(countdownTimerRef.current)
         countdownTimerRef.current = null
       }
-      // Stop audio if popup closes
-      if (alertAudioRef.current) {
-        alertAudioRef.current.pause()
-        alertAudioRef.current.currentTime = 0
-        alertAudioRef.current = null
-      }
     }
 
     return () => {
+      // Only clear the timer, don't stop audio here
+      // Audio will be stopped by the popup close useEffect
       if (countdownTimerRef.current) {
         clearInterval(countdownTimerRef.current)
         countdownTimerRef.current = null
       }
-      // Clean up audio on unmount
+    }
+  }, [showNewOrderPopup, countdownSeconds])
+
+  // Play audio when New Order popup appears
+  useEffect(() => {
+    if (showNewOrderPopup && selectedRestaurant) {
+      // Stop any existing audio first
       if (alertAudioRef.current) {
+        alertAudioRef.current.pause()
+        alertAudioRef.current.currentTime = 0
+        alertAudioRef.current = null
+      }
+
+      // Play alert sound when popup appears
+      const playAudio = async () => {
+        try {
+          console.log('[NewOrder] 🎵 Attempting to play audio...')
+          const audio = await playAlertSound()
+          if (audio) {
+            alertAudioRef.current = audio
+            console.log('[NewOrder] 🔊 Audio started playing, looping:', audio.loop)
+            
+            // Verify audio is actually playing and ensure it loops
+            audio.addEventListener('playing', () => {
+              console.log('[NewOrder] ✅ Audio is now playing')
+            })
+            
+            // Manually restart if loop doesn't work
+            audio.addEventListener('ended', () => {
+              console.log('[NewOrder] 🔄 Audio ended, restarting...')
+              if (showNewOrderPopup && alertAudioRef.current === audio) {
+                audio.currentTime = 0
+                audio.play().catch(err => {
+                  console.error('[NewOrder] ❌ Failed to restart audio:', err)
+                })
+              }
+            })
+            
+            audio.addEventListener('error', (e) => {
+              console.error('[NewOrder] ❌ Audio error:', e)
+            })
+            
+            // Double-check loop is enabled
+            if (!audio.loop) {
+              audio.loop = true
+              console.log('[NewOrder] 🔧 Loop was false, enabled it')
+            }
+          } else {
+            console.log('[NewOrder] ⚠️ playAlertSound returned null')
+          }
+        } catch (error) {
+          console.error('[NewOrder] ⚠️ Audio failed to play:', error)
+        }
+      }
+      
+      // Small delay to ensure popup is fully rendered
+      const timeoutId = setTimeout(() => {
+        playAudio()
+      }, 100)
+      
+      return () => {
+        clearTimeout(timeoutId)
+      }
+    } else {
+      // Stop audio when popup closes
+      if (alertAudioRef.current) {
+        console.log('[NewOrder] 🔇 Stopping audio (popup closed)')
         alertAudioRef.current.pause()
         alertAudioRef.current.currentTime = 0
         alertAudioRef.current = null
       }
     }
-  }, [showNewOrderPopup, countdownSeconds])
+  }, [showNewOrderPopup, selectedRestaurant])
 
-  // Reset countdown and stop audio when popup closes
+  // Reset countdown when popup closes
   useEffect(() => {
     if (!showNewOrderPopup) {
       setCountdownSeconds(300)
-      // Stop audio when popup closes
-      if (alertAudioRef.current) {
-        alertAudioRef.current.pause()
-        alertAudioRef.current.currentTime = 0
-        alertAudioRef.current = null
-      }
     }
   }, [showNewOrderPopup])
 
@@ -667,7 +740,9 @@ export default function DeliveryHome() {
     // Only handle horizontal swipes (swipe right)
     if (Math.abs(deltaX) > 5 && Math.abs(deltaX) > Math.abs(deltaY) && deltaX > 0) {
       newOrderAcceptButtonIsSwiping.current = true
-      e.preventDefault()
+      if (e.cancelable) {
+        e.preventDefault()
+      }
 
       // Calculate max swipe distance
       const buttonWidth = newOrderAcceptButtonRef.current?.offsetWidth || 300
@@ -694,19 +769,59 @@ export default function DeliveryHome() {
     const threshold = maxSwipe * 0.7 // 70% of max swipe
 
     if (deltaX > threshold) {
+      // Stop audio immediately when user accepts
+      if (alertAudioRef.current) {
+        alertAudioRef.current.pause()
+        alertAudioRef.current.currentTime = 0
+        alertAudioRef.current = null
+        console.log('[NewOrder] 🔇 Audio stopped (order accepted)')
+      }
+
       // Animate to completion
       setNewOrderIsAnimatingToComplete(true)
       setNewOrderAcceptButtonProgress(1)
 
-      // Navigate to pickup directions page after animation
+      // Close popup with animation, then show map with directions
       setTimeout(() => {
         setShowNewOrderPopup(false)
-        navigate("/delivery/pickup-directions", {
-          state: { restaurants: mockRestaurants, selectedRestaurant },
-          replace: false
-        })
+        
+        // Fetch route for directions
+        if (selectedRestaurant && riderLocation) {
+          const fetchRoute = async () => {
+            try {
+              const url = `https://router.project-osrm.org/route/v1/driving/${riderLocation[1]},${riderLocation[0]};${selectedRestaurant.lng},${selectedRestaurant.lat}?overview=full&geometries=geojson`
+              const response = await fetch(url)
+              const data = await response.json()
+              
+              if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+                const coordinates = data.routes[0].geometry.coordinates.map((coord) => [coord[1], coord[0]])
+                setRoutePolyline(coordinates)
+              } else {
+                // Fallback: straight line
+                setRoutePolyline([riderLocation, [selectedRestaurant.lat, selectedRestaurant.lng]])
+              }
+            } catch (error) {
+              console.error('Error fetching route:', error)
+              // Fallback: straight line
+              setRoutePolyline([riderLocation, [selectedRestaurant.lat, selectedRestaurant.lng]])
+            }
+          }
+          
+          fetchRoute()
+        }
+        
+        // Show map with directions
+        setTimeout(() => {
+          setShowDirectionsMap(true)
+          
+          // After 5 seconds, hide map and show Reached Pickup popup
+          setTimeout(() => {
+            setShowDirectionsMap(false)
+            setShowreachedPickupPopup(true)
+          }, 5000)
+        }, 300) // Wait for popup close animation
 
-        // Reset after navigation
+        // Reset after animation
         setTimeout(() => {
           setNewOrderAcceptButtonProgress(0)
           setNewOrderIsAnimatingToComplete(false)
@@ -745,7 +860,9 @@ export default function DeliveryHome() {
     const deltaY = e.touches[0].clientY - newOrderSwipeStartY.current
 
     if (deltaY > 0) {
-      e.preventDefault()
+      if (e.cancelable) {
+        e.preventDefault()
+      }
       e.stopPropagation()
       setNewOrderDragY(deltaY)
     }
@@ -775,6 +892,173 @@ export default function DeliveryHome() {
     newOrderSwipeStartY.current = 0
   }
 
+  // Handle Reached Pickup button swipe
+  const handlereachedPickupTouchStart = (e) => {
+    reachedPickupSwipeStartX.current = e.touches[0].clientX
+    reachedPickupSwipeStartY.current = e.touches[0].clientY
+    reachedPickupIsSwiping.current = false
+    setreachedPickupIsAnimatingToComplete(false)
+    setreachedPickupButtonProgress(0)
+  }
+
+  const handlereachedPickupTouchMove = (e) => {
+    const deltaX = e.touches[0].clientX - reachedPickupSwipeStartX.current
+    const deltaY = e.touches[0].clientY - reachedPickupSwipeStartY.current
+
+    // Only handle horizontal swipes (swipe right)
+    if (Math.abs(deltaX) > 5 && Math.abs(deltaX) > Math.abs(deltaY) && deltaX > 0) {
+      reachedPickupIsSwiping.current = true
+      if (e.cancelable) {
+        e.preventDefault()
+      }
+
+      // Calculate max swipe distance
+      const buttonWidth = reachedPickupButtonRef.current?.offsetWidth || 300
+      const circleWidth = 56 // w-14 = 56px
+      const padding = 16 // px-4 = 16px
+      const maxSwipe = buttonWidth - circleWidth - (padding * 2)
+
+      const progress = Math.min(Math.max(deltaX / maxSwipe, 0), 1)
+      setreachedPickupButtonProgress(progress)
+    }
+  }
+
+  const handlereachedPickupTouchEnd = (e) => {
+    if (!reachedPickupIsSwiping.current) {
+      setreachedPickupButtonProgress(0)
+      return
+    }
+
+    const deltaX = e.changedTouches[0].clientX - reachedPickupSwipeStartX.current
+    const buttonWidth = reachedPickupButtonRef.current?.offsetWidth || 300
+    const circleWidth = 56
+    const padding = 16
+    const maxSwipe = buttonWidth - circleWidth - (padding * 2)
+    const threshold = maxSwipe * 0.7 // 70% of max swipe
+
+    if (deltaX > threshold) {
+      // Animate to completion
+      setreachedPickupIsAnimatingToComplete(true)
+      setreachedPickupButtonProgress(1)
+
+      // Close popup after animation, then show map for 5 seconds
+      setTimeout(() => {
+        setShowreachedPickupPopup(false)
+        
+        // Show map with directions for 5 seconds
+        setShowDirectionsMap(true)
+        
+        // Fetch route for directions
+        if (selectedRestaurant && riderLocation) {
+          const fetchRoute = async () => {
+            try {
+              const url = `https://router.project-osrm.org/route/v1/driving/${riderLocation[1]},${riderLocation[0]};${selectedRestaurant.lng},${selectedRestaurant.lat}?overview=full&geometries=geojson`
+              const response = await fetch(url)
+              const data = await response.json()
+              
+              if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+                const coordinates = data.routes[0].geometry.coordinates.map((coord) => [coord[1], coord[0]])
+                setRoutePolyline(coordinates)
+              } else {
+                // Fallback: straight line
+                setRoutePolyline([riderLocation, [selectedRestaurant.lat, selectedRestaurant.lng]])
+              }
+            } catch (error) {
+              console.error('Error fetching route:', error)
+              // Fallback: straight line
+              setRoutePolyline([riderLocation, [selectedRestaurant.lat, selectedRestaurant.lng]])
+            }
+          }
+          
+          fetchRoute()
+        }
+        
+        // After 5 seconds, hide map and show reached drop popup
+        setTimeout(() => {
+          setShowDirectionsMap(false)
+          setShowReachedDropPopup(true)
+        }, 5000)
+        
+        // Reset after animation
+        setTimeout(() => {
+          setreachedPickupButtonProgress(0)
+          setreachedPickupIsAnimatingToComplete(false)
+        }, 500)
+      }, 200)
+    } else {
+      // Reset smoothly
+      setreachedPickupButtonProgress(0)
+    }
+
+    reachedPickupSwipeStartX.current = 0
+    reachedPickupSwipeStartY.current = 0
+    reachedPickupIsSwiping.current = false
+  }
+
+  // Handle Reached Drop button swipe
+  const handleReachedDropTouchStart = (e) => {
+    reachedDropSwipeStartX.current = e.touches[0].clientX
+    reachedDropSwipeStartY.current = e.touches[0].clientY
+    reachedDropIsSwiping.current = false
+    setReachedDropIsAnimatingToComplete(false)
+    setReachedDropButtonProgress(0)
+  }
+
+  const handleReachedDropTouchMove = (e) => {
+    const deltaX = e.touches[0].clientX - reachedDropSwipeStartX.current
+    const deltaY = e.touches[0].clientY - reachedDropSwipeStartY.current
+
+    // Only handle horizontal swipes (swipe right)
+    if (Math.abs(deltaX) > 5 && Math.abs(deltaX) > Math.abs(deltaY) && deltaX > 0) {
+      reachedDropIsSwiping.current = true
+      if (e.cancelable) {
+        e.preventDefault()
+      }
+
+      // Calculate max swipe distance
+      const buttonWidth = reachedDropButtonRef.current?.offsetWidth || 300
+      const circleWidth = 56 // w-14 = 56px
+      const padding = 16 // px-4 = 16px
+      const maxSwipe = buttonWidth - circleWidth - (padding * 2)
+
+      const progress = Math.min(Math.max(deltaX / maxSwipe, 0), 1)
+      setReachedDropButtonProgress(progress)
+    }
+  }
+
+  const handleReachedDropTouchEnd = (e) => {
+    if (!reachedDropIsSwiping.current) {
+      setReachedDropButtonProgress(0)
+      return
+    }
+
+    const deltaX = e.changedTouches[0].clientX - reachedDropSwipeStartX.current
+    const buttonWidth = reachedDropButtonRef.current?.offsetWidth || 300
+    const circleWidth = 56
+    const padding = 16
+    const maxSwipe = buttonWidth - circleWidth - (padding * 2)
+    const threshold = maxSwipe * 0.7 // 70% of max swipe
+
+    if (deltaX > threshold) {
+      // Animate to completion
+      setReachedDropIsAnimatingToComplete(true)
+      setReachedDropButtonProgress(1)
+
+      // Close popup and show order delivered animation
+      setTimeout(() => {
+        setShowReachedDropPopup(false)
+        setShowOrderDeliveredAnimation(true)
+      }, 200)
+    } else {
+      // Reset smoothly
+      setReachedDropButtonProgress(0)
+    }
+
+    reachedDropSwipeStartX.current = 0
+    reachedDropSwipeStartY.current = 0
+    reachedDropIsSwiping.current = false
+  }
+
   // Handle accept orders button swipe
   const handleAcceptOrdersTouchStart = (e) => {
     acceptButtonSwipeStartX.current = e.touches[0].clientX
@@ -791,7 +1075,9 @@ export default function DeliveryHome() {
     // Only handle horizontal swipes (swipe right)
     if (Math.abs(deltaX) > 5 && Math.abs(deltaX) > Math.abs(deltaY) && deltaX > 0) {
       acceptButtonIsSwiping.current = true
-      e.preventDefault()
+      if (e.cancelable) {
+        e.preventDefault()
+      }
 
       // Calculate max swipe distance
       const buttonWidth = acceptButtonRef.current?.offsetWidth || 300
@@ -875,12 +1161,16 @@ export default function DeliveryHome() {
 
       // Swipe up to expand
       if (deltaY > 0 && !bottomSheetExpanded && bottomSheetRef.current) {
-        e.preventDefault()
+        if (e.cancelable) {
+          e.preventDefault()
+        }
         bottomSheetRef.current.style.transform = `translateY(${-deltaY}px)`
       }
       // Swipe down to collapse
       else if (deltaY < 0 && bottomSheetExpanded && bottomSheetRef.current) {
-        e.preventDefault()
+        if (e.cancelable) {
+          e.preventDefault()
+        }
         bottomSheetRef.current.style.transform = `translateY(${-deltaY}px)`
       }
     }
@@ -1144,7 +1434,9 @@ export default function DeliveryHome() {
 
     // Only prevent default if horizontal swipe is dominant
     if (deltaX > deltaY && deltaX > 10) {
-      e.preventDefault()
+      if (e.cancelable) {
+        e.preventDefault()
+      }
     }
   }
 
@@ -1266,7 +1558,9 @@ export default function DeliveryHome() {
 
     // Only prevent default if we're actually dragging (not scrolling)
     if (Math.abs(deltaY) > 5) {
-      e.preventDefault()
+      if (e.cancelable) {
+        e.preventDefault()
+      }
     }
 
     if (showHomeSections) {
@@ -1349,7 +1643,9 @@ export default function DeliveryHome() {
     const windowHeight = window.innerHeight
 
     // Prevent default to avoid text selection
-    e.preventDefault()
+    if (e.cancelable) {
+      e.preventDefault()
+    }
 
     if (showHomeSections) {
       // Currently showing home sections - swiping down should go back to map
@@ -2622,12 +2918,17 @@ export default function DeliveryHome() {
               <div className="relative mb-0 bg-green-500 rounded-t-3xl overflow-visible">
                 {/* Small countdown badge - positioned at center edge, half above popup */}
                 <div className="absolute left-1/2 -translate-x-1/2 -top-5 z-20">
-                  <div className="relative">
-                    {/* Animated green border around badge */}
+                  <div className="relative inline-flex items-center justify-center">
+                    {/* Animated green border around badge - positioned behind badge, wider */}
                     <svg 
-                      className="absolute -inset-1 w-full h-full"
-                      viewBox="0 0 180 50"
-                      preserveAspectRatio="none"
+                      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+                      style={{ 
+                        width: 'calc(100% + 10px)', 
+                        height: 'calc(100% + 10px)',
+                        zIndex: 35
+                      }}
+                      viewBox="0 0 200 60"
+                      preserveAspectRatio="xMidYMid meet"
                     >
                       <defs>
                         <linearGradient id="newOrderCountdownGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -2636,59 +2937,55 @@ export default function DeliveryHome() {
                         </linearGradient>
                       </defs>
                       
-                      {/* Background border (full rounded rectangle) */}
-                      <motion.rect
-                        x="2"
-                        y="2"
-                        width="176"
-                        height="46"
-                        rx="23"
-                        ry="23"
+                      {/* Full white border path - rounded rectangle (background) */}
+                      <path
+                        d="M 30,5 L 170,5 A 25,25 0 0,1 195,30 L 195,30 A 25,25 0 0,1 170,55 L 30,55 A 25,25 0 0,1 5,30 L 5,30 A 25,25 0 0,1 30,5 Z"
                         fill="none"
-                        stroke="rgba(34, 197, 94, 0.3)"
-                        strokeWidth="3"
+                        stroke="white"
+                        strokeWidth="8"
                         strokeLinecap="round"
+                        strokeLinejoin="round"
                       />
                       
-                      {/* Animated progress border */}
-                      <motion.rect
-                        x="2"
-                        y="2"
-                        width="176"
-                        height="46"
-                        rx="23"
-                        ry="23"
+                      {/* Animated green progress border - starts from top center, decreases clockwise */}
+                      <motion.path
+                        d="M 100,5 L 170,5 A 25,25 0 0,1 195,30 L 195,30 A 25,25 0 0,1 170,55 L 30,55 A 25,25 0 0,1 5,30 L 5,30 A 25,25 0 0,1 30,5 L 100,5"
                         fill="none"
-                        stroke="url(#newOrderCountdownGradient)"
-                        strokeWidth="3"
+                        stroke="#22c55e"
+                        strokeWidth="8"
                         strokeLinecap="round"
-                        strokeDasharray="360"
+                        strokeLinejoin="round"
+                        strokeDasharray="450"
                         initial={{ strokeDashoffset: 0 }}
                         animate={{
-                          strokeDashoffset: `${360 * (1 - countdownSeconds / 300)}`
+                          strokeDashoffset: `${450 * (1 - countdownSeconds / 300)}`
                         }}
                         transition={{ duration: 1, ease: "linear" }}
                       />
+                      
+                      {/* White segment indicator at top center */}
+                      <rect
+                        x="95"
+                        y="0"
+                        width="10"
+                        height="8"
+                        fill="white"
+                        rx="1"
+                      />
                     </svg>
                     
-                    {/* White pill-shaped badge */}
-                    <div className="relative bg-white rounded-full px-5 py-2 shadow-lg">
-                      <div className="flex items-center gap-2">
-                        <div className="text-base font-bold text-gray-900">
-                          {countdownSeconds}s
-                        </div>
-                        <div className="text-xs font-semibold text-gray-900">New order</div>
+                    {/* White pill-shaped badge - positioned above SVG */}
+                    <div className="relative bg-white rounded-full px-6 py-2 shadow-lg" style={{ zIndex: 30 }}>
+                      <div className="text-sm font-bold text-gray-900">
+                        New order
                       </div>
                     </div>
                   </div>
                 </div>
-
-                {/* Minimal spacer for the badge */}
-                <div className="h-8"></div>
               </div>
 
               {/* White Content Card */}
-              <div className="bg-white rounded-b-3xl ">
+              <div className="bg-white rounded-t-3xl">
                 <div className="p-6">
                   {/* Estimated Earnings */}
 
@@ -2787,6 +3084,462 @@ export default function DeliveryHome() {
               </div>
             </motion.div>
           </>
+        )}
+      </AnimatePresence>
+
+      {/* Directions Map View */}
+      <AnimatePresence>
+        {showDirectionsMap && selectedRestaurant && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-[120] bg-white"
+          >
+            <MapContainer
+              key={`directions-map-${riderLocation[0]}-${riderLocation[1]}`}
+              center={riderLocation}
+              zoom={13}
+              style={{ height: '100%', width: '100%', zIndex: 1 }}
+              zoomControl={true}
+              scrollWheelZoom={true}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <MapUpdater center={riderLocation} />
+              
+              {/* Rider location marker */}
+              <Marker
+                position={riderLocation}
+                icon={createCustomIcon('#10b981', '<div style="width: 20px; height: 20px; background: white; border-radius: 50%;"></div>')}
+              >
+                <Popup>Your Location</Popup>
+              </Marker>
+
+              {/* Destination marker */}
+              <Marker
+                position={[selectedRestaurant.lat, selectedRestaurant.lng]}
+                icon={createCustomIcon('#ff8100', '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>')}
+              >
+                <Popup>{selectedRestaurant.name}</Popup>
+              </Marker>
+
+              {/* Route polyline */}
+              {routePolyline.length > 0 && (
+                <Polyline
+                  positions={routePolyline}
+                  pathOptions={{ color: '#10b981', weight: 5, opacity: 0.9 }}
+                />
+              )}
+            </MapContainer>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Reached Pickup Popup */}
+      <BottomPopup
+        isOpen={showreachedPickupPopup}
+        onClose={() => setShowreachedPickupPopup(false)}
+        showCloseButton={false}
+        closeOnBackdropClick={false}
+        maxHeight="70vh"
+        showHandle={true}
+      >
+        <div className="">
+          {/* Drop Label */}
+          <div className="mb-4">
+            <span className="bg-gray-500 text-white text-xs font-medium px-3 py-1.5 rounded-lg">
+              Drop
+            </span>
+          </div>
+
+          {/* Customer Info */}
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Dal Bati Surma
+            </h2>
+            <p className="text-gray-600 mb-1">
+              401, 4th Floor, Pushparatna Solitare Building, Janjeerwala Square, New Palasia, Indore.
+            </p>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 mb-6">
+            <button className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+              <Phone className="w-5 h-5 text-gray-700" />
+              <span className="text-gray-700 font-medium">Call</span>
+            </button>
+            <button className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">
+              <MapPin className="w-5 h-5 text-white" />
+              <span className="text-white font-medium">Map</span>
+            </button>
+          </div>
+
+          {/* Reached Pickup Button with Swipe */}
+          <div className="relative w-full">
+            <motion.div
+              ref={reachedPickupButtonRef}
+              className="relative w-full bg-green-600 rounded-full overflow-hidden shadow-xl"
+              onTouchStart={handlereachedPickupTouchStart}
+              onTouchMove={handlereachedPickupTouchMove}
+              onTouchEnd={handlereachedPickupTouchEnd}
+              whileTap={{ scale: 0.98 }}
+            >
+              {/* Swipe progress background */}
+              <motion.div
+                className="absolute inset-0 bg-green-500 rounded-full"
+                animate={{
+                  width: `${reachedPickupButtonProgress * 100}%`
+                }}
+                transition={reachedPickupIsAnimatingToComplete ? {
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 25
+                } : { duration: 0 }}
+              />
+
+              {/* Button content container */}
+              <div className="relative flex items-center h-[64px] px-1">
+                {/* Left: Black circle with arrow */}
+                <motion.div
+                  className="w-14 h-14 bg-gray-900 rounded-full flex items-center justify-center shrink-0 relative z-20 shadow-2xl"
+                  animate={{
+                    x: reachedPickupButtonProgress * (reachedPickupButtonRef.current ? (reachedPickupButtonRef.current.offsetWidth - 56 - 32) : 240)
+                  }}
+                  transition={reachedPickupIsAnimatingToComplete ? {
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 30
+                  } : { duration: 0 }}
+                >
+                  <ArrowRight className="w-5 h-5 text-white" />
+                </motion.div>
+
+                {/* Text - centered and stays visible */}
+                <div className="absolute inset-0 flex items-center justify-center left-16 right-4 pointer-events-none">
+                  <motion.span
+                    className="text-white font-semibold flex items-center justify-center text-center text-base select-none"
+                    animate={{
+                      opacity: reachedPickupButtonProgress > 0.5 ? Math.max(0.2, 1 - reachedPickupButtonProgress * 0.8) : 1,
+                      x: reachedPickupButtonProgress > 0.5 ? reachedPickupButtonProgress * 15 : 0
+                    }}
+                    transition={reachedPickupIsAnimatingToComplete ? {
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 25
+                    } : { duration: 0 }}
+                  >
+                    {reachedPickupButtonProgress > 0.5 ? 'Release to Confirm' : 'Reached Pickup'}
+                  </motion.span>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </BottomPopup>
+
+
+      {/* Reached Drop Popup */}
+      <BottomPopup
+        isOpen={showReachedDropPopup}
+        onClose={() => setShowReachedDropPopup(false)}
+        showCloseButton={false}
+        closeOnBackdropClick={false}
+        maxHeight="70vh"
+        showHandle={true}
+      >
+        <div className="">
+          {/* Drop Label */}
+          <div className="mb-4">
+            <span className="bg-teal-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg">
+              Drop
+            </span>
+          </div>
+
+          {/* Customer Info */}
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              {selectedRestaurant?.name || 'Customer Name'}
+            </h2>
+            <p className="text-gray-600 mb-1">
+              {selectedRestaurant?.address || 'Customer Address'}
+            </p>
+            <p className="text-gray-500 text-sm">
+              Order: {selectedRestaurant?.id || '1234567890'}
+            </p>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 mb-6">
+            <button className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+              <Phone className="w-5 h-5 text-gray-700" />
+              <span className="text-gray-700 font-medium">Call</span>
+            </button>
+            <button className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+              <MapPin className="w-5 h-5 text-gray-700" />
+              <span className="text-gray-700 font-medium">Chat</span>
+            </button>
+            <button className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">
+              <MapPin className="w-5 h-5 text-white" />
+              <span className="text-white font-medium">Map</span>
+            </button>
+          </div>
+
+          {/* Reached Drop Button with Swipe */}
+          <div className="relative w-full">
+            <motion.div
+              ref={reachedDropButtonRef}
+              className="relative w-full bg-green-600 rounded-full overflow-hidden shadow-xl"
+              onTouchStart={handleReachedDropTouchStart}
+              onTouchMove={handleReachedDropTouchMove}
+              onTouchEnd={handleReachedDropTouchEnd}
+              whileTap={{ scale: 0.98 }}
+            >
+              {/* Swipe progress background */}
+              <motion.div
+                className="absolute inset-0 bg-green-500 rounded-full"
+                animate={{
+                  width: `${reachedDropButtonProgress * 100}%`
+                }}
+                transition={reachedDropIsAnimatingToComplete ? {
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 25
+                } : { duration: 0 }}
+              />
+
+              {/* Button content container */}
+              <div className="relative flex items-center h-[64px] px-1">
+                {/* Left: Black circle with arrow */}
+                <motion.div
+                  className="w-14 h-14 bg-gray-900 rounded-full flex items-center justify-center shrink-0 relative z-20 shadow-2xl"
+                  animate={{
+                    x: reachedDropButtonProgress * (reachedDropButtonRef.current ? (reachedDropButtonRef.current.offsetWidth - 56 - 32) : 240)
+                  }}
+                  transition={reachedDropIsAnimatingToComplete ? {
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 30
+                  } : { duration: 0 }}
+                >
+                  <ArrowRight className="w-5 h-5 text-white" />
+                </motion.div>
+
+                {/* Text - centered and stays visible */}
+                <div className="absolute inset-0 flex items-center justify-center left-16 right-4 pointer-events-none">
+                  <motion.span
+                    className="text-white font-semibold flex items-center justify-center text-center text-base select-none"
+                    animate={{
+                      opacity: reachedDropButtonProgress > 0.5 ? Math.max(0.2, 1 - reachedDropButtonProgress * 0.8) : 1,
+                      x: reachedDropButtonProgress > 0.5 ? reachedDropButtonProgress * 15 : 0
+                    }}
+                    transition={reachedDropIsAnimatingToComplete ? {
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 25
+                    } : { duration: 0 }}
+                  >
+                    {reachedDropButtonProgress > 0.5 ? 'Release to Confirm' : 'Reached Drop'}
+                  </motion.span>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </BottomPopup>
+
+      {/* Order Delivered Screen */}
+      <AnimatePresence>
+        {showOrderDeliveredAnimation && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-[200] bg-white overflow-y-auto"
+          >
+            {/* Close Button */}
+            <motion.button
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2, duration: 0.3 }}
+              onClick={() => {
+                setShowOrderDeliveredAnimation(false)
+                navigate("/delivery")
+                // Reset states
+                setTimeout(() => {
+                  setReachedDropButtonProgress(0)
+                  setReachedDropIsAnimatingToComplete(false)
+                }, 500)
+              }}
+              className="absolute top-4 left-4 z-10 w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <X className="w-6 h-6 text-gray-700" />
+            </motion.button>
+
+            {/* Green Curved Background */}
+            <motion.div
+              initial={{ scaleY: 0 }}
+              animate={{ scaleY: 1 }}
+              transition={{ type: "spring", stiffness: 100, damping: 15, delay: 0.1 }}
+              className="relative bg-green-500 h-64 rounded-b-[40px] overflow-hidden"
+            >
+              {/* Checkmark Icon */}
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ 
+                  type: "spring", 
+                  stiffness: 200, 
+                  damping: 15,
+                  delay: 0.3
+                }}
+                className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2"
+              >
+                <div className="relative">
+                  {/* White border circle */}
+                  <div className="w-28 h-28 bg-white rounded-full flex items-center justify-center shadow-xl">
+                    {/* Green inner circle */}
+                    <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center">
+                      <CheckCircle className="w-16 h-16 text-white fill-white" strokeWidth={3} />
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+
+            {/* Main Content */}
+            <div className="px-6 pt-20 pb-6">
+              {/* Title */}
+              <motion.div
+                initial={{ y: 30, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.5, duration: 0.5 }}
+                className="text-center mb-6"
+              >
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  Great job! Delivery complete 👍
+                </h1>
+              </motion.div>
+
+              {/* Trip Earnings */}
+              <motion.div
+                initial={{ y: 30, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.7, duration: 0.5 }}
+                className="text-center mb-6"
+              >
+                <p className="text-sm text-gray-600 mb-2">Trip earnings</p>
+                <motion.p
+                  initial={{ scale: 0.8 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.9, type: "spring", stiffness: 200, damping: 15 }}
+                  className="text-5xl font-bold text-gray-900"
+                >
+                  ₹76.62
+                </motion.p>
+              </motion.div>
+
+              {/* Trip Details Card */}
+              <motion.div
+                initial={{ y: 50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 1.1, duration: 0.5 }}
+                className="bg-white rounded-2xl shadow-lg p-5 mb-6 border border-gray-100"
+              >
+                {/* Trip Pay */}
+                <motion.div
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 1.3, duration: 0.4 }}
+                  className="flex items-center justify-between py-3 border-b border-gray-100"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                      <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                    </div>
+                    <span className="text-gray-700 font-medium">Trip pay</span>
+                  </div>
+                  <span className="text-gray-900 font-semibold">₹71.62</span>
+                </motion.div>
+
+                {/* Long Distance Return Pay */}
+                <motion.div
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 1.4, duration: 0.4 }}
+                  className="flex items-center justify-between py-3 border-b border-gray-100"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                      <span className="text-lg font-bold text-gray-700">₹</span>
+                    </div>
+                    <span className="text-gray-700 font-medium">Long distance return pay</span>
+                  </div>
+                  <span className="text-gray-900 font-semibold">₹5</span>
+                </motion.div>
+
+                {/* Trip Distance */}
+                <motion.div
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 1.5, duration: 0.4 }}
+                  className="flex items-center justify-between py-3 border-b border-gray-100"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                      <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <span className="text-gray-700 font-medium">Trip distance</span>
+                  </div>
+                  <span className="text-gray-900 font-semibold">8.8 kms</span>
+                </motion.div>
+
+                {/* Trip Time */}
+                <motion.div
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 1.6, duration: 0.4 }}
+                  className="flex items-center justify-between py-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                      <Clock className="w-5 h-5 text-gray-700" />
+                    </div>
+                    <span className="text-gray-700 font-medium">Trip time</span>
+                  </div>
+                  <span className="text-gray-900 font-semibold">38 mins</span>
+                </motion.div>
+              </motion.div>
+
+              {/* Get Next Order Button */}
+              <motion.button
+                initial={{ y: 50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 1.7, duration: 0.5, type: "spring", stiffness: 100 }}
+                onClick={() => {
+                  setShowOrderDeliveredAnimation(false)
+                  navigate("/delivery")
+                  // Reset states
+                  setTimeout(() => {
+                    setReachedDropButtonProgress(0)
+                    setReachedDropIsAnimatingToComplete(false)
+                  }, 500)
+                }}
+                className="w-full bg-gray-900 text-white py-4 rounded-xl font-semibold text-lg hover:bg-gray-800 transition-colors shadow-lg"
+              >
+                Get next order
+              </motion.button>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

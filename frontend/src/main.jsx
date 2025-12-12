@@ -29,7 +29,7 @@ createRoot(rootElement).render(
   <StrictMode>
     <BrowserRouter>
       <App />
-      <Toaster position="top-center" richColors />
+      <Toaster position="top-center" richColors offset="80px" />
     </BrowserRouter>
   </StrictMode>,
 )

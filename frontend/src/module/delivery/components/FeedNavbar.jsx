@@ -90,11 +90,17 @@ export default function FeedNavbar({ className = "" }) {
     // Dismiss any existing toast with the same ID first
     toast.dismiss(TOAST_ID_KEY);
     
-    // Show new toast with a consistent ID to prevent duplicates
+    // Show new toast with a consistent ID to prevent duplicates and offset position
     if (isNowOnline) {
-      toast.success("You are now online", { id: TOAST_ID_KEY });
+      toast.success("You are now online", { 
+        id: TOAST_ID_KEY,
+        style: { marginTop: '80px' }
+      });
     } else {
-      toast("You are now offline", { id: TOAST_ID_KEY });
+      toast("You are now offline", { 
+        id: TOAST_ID_KEY,
+        style: { marginTop: '80px' }
+      });
     }
   };
 
@@ -131,73 +137,73 @@ export default function FeedNavbar({ className = "" }) {
 
   return (
     <>
-      <div className={`bg-white px-4 py-3 flex items-center justify-between sticky top-0 z-50 border-b border-gray-200 ${className}`}>
+    <div className={`bg-white px-4 py-3 flex items-center justify-between sticky top-0 z-50 border-b border-gray-200 ${className}`}>
         {/* Online/Offline Toggle */}
-        <div className="relative" style={{ zIndex: 100 }}>
-          <button
-            onClick={handleToggle}
-            onTouchStart={(e) => e.stopPropagation()}
-            className="focus:outline-none relative cursor-pointer"
-            type="button"
-            role="switch"
+      <div className="relative" style={{ zIndex: 100 }}>
+        <button
+          onClick={handleToggle}
+          onTouchStart={(e) => e.stopPropagation()}
+          className="focus:outline-none relative cursor-pointer"
+          type="button"
+          role="switch"
             aria-checked={isOnline}
             style={{ pointerEvents: "auto", zIndex: 100, WebkitTapHighlightColor: "transparent" }}
           >
             <div className={`relative w-20 h-8 rounded-full transition-colors duration-300 ${isOnline ? "bg-green-500" : "bg-gray-400"}`}>
-              <span
-                className={`text-[11px] font-bold text-white absolute top-1/2 -translate-y-1/2 whitespace-nowrap transition-all duration-300 ${
+            <span
+              className={`text-[11px] font-bold text-white absolute top-1/2 -translate-y-1/2 whitespace-nowrap transition-all duration-300 ${
                   isOnline ? "left-2" : "right-2"
-                }`}
-                style={{ opacity: 1, zIndex: 2, pointerEvents: "none" }}
-              >
+              }`}
+              style={{ opacity: 1, zIndex: 2, pointerEvents: "none" }}
+            >
                 {isOnline ? "Online" : "Offline"}
-              </span>
+            </span>
 
-              <motion.div
-                className="absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg"
+            <motion.div
+              className="absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg"
                 animate={{ x: isOnline ? 48 : 2 }}
-                transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                style={{ pointerEvents: "none", zIndex: 10 }}
-              />
-            </div>
-          </button>
-        </div>
-
-        {/* Right Icons */}
-        <div className="flex items-center gap-3">
-          {/* Emergency */}
-          <button
-            onClick={() => setShowEmergencyPopup(true)}
-            className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center hover:bg-red-600 transition-colors relative"
-            title="Emergency"
-          >
-            <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </button>
-
-          {/* Help */}
-          <button
-            onClick={() => setShowHelpPopup(true)}
-            className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300 transition-colors"
-            title="Help"
-          >
-            <HelpCircle className="w-5 h-5 text-gray-700" />
-          </button>
-
-          {/* Profile */}
-          <button onClick={handleProfileClick} className="w-9 h-9 rounded-full overflow-hidden ring-2 ring-gray-300" title="Profile">
-            <img
-              src="https://i.pravatar.cc/80?img=12"
-              alt="Profile"
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.currentTarget.src = "https://ui-avatars.com/api/?name=User&background=ff8100&color=fff&size=40";
-              }}
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              style={{ pointerEvents: "none", zIndex: 10 }}
             />
-          </button>
-        </div>
+          </div>
+        </button>
       </div>
+
+      {/* Right Icons */}
+      <div className="flex items-center gap-3">
+        {/* Emergency */}
+        <button
+            onClick={() => setShowEmergencyPopup(true)}
+          className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center hover:bg-red-600 transition-colors relative"
+            title="Emergency"
+        >
+          <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </button>
+
+        {/* Help */}
+        <button
+            onClick={() => setShowHelpPopup(true)}
+          className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300 transition-colors"
+            title="Help"
+        >
+          <HelpCircle className="w-5 h-5 text-gray-700" />
+        </button>
+
+        {/* Profile */}
+          <button onClick={handleProfileClick} className="w-9 h-9 rounded-full overflow-hidden ring-2 ring-gray-300" title="Profile">
+          <img
+            src="https://i.pravatar.cc/80?img=12"
+            alt="Profile"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+                e.currentTarget.src = "https://ui-avatars.com/api/?name=User&background=ff8100&color=fff&size=40";
+            }}
+          />
+        </button>
+      </div>
+    </div>
 
       {/* Help Popup */}
       <BottomPopup
