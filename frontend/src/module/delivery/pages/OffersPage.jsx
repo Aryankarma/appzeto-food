@@ -334,8 +334,8 @@ export default function OffersPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         {offer.status === "Live" && (
-                          <>
-                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <> 
+                            <div className="w-2 h-2 bg-neutral-900 rounded-full"></div>
                             <span className="text-sm font-medium text-green-600">Live</span>
                           </>
                         )}
@@ -376,14 +376,14 @@ export default function OffersPage() {
                           <div key={idx} className="flex items-center gap-1">
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
                               idx === 0
-                                ? "bg-green-500 text-white"
+                                ? "bg-neutral-900 text-white"
                                 : "bg-gray-200 text-gray-600"
                             }`}>
                               {gig}
                             </div>
                             {idx < offer.gigsProgression.length - 1 && (
                               <div className={`w-8 h-0.5 ${
-                                idx === 0 ? "bg-green-500" : "bg-gray-300"
+                                idx === 0 ? "bg-neutral-900" : "bg-gray-300"
                               }`}></div>
                             )}
                             {idx > 0 && (
@@ -402,14 +402,14 @@ export default function OffersPage() {
                           <div key={idx} className="flex items-center gap-1">
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
                               idx === 0
-                                ? "bg-green-500 text-white"
+                                ? "bg-neutral-900 text-white"
                                 : "bg-gray-200 text-gray-600"
                             }`}>
                               {order}
                             </div>
                             {idx < offer.ordersProgression.length - 1 && (
                               <div className={`w-8 h-0.5 ${
-                                idx === 0 ? "bg-green-500" : "bg-gray-300"
+                                idx === 0 ? "bg-neutral-900" : "bg-gray-300"
                               }`}></div>
                             )}
                             {idx > 0 && (
@@ -501,7 +501,7 @@ export default function OffersPage() {
                     <h2 className="text-2xl font-bold text-gray-900">{selectedOffer.title}</h2>
                     {selectedOffer.status === "Live" && (
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <div className="w-2 h-2 bg-neutral-900 rounded-full"></div>
                         <span className="text-sm font-medium text-green-600">Live</span>
                       </div>
                     )}
@@ -564,14 +564,14 @@ export default function OffersPage() {
                       <div key={idx} className="flex items-center gap-1">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
                           idx === 0
-                            ? "bg-green-500 text-white"
+                            ? "bg-neutral-900 text-white"
                             : "bg-gray-200 text-gray-600"
                         }`}>
                           {gig}
                         </div>
                         {idx < selectedOffer.gigsProgression.length - 1 && (
                           <div className={`w-8 h-0.5 ${
-                            idx === 0 ? "bg-green-500" : "bg-gray-300"
+                            idx === 0 ? "bg-neutral-900" : "bg-gray-300"
                           }`}></div>
                         )}
                         {idx > 0 && (
@@ -590,14 +590,14 @@ export default function OffersPage() {
                       <div key={idx} className="flex items-center gap-1">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
                           idx === 0
-                            ? "bg-green-500 text-white"
+                            ? "bg-neutral-900 text-white"
                             : "bg-gray-200 text-gray-600"
                         }`}>
                           {order}
                         </div>
                         {idx < selectedOffer.ordersProgression.length - 1 && (
                           <div className={`w-8 h-0.5 ${
-                            idx === 0 ? "bg-green-500" : "bg-gray-300"
+                            idx === 0 ? "bg-neutral-900" : "bg-gray-300"
                           }`}></div>
                         )}
                         {idx > 0 && (
