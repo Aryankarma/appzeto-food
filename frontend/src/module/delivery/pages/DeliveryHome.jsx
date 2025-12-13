@@ -23,6 +23,9 @@ import {
   Phone,
   X,
   TargetIcon,
+  Play,
+  Pause,
+  IndianRupee,
 } from "lucide-react"
 import BottomPopup from "../components/BottomPopup"
 import FeedNavbar from "../components/FeedNavbar"
@@ -179,6 +182,9 @@ export default function DeliveryHome() {
   const reachedDropSwipeStartX = useRef(0)
   const reachedDropSwipeStartY = useRef(0)
   const reachedDropIsSwiping = useRef(false)
+  const [earningsGuaranteeIsPlaying, setEarningsGuaranteeIsPlaying] = useState(true)
+  const [earningsGuaranteeAudioTime, setEarningsGuaranteeAudioTime] = useState("00:00")
+  const earningsGuaranteeAudioRef = useRef(null)
   const bottomSheetRef = useRef(null)
   const handleRef = useRef(null)
   const acceptButtonRef = useRef(null)
@@ -663,6 +669,32 @@ export default function DeliveryHome() {
       setCountdownSeconds(300)
     }
   }, [showNewOrderPopup])
+
+  // Simulate audio playback for Earnings Guarantee
+  useEffect(() => {
+    if (earningsGuaranteeIsPlaying) {
+      // Simulate audio time progression
+      let time = 0
+      const interval = setInterval(() => {
+        time += 1
+        const minutes = Math.floor(time / 60)
+        const seconds = time % 60
+        setEarningsGuaranteeAudioTime(`${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`)
+        
+        // Stop after 10 seconds (simulating audio length)
+        if (time >= 10) {
+          setEarningsGuaranteeIsPlaying(false)
+          clearInterval(interval)
+        }
+      }, 1000)
+
+      return () => clearInterval(interval)
+    }
+  }, [earningsGuaranteeIsPlaying])
+
+  const toggleEarningsGuaranteeAudio = () => {
+    setEarningsGuaranteeIsPlaying(!earningsGuaranteeIsPlaying)
+  }
 
   // Reset popup state on page load/refresh - ensure no popup shows on refresh
   useEffect(() => {
@@ -2602,6 +2634,188 @@ export default function DeliveryHome() {
               </div>
             </motion.div>
 
+            {/* Earnings Guarantee Card */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.25 }}
+              className="w-full rounded-xl overflow-hidden shadow-lg bg-white"
+            >
+              {/* Header */}
+              <div className="border-b  border-gray-100">
+                <div className="flex p-2 px-3 items-center justify-between bg-black">
+                  <div className="flex-1">
+                    <h2 className="text-lg font-bold text-white mb-1">Earnings Guarantee</h2>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-white">Valid till 14 Dec</span>
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span className="text-sm text-green-600 font-medium">Live</span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Summary Box */}
+                  <div className="bg-black text-white px-4 py-3 rounded-lg text-center min-w-[80px]">
+                    <div className="text-2xl font-bold">₹180</div>
+                    <div className="text-xs text-white/80 mt-1">4 orders</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Progress Circles */}
+              <div className="px-6 py-6">
+                <div className="flex items-center justify-around gap-6">
+                  {/* Orders Progress Circle */}
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.4, duration: 0.5, type: "spring" }}
+                    className="flex flex-col items-center"
+                  >
+                    <div className="relative w-32 h-32">
+                      <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 120 120">
+                        {/* Background circle */}
+                        <circle
+                          cx="60"
+                          cy="60"
+                          r="50"
+                          fill="none"
+                          stroke="#e5e7eb"
+                          strokeWidth="8"
+                        />
+                        {/* Progress circle */}
+                        <motion.circle
+                          cx="60"
+                          cy="60"
+                          r="50"
+                          fill="none"
+                          stroke="#000000"
+                          strokeWidth="8"
+                          strokeLinecap="round"
+                          initial={{ pathLength: 0 }}
+                          animate={{ pathLength: 0.25 }}
+                          transition={{ delay: 0.6, duration: 1, ease: "easeOut" }}
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-xl font-bold text-gray-900">1 of 4</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 mt-3">
+                      <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span className="text-sm font-medium text-gray-700">Orders</span>
+                    </div>
+                  </motion.div>
+
+                  {/* Earnings Progress Circle */}
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.5, duration: 0.5, type: "spring" }}
+                    className="flex flex-col items-center"
+                  >
+                    <div className="relative w-32 h-32">
+                      <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 120 120">
+                        {/* Background circle */}
+                        <circle
+                          cx="60"
+                          cy="60"
+                          r="50"
+                          fill="none"
+                          stroke="#e5e7eb"
+                          strokeWidth="8"
+                        />
+                        {/* Progress circle - approximately 42.6% (76.62/180) */}
+                        <motion.circle
+                          cx="60"
+                          cy="60"
+                          r="50"
+                          fill="none"
+                          stroke="#000000"
+                          strokeWidth="8"
+                          strokeLinecap="round"
+                          initial={{ pathLength: 0 }}
+                          animate={{ pathLength: 0.426 }}
+                          transition={{ delay: 0.7, duration: 1, ease: "easeOut" }}
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-lg font-bold text-gray-900">₹76.62</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 mt-3">
+                      <IndianRupee className="w-5 h-5 text-gray-700" />
+                      <span className="text-sm font-medium text-gray-700">Earnings</span>
+                    </div>
+                  </motion.div>
+                </div>
+              </div>
+
+              {/* Audio Player Section */}
+              <div className="px-2 py-3 border-t border-gray-100 bg-gray-50">
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={toggleEarningsGuaranteeAudio}
+                    className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center hover:bg-gray-800 transition-colors"
+                  >
+                    {earningsGuaranteeIsPlaying ? (
+                      <Pause className="w-5 h-5" />
+                    ) : (
+                      <Play className="w-5 h-5" />
+                    )}
+                  </button>
+                  
+                  {/* Waveform */}
+                  <div className="flex-1 flex items-center gap-1 h-8">
+                    {[...Array(30)].map((_, i) => {
+                      // Use a seeded random-like pattern for each bar
+                      const seed = i * 0.1
+                      const baseHeight = 20
+                      const maxHeight = 80
+                      
+                      // Create varying heights using sine waves with different frequencies
+                      const height1 = baseHeight + (Math.sin(seed) * 0.5 + 0.5) * (maxHeight - baseHeight)
+                      const height2 = baseHeight + (Math.sin(seed + 1) * 0.5 + 0.5) * (maxHeight - baseHeight)
+                      const height3 = baseHeight + (Math.sin(seed + 2) * 0.5 + 0.5) * (maxHeight - baseHeight)
+                      const height4 = baseHeight + (Math.sin(seed + 3) * 0.5 + 0.5) * (maxHeight - baseHeight)
+                      
+                      return (
+                        <motion.div
+                          key={i}
+                          className="w-1 bg-gray-400 rounded-full"
+                          animate={earningsGuaranteeIsPlaying ? {
+                            height: [
+                              `${height1}%`,
+                              `${height2}%`,
+                              `${height3}%`,
+                              `${height4}%`,
+                              `${height1}%`,
+                            ],
+                          } : {
+                            height: `${baseHeight}%`,
+                          }}
+                          transition={{
+                            duration: 0.5 + (i % 3) * 0.2,
+                            repeat: earningsGuaranteeIsPlaying ? Infinity : 0,
+                            repeatDelay: 0,
+                            delay: i * 0.05,
+                            ease: "easeInOut",
+                          }}
+                        />
+                      )
+                    })}
+                  </div>
+
+                  {/* Time */}
+                  <span className="text-sm text-gray-600 font-mono min-w-[50px]">
+                    {earningsGuaranteeAudioTime}
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+
             {/* Today's Progress Card */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -3385,9 +3599,42 @@ export default function DeliveryHome() {
               initial={{ scaleY: 0 }}
               animate={{ scaleY: 1 }}
               transition={{ type: "spring", stiffness: 100, damping: 15, delay: 0.1 }}
-              className="relative bg-green-500 h-64 rounded-b-[40px] overflow-hidden"
+              className="relative bg-green-500 rounded-b-[40px] overflow-hidden pb-20"
             >
-              {/* Checkmark Icon */}
+              {/* Title and Earnings in Green Section */}
+              <div className="py-16 px-6">
+                {/* Title */}
+                <motion.div
+                  initial={{ y: 30, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3, duration: 0.5 }}
+                  className="text-center mb-4"
+                >
+                  <h1 className="text-2xl font-bold text-white mb-3">
+                    Great job! Delivery complete 👍
+                  </h1>
+                </motion.div>
+
+                {/* Trip Earnings */}
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.5, duration: 0.5 }}
+                  className="text-center"
+                >
+                  <p className="text-sm text-white/90 mb-1">Trip earnings</p>
+                  <motion.p
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.7, type: "spring", stiffness: 200, damping: 15 }}
+                    className="text-5xl font-bold text-white"
+                  >
+                    ₹76.62
+                  </motion.p>
+                </motion.div>
+              </div>
+
+              {/* Checkmark Icon - Fully on green background */}
               <motion.div
                 initial={{ scale: 0, rotate: -180 }}
                 animate={{ scale: 1, rotate: 0 }}
@@ -3395,16 +3642,18 @@ export default function DeliveryHome() {
                   type: "spring", 
                   stiffness: 200, 
                   damping: 15,
-                  delay: 0.3
+                  delay: 0.4
                 }}
-                className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2"
+                className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10" 
               >
                 <div className="relative">
-                  {/* White border circle */}
-                  <div className="w-28 h-28 bg-white rounded-full flex items-center justify-center shadow-xl">
-                    {/* Green inner circle */}
-                    <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center">
-                      <CheckCircle className="w-16 h-16 text-white fill-white" strokeWidth={3} />
+                  {/* White circle with border */}
+                  <div className="w-28 h-28 bg-white rounded-full flex items-center justify-center shadow-2xl border-4 border-white">
+                    {/* Green circle with checkmark */}
+                    <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center">
+                      <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={4}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
                     </div>
                   </div>
                 </div>
@@ -3412,119 +3661,99 @@ export default function DeliveryHome() {
             </motion.div>
 
             {/* Main Content */}
-            <div className="px-6 pt-20 pb-6">
-              {/* Title */}
-              <motion.div
-                initial={{ y: 30, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.5, duration: 0.5 }}
-                className="text-center mb-6"
-              >
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  Great job! Delivery complete 👍
-                </h1>
-              </motion.div>
-
-              {/* Trip Earnings */}
-              <motion.div
-                initial={{ y: 30, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.7, duration: 0.5 }}
-                className="text-center mb-6"
-              >
-                <p className="text-sm text-gray-600 mb-2">Trip earnings</p>
-                <motion.p
-                  initial={{ scale: 0.8 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.9, type: "spring", stiffness: 200, damping: 15 }}
-                  className="text-5xl font-bold text-gray-900"
-                >
-                  ₹76.62
-                </motion.p>
-              </motion.div>
+            <div className="px-6 pt-16 pb-6">
 
               {/* Trip Details Card */}
               <motion.div
                 initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 1.1, duration: 0.5 }}
-                className="bg-white rounded-2xl shadow-lg p-5 mb-6 border border-gray-100"
+                transition={{ delay: 0.9, duration: 0.5 }}
+                className="bg-white rounded-2xl shadow-lg mb-6 border border-gray-100 overflow-hidden"
               >
-                {/* Trip Pay */}
+                {/* Trip Details Header */}
                 <motion.div
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 1.3, duration: 0.4 }}
-                  className="flex items-center justify-between py-3 border-b border-gray-100"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1.1, duration: 0.3 }}
+                  className="px-5 pt-5 pb-3 border-b border-gray-100"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                      <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                    </div>
-                    <span className="text-gray-700 font-medium">Trip pay</span>
-                  </div>
-                  <span className="text-gray-900 font-semibold">₹71.62</span>
+                  <h2 className="text-lg font-bold text-gray-900">Trip details</h2>
                 </motion.div>
 
-                {/* Long Distance Return Pay */}
-                <motion.div
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 1.4, duration: 0.4 }}
-                  className="flex items-center justify-between py-3 border-b border-gray-100"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                      <span className="text-lg font-bold text-gray-700">₹</span>
+                <div className="px-5 py-2">
+                  {/* Trip Pay */}
+                  <motion.div
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: 1.2, duration: 0.4 }}
+                    className="flex items-center justify-between py-3 border-b border-gray-100"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                        <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <span className="text-gray-700 font-medium">Trip pay</span>
                     </div>
-                    <span className="text-gray-700 font-medium">Long distance return pay</span>
-                  </div>
-                  <span className="text-gray-900 font-semibold">₹5</span>
-                </motion.div>
+                    <span className="text-gray-900 font-semibold">₹71.62</span>
+                  </motion.div>
 
-                {/* Trip Distance */}
-                <motion.div
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 1.5, duration: 0.4 }}
-                  className="flex items-center justify-between py-3 border-b border-gray-100"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                      <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
+                  {/* Long Distance Return Pay */}
+                  <motion.div
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: 1.3, duration: 0.4 }}
+                    className="flex items-center justify-between py-3 border-b border-gray-100"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                        <span className="text-lg font-bold text-gray-700">₹</span>
+                      </div>
+                      <span className="text-gray-700 font-medium">Long distance return pay</span>
                     </div>
-                    <span className="text-gray-700 font-medium">Trip distance</span>
-                  </div>
-                  <span className="text-gray-900 font-semibold">8.8 kms</span>
-                </motion.div>
+                    <span className="text-gray-900 font-semibold">₹5</span>
+                  </motion.div>
 
-                {/* Trip Time */}
-                <motion.div
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 1.6, duration: 0.4 }}
-                  className="flex items-center justify-between py-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                      <Clock className="w-5 h-5 text-gray-700" />
+                  {/* Trip Distance */}
+                  <motion.div
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: 1.4, duration: 0.4 }}
+                    className="flex items-center justify-between py-3 border-b border-gray-100"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                        <MapPin className="w-5 h-5 text-gray-700" />
+                      </div>
+                      <span className="text-gray-700 font-medium">Trip distance</span>
                     </div>
-                    <span className="text-gray-700 font-medium">Trip time</span>
-                  </div>
-                  <span className="text-gray-900 font-semibold">38 mins</span>
-                </motion.div>
+                    <span className="text-gray-900 font-semibold">8.8 kms</span>
+                  </motion.div>
+
+                  {/* Trip Time */}
+                  <motion.div
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: 1.5, duration: 0.4 }}
+                    className="flex items-center justify-between py-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                        <Clock className="w-5 h-5 text-gray-700" />
+                      </div>
+                      <span className="text-gray-700 font-medium">Trip time</span>
+                    </div>
+                    <span className="text-gray-900 font-semibold">38 mins</span>
+                  </motion.div>
+                </div>
               </motion.div>
 
               {/* Get Next Order Button */}
               <motion.button
                 initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 1.7, duration: 0.5, type: "spring", stiffness: 100 }}
+                transition={{ delay: 1.6, duration: 0.5, type: "spring", stiffness: 100 }}
                 onClick={() => {
                   setShowOrderDeliveredAnimation(false)
                   navigate("/delivery")
