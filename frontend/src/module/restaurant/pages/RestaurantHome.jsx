@@ -38,6 +38,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import BottomNavbar from "../components/BottomNavbar"
 import MenuOverlay from "../components/MenuOverlay"
+import RestaurantNavbar from "../components/RestaurantNavbar"
 
 export default function RestaurantHome() {
   const navigate = useNavigate()
@@ -248,31 +249,7 @@ export default function RestaurantHome() {
   return (
     <div className="min-h-screen bg-[#f6e9dc] overflow-x-hidden">
       {/* Top Bar */}
-      <div className="bg-white border-b border-gray-200 px-4 py-4 md:py-3 flex items-center justify-between rounded-b-3xl md:rounded-b-none">
-        <div className="flex items-center gap-2">
-          {/* Appzeto Food Logo */}
-          <div className="flex items-center gap-2">
-            <div className="bg-[#ff8100] rounded-lg p-1.5 md:p-1.5">
-              <UtensilsCrossed className="w-5 h-5 md:w-4 md:h-4 text-white" />
-            </div>
-            <span className="text-[#ff8100] font-bold text-xl md:text-lg">Appzeto Food</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => navigate("/restaurant/notifications")}
-            className="p-1 hover:bg-gray-100 rounded-full transition-colors relative"
-          >
-            <Bell className="w-6 h-6 md:w-5 md:h-5 text-gray-600" />
-            {unreadNotificationCount > 0 && (
-              <span className="absolute top-0 right-0 bg-black text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
-              </span>
-            )}
-          </button>
-        </div>
-      </div>
-
+      <RestaurantNavbar />
       {/* Main Content */}
       <div className="px-4 py-6 pb-24 md:pb-6">
         {/* Business Analytics Section */}

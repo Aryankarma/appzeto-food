@@ -1386,7 +1386,7 @@ export default function DeliveryHome() {
     {
       id: "idCard",
       title: "Show ID card",
-      subtitle: "See your Zomato ID card",
+      subtitle: "See your Appzeto ID card",
       icon: "idCard",
       path: "/delivery/help/id-card"
     },
@@ -1455,7 +1455,7 @@ export default function DeliveryHome() {
     {
       id: 1,
       title: "Work for 2 days",
-      subtitle: "to get Zomato bag",
+      subtitle: "to get Appzeto bag",
       icon: "bag",
       buttonText: "Know more",
       bgColor: "bg-gray-700"

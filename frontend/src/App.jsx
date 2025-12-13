@@ -26,6 +26,7 @@ import RestaurantSignIn from "@/module/restaurant/pages/auth/SignIn"
 import RestaurantLogin from "@/module/restaurant/pages/auth/Login"
 import RestaurantSignup from "@/module/restaurant/pages/auth/Signup"
 import RestaurantOTP from "@/module/restaurant/pages/auth/OTP"
+import RestaurantWelcome from "@/module/restaurant/pages/auth/Welcome"
 import RestaurantPanelRouter from "@/module/restaurant/panel/components/RestaurantPanelRouter"
 import EditProfilePage from "@/module/restaurant/pages/EditProfilePage"
 import AdvertisementsPage from "@/module/restaurant/pages/AdvertisementsPage"
@@ -45,6 +46,10 @@ import RestaurantCategoriesPage from "@/module/restaurant/pages/RestaurantCatego
 import BusinessPlanPage from "@/module/restaurant/pages/BusinessPlanPage"
 import ConversationListPage from "@/module/restaurant/pages/ConversationListPage"
 import ChatDetailPage from "@/module/restaurant/pages/ChatDetailPage"
+import RestaurantStatus from "@/module/restaurant/pages/RestaurantStatus"
+import ExploreMore from "@/module/restaurant/pages/ExploreMore"
+import OutletTimings from "@/module/restaurant/pages/OutletTimings"
+import DaySlots from "@/module/restaurant/pages/DaySlots"
 import AdminRouter from "@/module/admin/components/AdminRouter"
 import DeliveryRouter from "@/module/delivery/components/DeliveryRouter"
 
@@ -61,6 +66,7 @@ export default function App() {
       <Route path="/user" element={<Navigate to="/" replace />} />
       <Route path="/user/*" element={<UserPathRedirect />} />
       <Route path="/routes" element={<Home />} />
+      <Route path="/restaurant/welcome" element={<RestaurantWelcome />} />
       <Route path="/restaurant/auth/sign-in" element={<RestaurantSignIn />} />
       <Route path="/restaurant/login" element={<RestaurantLogin />} />
       <Route path="/restaurant/signup" element={<RestaurantSignup />} />
@@ -106,6 +112,10 @@ export default function App() {
       <Route path="/restaurant/business-plan" element={<BusinessPlanPage />} />
       <Route path="/restaurant/conversation" element={<ConversationListPage />} />
       <Route path="/restaurant/conversation/:conversationId" element={<ChatDetailPage />} />
+      <Route path="/restaurant/status" element={<RestaurantStatus />} />
+      <Route path="/restaurant/explore" element={<ExploreMore />} />
+      <Route path="/restaurant/outlet-timings" element={<OutletTimings />} />
+      <Route path="/restaurant/outlet-timings/:day" element={<DaySlots />} />
       <Route path="/delivery/*" element={<DeliveryRouter />} />
       <Route path="/admin/*" element={<AdminRouter />} />
       <Route path="/*" element={<UserRouter />} />
