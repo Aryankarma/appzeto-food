@@ -317,7 +317,7 @@ export default function DeliveryHome() {
   const progressPercentage = Math.min((loginHours / minimumHours) * 100, 100)
 
   // Get today's progress from store
-  const { getTodayProgress, getDateData, hasDateData } = useProgressStore()
+  const { getTodayProgress, getDateData, hasDateData, updateTodayProgress } = useProgressStore()
   const todayProgress = getTodayProgress()
   
   // Check if store has data for today
@@ -355,6 +355,49 @@ export default function DeliveryHome() {
   const todayHoursWorked = hasStoreDataForToday && todayData
     ? (todayData.timeOnOrders ?? calculatedHours)
     : calculatedHours
+
+  // Track last updated values to prevent infinite loops
+  const lastUpdatedRef = useRef({ earnings: null, trips: null, hours: null })
+
+  // Update progress store with calculated values when data changes (with debounce)
+  useEffect(() => {
+    // Only update if values have actually changed
+    if (
+      calculatedEarnings !== undefined && 
+      calculatedTrips !== undefined && 
+      calculatedHours !== undefined &&
+      (
+        lastUpdatedRef.current.earnings !== calculatedEarnings ||
+        lastUpdatedRef.current.trips !== calculatedTrips ||
+        lastUpdatedRef.current.hours !== calculatedHours
+      )
+    ) {
+      lastUpdatedRef.current = {
+        earnings: calculatedEarnings,
+        trips: calculatedTrips,
+        hours: calculatedHours
+      }
+      
+      updateTodayProgress({
+        earnings: calculatedEarnings,
+        trips: calculatedTrips,
+        timeOnOrders: calculatedHours
+      })
+    }
+  }, [calculatedEarnings, calculatedTrips, calculatedHours, updateTodayProgress])
+
+  // Listen for progress data updates from other components
+  useEffect(() => {
+    const handleProgressUpdate = () => {
+      // Refresh wallet state when other components update progress
+      setWalletState(getDeliveryWalletState())
+    }
+    
+    window.addEventListener('progressDataUpdated', handleProgressUpdate)
+    return () => {
+      window.removeEventListener('progressDataUpdated', handleProgressUpdate)
+    }
+  }, []) // Empty dependency array - only set up listener once
 
   const formatHours = (hours) => {
     const h = Math.floor(hours)
