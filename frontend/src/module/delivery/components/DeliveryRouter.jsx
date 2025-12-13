@@ -17,6 +17,7 @@ import PocketPage from "../pages/PocketPage"
 import GigBooking from "../pages/GigBooking"
 import PickupDirectionsPage from "../pages/PickupDirectionsPage"
 import ProfilePage from "../pages/ProfilePage"
+import ProfileDetails from "../pages/ProfileDetails"
 import AcceptedOrderDetails from "../pages/AcceptedOrderDetails"
 import MyAccount from "../pages/MyAccount"
 import TransactionHistory from "../pages/TransactionHistory"
@@ -163,6 +164,16 @@ export default function DeliveryRouter() {
           </ProtectedRoute>
         }
         path="/profile"
+      />
+      <Route
+        element={
+          <ProtectedRoute>
+            <DeliveryLayout>
+              <ProfileDetails />
+            </DeliveryLayout>
+          </ProtectedRoute>
+        }
+        path="/profile/details"
       />
       <Route
         element={
@@ -378,7 +389,7 @@ export default function DeliveryRouter() {
         element={
           <ProtectedRoute>
             <DeliveryLayout>
-              <ShowIdCard />can we help?
+              <ShowIdCard />
             </DeliveryLayout>
           </ProtectedRoute>
         }

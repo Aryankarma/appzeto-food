@@ -380,7 +380,7 @@ export default function PocketPage() {
       {/* Main Content */}
       <div className="px-4 py-6 bg-gray-100 pb-24 md:pb-6">
         {/* Earnings Section */}
-        <Card className="py-4 bg-white border-0 shadow-none mb-4">
+        <Card onClick={() => navigate("/delivery/earnings")} className="py-4 bg-white border-0 shadow-none mb-4">
           <CardContent className="p-4 text-center">
 
             {/* Top text */}

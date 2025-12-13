@@ -144,7 +144,10 @@ export default function ProfilePage() {
             </button>
 
             {/* Profile Information */}
-            <div className="flex items-start justify-between">
+            <div
+              onClick={() => navigate("/delivery/profile/details")}
+              className="flex items-start justify-between"
+            >
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <h2 className="text-2xl md:text-3xl font-bold">Manish Kumar Yadav</h2>
@@ -154,7 +157,7 @@ export default function ProfilePage() {
               </div>
               <div className="relative shrink-0 ml-4">
                 <img 
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"
+                  src="https://i.pravatar.cc/240?img=12"
                   alt="Profile"
                   className="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover"
                 />
@@ -172,27 +175,27 @@ export default function ProfilePage() {
         <div ref={navButtonsRef} className="grid grid-cols-3 gap-3 mb-6">
           <button
             onClick={() => navigate("/delivery/gig?tab=history")}
-            className="bg-white rounded-lg p-4 flex flex-col items-center gap-2 hover:bg-gray-200 transition-colors"
+            className="bg-white rounded-lg p-4 flex flex-col items-center gap-1 hover:bg-gray-200 transition-colors"
           >
-            <div className="bg-gray-100 rounded-lg p-2">
+            <div className="rounded-lg p-2">
               <span className="text-xl font-bold">g</span>
             </div>
             <span className="text-xs font-medium">Gigs history</span>
           </button>
           <button
             onClick={() => navigate("/delivery/orders")}
-            className="bg-white rounded-lg p-4 flex flex-col items-center gap-2 hover:bg-gray-200 transition-colors"
+            className="bg-white rounded-lg p-4 flex flex-col items-center gap-1 hover:bg-gray-200 transition-colors"
           >
-            <div className="bg-gray-100 rounded-lg p-2">
+            <div className="rounded-lg p-2">
               <Bike className="w-5 h-5" />
             </div>
             <span className="text-xs font-medium">Trips history</span>
           </button>
           <button
             onClick={() => {}}
-            className="bg-white rounded-lg p-4 flex flex-col items-center gap-2 hover:bg-gray-200 transition-colors"
+            className="bg-white rounded-lg p-4 flex flex-col items-center gap-1 hover:bg-gray-200 transition-colors"
           >
-            <div className="bg-gray-100 rounded-lg p-2">
+            <div className="rounded-lg p-2">
               <Tag className="w-5 h-5" />
             </div>
             <span className="text-xs font-medium">Your offers</span>
