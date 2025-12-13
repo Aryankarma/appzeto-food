@@ -2803,7 +2803,7 @@ export default function DeliveryHome() {
                 <div className="flex items-center gap-4">
                   <button
                     onClick={toggleEarningsGuaranteeAudio}
-                    className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center hover:bg-gray-800 transition-colors"
+                    className="w-10 h-10 min-w-[40px] max-w-[40px] min-h-[40px] max-h-[40px] flex-shrink-0 rounded-full bg-black text-white flex items-center justify-center hover:bg-gray-800 transition-colors"
                   >
                     {earningsGuaranteeIsPlaying ? (
                       <Pause className="w-5 h-5" />
