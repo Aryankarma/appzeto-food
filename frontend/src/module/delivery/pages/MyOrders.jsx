@@ -80,8 +80,8 @@ const shoppingProducts = [
   }
 ]
 
-// Zomato store clothes
-const zomatoStoreClothes = [
+// Appzeto store clothes
+const AppzetoStoreClothes = [
   {
     id: 1,
     title: "Light Winter Jacket",
@@ -108,7 +108,7 @@ const zomatoStoreClothes = [
   },
   {
     id: 4,
-    title: "Zomato Hoodie",
+    title: "Appzeto Hoodie",
     image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=300&h=300&fit=crop",
     price: 699,
     originalPrice: 1299,
@@ -407,17 +407,17 @@ export default function MyOrders() {
         </div>
       </div>
 
-      {/* Zomato Store - Horizontal Scroll */}
+      {/* Appzeto Store - Horizontal Scroll */}
       <div className="mb-6 bg-blue-50 py-6">
         <div className="px-4 mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-900">Zomato store</h2>
+          <h2 className="text-lg font-bold text-gray-900">Appzeto store</h2>
           <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 transition-colors">
             <span>See all</span>
             <ChevronRight className="w-4 h-4" />
             </button>
         </div>
         <div className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth px-4">
-          {zomatoStoreClothes.map((item) => (
+          {AppzetoStoreClothes.map((item) => (
             <div key={item.id} className="flex-shrink-0 w-48 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="w-full h-48 bg-white flex items-center justify-center">
                 <img 

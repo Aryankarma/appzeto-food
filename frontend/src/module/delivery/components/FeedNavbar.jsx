@@ -136,7 +136,7 @@ export default function FeedNavbar({ className = "" }) {
     { 
       id: "idCard", 
       title: "Show ID card", 
-      subtitle: "See your Zomato ID card", 
+      subtitle: "See your Appzeto ID card", 
       icon: "idCard", 
       path: "/delivery/help/id-card"
     },
@@ -254,7 +254,7 @@ export default function FeedNavbar({ className = "" }) {
             <button
               key={option.id}
               onClick={() => handleHelpOptionClick(option)}
-              className="w-full flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
+              className="w-full flex items-center gap-4 py-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
             >
               {/* Icon */}
               <div className="shrink-0 w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">

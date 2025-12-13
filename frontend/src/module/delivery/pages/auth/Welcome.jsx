@@ -51,10 +51,8 @@ export default function DeliveryWelcome() {
 
   const handleProceed = () => {
     setShowPopup(false)
-    setTimeout(() => {
-      navigate("/delivery")
-    }, 300)
   }
+
 
   const toggleAudio = () => {
     setIsPlaying(!isPlaying)
@@ -149,7 +147,7 @@ export default function DeliveryWelcome() {
 
           {/* Start Earning Button */}
           <button
-            onClick={handleProceed}
+            onClick={()=> navigate("/delivery")}
             className="w-full bg-[#00B761] hover:bg-[#00A055] text-white font-bold py-4 rounded-lg mt-4 flex items-center justify-center gap-2 transition-colors"
           >
             <span>Start earning</span>

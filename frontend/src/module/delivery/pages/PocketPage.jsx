@@ -58,7 +58,7 @@ export default function PocketPage() {
     {
       id: 1,
       title: "Work for 2 days",
-      subtitle: "to get Zomato bag",
+      subtitle: "to get Appzeto bag",
       icon: "bag",
       buttonText: "Know more",
       bgColor: "bg-gray-700"

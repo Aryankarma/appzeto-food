@@ -183,7 +183,7 @@ export default function ProfilePage() {
             <span className="text-xs font-medium">Gigs history</span>
           </button>
           <button
-            onClick={() => navigate("/delivery/orders")}
+            onClick={() => navigate("/delivery/trip-history")}
             className="bg-white rounded-lg p-4 flex flex-col items-center gap-1 hover:bg-gray-200 transition-colors"
           >
             <div className="rounded-lg p-2">
