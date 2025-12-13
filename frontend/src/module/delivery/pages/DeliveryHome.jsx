@@ -1367,7 +1367,7 @@ export default function DeliveryHome() {
     return localStorage.getItem('selectedDropLocation') || null
   })
 
-  // Help options
+  // Help options - using paths from DeliveryRouter
   const helpOptions = [
     {
       id: "helpCenter",
@@ -1399,10 +1399,12 @@ export default function DeliveryHome() {
     }
   ]
 
-  // Handle help option click
+  // Handle help option click - navigate to the correct route
   const handleHelpOptionClick = (option) => {
-    setShowHelpPopup(false)
-    navigate(option.path)
+    if (option.path) {
+      setShowHelpPopup(false)
+      navigate(option.path)
+    }
   }
 
   // Emergency options with phone numbers

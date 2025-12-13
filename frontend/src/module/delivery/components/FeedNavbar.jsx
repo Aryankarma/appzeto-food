@@ -117,13 +117,48 @@ export default function FeedNavbar({ className = "" }) {
     });
   };
 
-  // Inline options (same visuals as before)
+  // Help options with proper navigation paths
   const helpOptions = [
-    { id: "helpCenter", title: "Help Center", subtitle: "Browse common questions", icon: "helpCenter", onClick: () => toast("Opening Help Center…") },
-    { id: "ticket", title: "Raise a Ticket", subtitle: "Report a problem", icon: "ticket", onClick: () => toast("Ticket flow…") },
-    { id: "idCard", title: "Account & KYC", subtitle: "Manage your documents", icon: "idCard", onClick: () => toast("Account & KYC…") },
-    { id: "language", title: "Language", subtitle: "Change app language", icon: "language", onClick: () => toast("Language settings…") },
+    { 
+      id: "helpCenter", 
+      title: "Help center", 
+      subtitle: "Find answers to queries and raise ticket", 
+      icon: "helpCenter", 
+      path: "/delivery/help/center"
+    },
+    { 
+      id: "supportTickets", 
+      title: "Support tickets", 
+      subtitle: "Check status of tickets raised", 
+      icon: "ticket", 
+      path: "/delivery/help/tickets"
+    },
+    { 
+      id: "idCard", 
+      title: "Show ID card", 
+      subtitle: "See your Zomato ID card", 
+      icon: "idCard", 
+      path: "/delivery/help/id-card"
+    },
+    { 
+      id: "changeLanguage", 
+      title: "Change language", 
+      subtitle: "Use app in your language of choice", 
+      icon: "language", 
+      path: "/delivery/help/language"
+    },
   ];
+
+  // Handle help option click - navigate to the correct route
+  const handleHelpOptionClick = (option) => {
+    if (option.path) {
+      setShowHelpPopup(false);
+      navigate(option.path);
+    } else if (option.onClick) {
+      option.onClick();
+      setShowHelpPopup(false);
+    }
+  };
 
   const emergencyOptions = [
     { id: "ambulance", title: "Medical Emergency", subtitle: "Call an ambulance", icon: "ambulance", onClick: () => toast("Dialing medical emergency…") },
@@ -214,18 +249,18 @@ export default function FeedNavbar({ className = "" }) {
         closeOnBackdropClick={true}
         maxHeight="70vh"
       >
-        <div className="py-2">
+    <div className="py-2">
           {helpOptions.map((option) => (
             <button
               key={option.id}
-              onClick={() => {
-                option.onClick?.();
-                setShowHelpPopup(false);
-              }}
+              onClick={() => handleHelpOptionClick(option)}
               className="w-full flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
             >
+              {/* Icon */}
               <div className="shrink-0 w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
-                {option.icon === "helpCenter" && <HelpCircle className="w-6 h-6 text-gray-700" />}
+                {option.icon === "helpCenter" && (
+                  <HelpCircle className="w-6 h-6 text-gray-700" />
+                )}
                 {option.icon === "ticket" && (
                   <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
@@ -243,11 +278,13 @@ export default function FeedNavbar({ className = "" }) {
                 )}
               </div>
 
+              {/* Text Content */}
               <div className="flex-1 text-left">
                 <h3 className="text-base font-semibold text-gray-900 mb-1">{option.title}</h3>
                 <p className="text-sm text-gray-600">{option.subtitle}</p>
               </div>
 
+              {/* Arrow Icon */}
               <ArrowRight className="w-5 h-5 text-gray-400 shrink-0" />
             </button>
           ))}
