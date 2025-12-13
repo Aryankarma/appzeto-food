@@ -192,7 +192,7 @@ export default function ProfilePage() {
             <span className="text-xs font-medium">Trips history</span>
           </button>
           <button
-            onClick={() => {}}
+            onClick={() => navigate("/delivery/offers")}
             className="bg-white rounded-lg p-4 flex flex-col items-center gap-1 hover:bg-gray-200 transition-colors"
           >
             <div className="rounded-lg p-2">
@@ -220,7 +220,10 @@ export default function ProfilePage() {
           </Card>
 
           {/* Referral bonus */}
-          <Card className="py-0 bg-white border-0 shadow-none">
+          <Card 
+            onClick={() => navigate("/delivery/refer-and-earn")}
+            className="py-0 bg-white border-0 shadow-none cursor-pointer hover:bg-gray-200 transition-colors"
+          >
             <CardContent className="p-4 flex items-center justify-between">
               <div>
                 <h3 className="text-base font-medium mb-1">₹2000 referral bonus</h3>
@@ -237,7 +240,7 @@ export default function ProfilePage() {
             <h3 className="text-base font-medium mb-3 px-1">Support</h3>
             <div className="space-y-0">
               <Card 
-                onClick={() => {}}
+                onClick={() => navigate("/delivery/help/center")}
                 className="bg-white py-0 border-0 shadow-none rounded-none first:rounded-t-lg last:rounded-b-lg cursor-pointer hover:bg-gray-200 transition-colors"
               >
                 <CardContent className="p-4 flex items-center justify-between">
@@ -250,7 +253,7 @@ export default function ProfilePage() {
               </Card>
               <div className="h-px bg-gray-200"></div>
               <Card 
-                onClick={() => {}}
+                onClick={() => navigate("/delivery/help/tickets")}
                 className="bg-white py-0 border-0 shadow-none rounded-none first:rounded-t-lg last:rounded-b-lg cursor-pointer hover:bg-gray-200 transition-colors"
               >
                 <CardContent className="p-4 flex items-center justify-between">
